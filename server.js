@@ -2756,6 +2756,16 @@ async function autoGenerateSitemap() {
   }
 }
 
+app.get('/sitemap.xml', (req, res) => {
+  const sitemapPath = path.join(__dirname, 'public', 'sitemap.xml');
+  if (fs.existsSync(sitemapPath)) {
+    res.header('Content-Type', 'application/xml');
+    res.sendFile(sitemapPath);
+  } else {
+    res.status(404).send('Sitemap not found');
+  }
+});
+
 app.post('/api/admin/seo-generate', adminIpFilter, authenticateAdmin, async (req, res) => {
   try {
     await autoGenerateSitemap();
