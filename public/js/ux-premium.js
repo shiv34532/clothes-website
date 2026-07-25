@@ -378,34 +378,40 @@ function initInteractiveShopperGuide() {
   document.body.appendChild(guideBtn);
   document.body.appendChild(guideCard);
   
-  // Show card on button click
+  // Toggle card on button click
   guideBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    guideCard.style.right = '20px';
-    guideBtn.style.transform = 'scale(0.9) rotate(-3deg)';
+    const isOpen = guideCard.classList.contains('active');
+    if (isOpen) {
+      guideCard.classList.remove('active');
+      guideBtn.style.transform = 'scale(1) rotate(0deg)';
+    } else {
+      guideCard.classList.add('active');
+      guideBtn.style.transform = 'scale(0.9) rotate(-3deg)';
+    }
   });
   
-  // Hide card on close click
+  // Hide card on close button click
   guideCard.querySelector('#closeGuideBtn').addEventListener('click', (e) => {
     e.stopPropagation();
-    guideCard.style.right = '-400px';
+    guideCard.classList.remove('active');
     guideBtn.style.transform = 'scale(1) rotate(0deg)';
   });
   
   // Hide on click outside
   document.addEventListener('click', (e) => {
-    if (!guideCard.contains(e.target) && e.target !== guideBtn) {
-      guideCard.style.right = '-400px';
+    if (!guideCard.contains(e.target) && !guideBtn.contains(e.target)) {
+      guideCard.classList.remove('active');
       guideBtn.style.transform = 'scale(1) rotate(0deg)';
     }
   });
 
   // Pulse effect periodically to draw attention
   setInterval(() => {
-    if (guideCard.style.right !== '20px') {
+    if (!guideCard.classList.contains('active')) {
       guideBtn.style.transform = 'scale(1.1)';
       setTimeout(() => {
-        if (guideCard.style.right !== '20px') {
+        if (!guideCard.classList.contains('active')) {
           guideBtn.style.transform = 'scale(1)';
         }
       }, 300);

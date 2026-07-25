@@ -2266,9 +2266,21 @@ footer {
 
   #shopperGuideCard {
     bottom: 140px !important;
-    left: 15px !important;
+    left: -420px !important;
     right: auto !important;
     width: calc(100vw - 30px) !important;
     max-width: 320px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  #shopperGuideCard.active {
+    left: 15px !important;
+    right: auto !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
   }
 }
