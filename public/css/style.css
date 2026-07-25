@@ -2167,9 +2167,34 @@ footer {
   }
 }
 
-/* ==========================================================================
-   MOBILE UI OVERFLOW & CLIPPING FIXES (PREVENT TEXT CUT OFF & ELEMENT OVERLAP)
-   ========================================================================== */
+/* Shopper Guide Global Styles (Desktop & Mobile) */
+#shopperGuideCard {
+  position: fixed !important;
+  bottom: 145px !important;
+  right: -420px !important;
+  left: auto !important;
+  width: 320px !important;
+  background: #ffffff !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 25px rgba(30, 27, 75, 0.15) !important;
+  border: 1px solid var(--border-color) !important;
+  padding: 18px !important;
+  z-index: 9999 !important;
+  font-family: inherit !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+#shopperGuideCard.active {
+  right: 20px !important;
+  left: auto !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+}
+
 @media (max-width: 768px) {
   /* Prevent horizontal body overflow */
   html, body {
