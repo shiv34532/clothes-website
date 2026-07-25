@@ -167,12 +167,18 @@ setInterval(() => {
 }, 15 * 60 * 1000); // Reset count every 15 minutes
 
 function rateLimiter(req, res, next) {
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  // Bypass rate limiting for authenticated admin sessions
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return next();
+  }
+
+  const ip = req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : req.socket.remoteAddress;
   if (!ipRequestCounts[ip]) {
     ipRequestCounts[ip] = 0;
   }
   ipRequestCounts[ip]++;
-  if (ipRequestCounts[ip] > 180) {
+  if (ipRequestCounts[ip] > 500) {
     return res.status(429).json({ success: false, message: 'Too many requests from this IP. Please try again later.' });
   }
   next();

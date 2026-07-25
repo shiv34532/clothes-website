@@ -568,6 +568,13 @@ function closeProductModal() {
 async function handleProductFormSubmit(e) {
   e.preventDefault();
 
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  if (submitBtn) {
+    if (submitBtn.disabled) return;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+  }
+
   const form = document.getElementById('productForm');
   const formData = new FormData(form);
 
@@ -589,10 +596,15 @@ async function handleProductFormSubmit(e) {
       closeProductModal();
       loadAdminProducts();
     } else {
-      showToast(data.message, 'error');
+      showToast(data.message || 'Failed to save product', 'error');
     }
   } catch (err) {
     showToast('Error uploading product data', 'error');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = 'Save Product';
+    }
   }
 }
 
