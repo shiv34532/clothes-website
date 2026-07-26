@@ -190,7 +190,7 @@ function securityHeaders(req, res, next) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://apis.google.com https://*.noupe.com https://*.jotform.com https://*.jotform.pro https://*.jotform.io https://*.jotfor.ms https://accounts.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://*.cloudinary.com https://res.cloudinary.com https://*.pollinations.ai https://*.razorpay.com https://cdn-icons-png.flaticon.com https://lh3.googleusercontent.com https://*.noupe.com https://noupe.com https://*.jotform.com https://*.jotform.pro https://*.jotform.io https://*.jotfor.ms https://*.amazonaws.com; media-src 'self' data: https://*.cloudinary.com https://res.cloudinary.com https://*.amazonaws.com; connect-src 'self' https://*.cloudinary.com https://res.cloudinary.com https://api.razorpay.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.googleapis.com https://*.firebaseapp.com https://*.noupe.com https://noupe.com https://*.jotform.com https://*.jotform.pro https://*.jotform.io https://*.jotfor.ms https://www.google.com; frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://accounts.google.com https://*.firebaseapp.com https://*.noupe.com https://noupe.com https://*.jotform.com https://*.jotform.pro https://*.jotform.io https://*.jotfor.ms https://www.google.com;");
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://apis.google.com https://*.noupe.com https://*.jotform.com https://*.jotform.pro https://*.jotform.io https://*.jotfor.ms https://accounts.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://*.cloudinary.com https://res.cloudinary.com https://*.pollinations.ai https://*.razorpay.com https://cdn-icons-png.flaticon.com https://lh3.googleusercontent.com https://*.noupe.com https://noupe.com https://*.jotform.com https://*.jotform.pro https://*.jotform.io https://*.jotfor.ms https://*.amazonaws.com; media-src 'self' data: https://*.cloudinary.com https://res.cloudinary.com https://*.amazonaws.com; connect-src 'self' https://cdn.jsdelivr.net https://*.cloudinary.com https://res.cloudinary.com https://api.razorpay.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.googleapis.com https://*.firebaseapp.com https://*.noupe.com https://noupe.com https://*.jotform.com https://*.jotform.pro https://*.jotform.io https://*.jotfor.ms https://www.google.com; frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://accounts.google.com https://*.firebaseapp.com https://*.noupe.com https://noupe.com https://*.jotform.com https://*.jotform.pro https://*.jotform.io https://*.jotfor.ms https://www.google.com;");
   next();
 }
 
@@ -238,6 +238,17 @@ const upload = multer({
   },
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
+
+// Safe Multer Upload Middleware to consume stream and prevent ERR_HTTP2_PROTOCOL_ERROR
+function handleMulterUpload(req, res, next) {
+  upload.array('images', 5)(req, res, (err) => {
+    if (err) {
+      console.error('[Multer Upload Error]:', err.message);
+      return res.status(400).json({ success: false, message: 'Image upload error: ' + err.message });
+    }
+    next();
+  });
+}
 
 // Helper function to upload files/buffers/URLs to Cloudinary reliably
 async function uploadToCloudinary(input, folder = 'products') {
@@ -2097,7 +2108,7 @@ app.post('/api/admin/orders/:id/manual-ship', adminIpFilter, authenticateAdmin, 
 });
 
 // Add New Product
-app.post('/api/products', adminIpFilter, authenticateAdmin, upload.array('images', 5), async (req, res) => {
+app.post('/api/products', handleMulterUpload, adminIpFilter, authenticateAdmin, async (req, res) => {
   const { name, category, subcategory, price, discount_price, stock, description, size_variants, return_window_days } = req.body;
  
   if (!name || !category || !price) {
@@ -2149,7 +2160,7 @@ app.post('/api/products', adminIpFilter, authenticateAdmin, upload.array('images
 });
 
 // Edit Product
-app.put('/api/products/:id', adminIpFilter, authenticateAdmin, upload.array('images', 5), async (req, res) => {
+app.put('/api/products/:id', handleMulterUpload, adminIpFilter, authenticateAdmin, async (req, res) => {
   const { name, category, subcategory, price, discount_price, stock, description, size_variants, return_window_days } = req.body;
   
   try {
