@@ -224,27 +224,27 @@ app.use(express.static(path.join(__dirname, 'public'), {
   extensions: ['html', 'htm']
 }));
 
-// Configure Multer for Image Uploads (memoryStorage - RAM only, no disk needed on Render)
+// Configure Multer for Image & Video Uploads (memoryStorage - RAM only)
 const upload = multer({ 
   storage: multer.memoryStorage(),
   fileFilter: (req, file, cb) => {
-    const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.svg', '.gif'];
+    const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.svg', '.gif', '.mp4', '.webm', '.mov', '.avi', '.mkv', '.m4v'];
     const ext = path.extname(file.originalname).toLowerCase();
-    if (allowed.includes(ext)) {
+    if (allowed.includes(ext) || file.mimetype.startsWith('video/') || file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
-      cb(new Error('Only images (.jpg, .jpeg, .png, .webp, .svg, .gif) are allowed!'));
+      cb(new Error('Only images (.jpg, .png, .webp) and videos (.mp4, .webm, .mov) are allowed!'));
     }
   },
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit for high-def video files
 });
 
 // Safe Multer Upload Middleware to consume stream and prevent ERR_HTTP2_PROTOCOL_ERROR
 function handleMulterUpload(req, res, next) {
-  upload.array('images', 5)(req, res, (err) => {
+  upload.any()(req, res, (err) => {
     if (err) {
       console.error('[Multer Upload Error]:', err.message);
-      return res.status(400).json({ success: false, message: 'Image upload error: ' + err.message });
+      return res.status(400).json({ success: false, message: 'Upload error: ' + err.message });
     }
     next();
   });
@@ -269,12 +269,14 @@ async function uploadToCloudinary(input, folder = 'products') {
     }
 
     if (buffer) {
-      console.log(`[Cloudinary] Uploading buffer of ${buffer.length} bytes (mime: ${mime}) to folder: ${folder}`);
+      const isVideo = mime.startsWith('video/');
+      const resourceType = isVideo ? 'video' : 'auto';
+      console.log(`[Cloudinary] Uploading buffer of ${buffer.length} bytes (mime: ${mime}, resourceType: ${resourceType}) to folder: ${folder}`);
       const b64 = buffer.toString('base64');
       const dataUri = `data:${mime};base64,${b64}`;
       const result = await cloudinary.uploader.upload(dataUri, {
         folder: `little_to_large/${folder}`,
-        resource_type: 'auto'
+        resource_type: resourceType
       });
       console.log(`[Cloudinary] Buffer upload success: ${result.secure_url}`);
       return result.secure_url;
@@ -282,10 +284,12 @@ async function uploadToCloudinary(input, folder = 'products') {
 
     // Case 2: String - Remote HTTP/HTTPS URL
     if (typeof input === 'string' && (input.startsWith('http://') || input.startsWith('https://'))) {
+      const isVideo = input.endsWith('.mp4') || input.endsWith('.webm') || input.endsWith('.mov') || input.includes('/video/upload/');
+      const resourceType = isVideo ? 'video' : 'auto';
       console.log(`[Cloudinary] Uploading from URL: ${input.substring(0, 80)}...`);
       const result = await cloudinary.uploader.upload(input.trim(), {
         folder: `little_to_large/${folder}`,
-        resource_type: 'auto'
+        resource_type: resourceType
       });
       console.log(`[Cloudinary] URL upload success: ${result.secure_url}`);
       return result.secure_url;
@@ -294,22 +298,21 @@ async function uploadToCloudinary(input, folder = 'products') {
     // Case 3: String - Local file path
     const filePath = typeof input === 'string' ? input : (input && input.path ? input.path : null);
     if (filePath && fs.existsSync(filePath)) {
+      const isVideo = filePath.endsWith('.mp4') || filePath.endsWith('.webm') || filePath.endsWith('.mov');
       console.log(`[Cloudinary] Uploading from local file: ${filePath}`);
       const result = await cloudinary.uploader.upload(filePath, {
         folder: `little_to_large/${folder}`,
-        resource_type: 'auto'
+        resource_type: isVideo ? 'video' : 'auto'
       });
       try { fs.unlinkSync(filePath); } catch (e) {}
       console.log(`[Cloudinary] File upload success: ${result.secure_url}`);
       return result.secure_url;
     }
 
-    console.warn(`[Cloudinary Warning] Unrecognized input type:`, typeof input);
-    return 'https://res.cloudinary.com/wzknhexk/image/upload/v1721564126/placeholder.jpg';
-
+    return typeof input === 'string' ? input : 'https://res.cloudinary.com/wzknhexk/image/upload/v1721564126/placeholder.jpg';
   } catch (err) {
     console.error('[Cloudinary Upload Error]:', err.message);
-    return 'https://res.cloudinary.com/wzknhexk/image/upload/v1721564126/placeholder.jpg';
+    return typeof input === 'string' ? input : 'https://res.cloudinary.com/wzknhexk/image/upload/v1721564126/placeholder.jpg';
   }
 }
 
