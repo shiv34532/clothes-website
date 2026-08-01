@@ -1438,20 +1438,49 @@ async function loadAdminHeroBanners() {
   }
 }
 
+function switchHeroMediaType(type) {
+  const imgContainer = document.getElementById('heroImageInputContainer');
+  const vidContainer = document.getElementById('heroVideoInputContainer');
+  if (!imgContainer || !vidContainer) return;
+  if (type === 'video') {
+    imgContainer.style.display = 'none';
+    vidContainer.style.display = 'flex';
+  } else {
+    imgContainer.style.display = 'flex';
+    vidContainer.style.display = 'none';
+  }
+}
+
 async function handleHeroBannerSubmit(e) {
   e.preventDefault();
   const id = document.getElementById('heroBannerId').value;
+  const isVideoMode = document.querySelector('input[name="heroMediaTypeRadio"]:checked')?.value === 'video';
+
   const formData = new FormData();
   formData.append('title', document.getElementById('heroBannerTitle').value);
   formData.append('subtitle', document.getElementById('heroBannerSubtitle').value);
   formData.append('cta_text', document.getElementById('heroBannerCta').value);
-  formData.append('media_url', document.getElementById('heroBannerMediaUrl').value);
   formData.append('link_url', document.getElementById('heroBannerLinkUrl').value);
   formData.append('priority', document.getElementById('heroBannerPriority').value);
 
-  const fileInput = document.getElementById('heroBannerFile');
-  if (fileInput && fileInput.files.length > 0) {
-    formData.append('file', fileInput.files[0]);
+  if (isVideoMode) {
+    formData.append('media_type', 'video');
+    const vidFile = document.getElementById('heroBannerVideoFile');
+    const vidUrl = document.getElementById('heroBannerVideoUrl').value;
+    if (vidFile && vidFile.files.length > 0) {
+      formData.append('file', vidFile.files[0]);
+    } else if (vidUrl) {
+      formData.append('media_url', vidUrl.trim());
+    }
+  } else {
+    formData.append('media_type', 'image');
+    const imgFile = document.getElementById('heroBannerFile');
+    const imgUrl = document.getElementById('heroBannerMediaUrl').value;
+    if (imgFile && imgFile.files.length > 0) {
+      formData.append('file', imgFile.files[0]);
+    } else if (imgUrl) {
+      formData.append('media_url', imgUrl.trim());
+    }
   }
 
   const url = id ? `/api/hero-banners/${id}` : '/api/hero-banners';
@@ -1468,6 +1497,7 @@ async function handleHeroBannerSubmit(e) {
       showToast(data.message, 'success');
       document.getElementById('heroBannerForm').reset();
       document.getElementById('heroBannerId').value = '';
+      switchHeroMediaType('image');
       loadAdminHeroBanners();
     } else {
       showToast(data.message || 'Failed to save banner', 'error');
@@ -1484,9 +1514,20 @@ function editHeroBanner(id) {
   document.getElementById('heroBannerTitle').value = b.title || '';
   document.getElementById('heroBannerSubtitle').value = b.subtitle || '';
   document.getElementById('heroBannerCta').value = b.cta_text || '';
-  document.getElementById('heroBannerMediaUrl').value = b.media_url || '';
   document.getElementById('heroBannerLinkUrl').value = b.link_url || '';
   document.getElementById('heroBannerPriority').value = b.priority || 1;
+
+  if (b.media_type === 'video') {
+    const radio = document.querySelector('input[name="heroMediaTypeRadio"][value="video"]');
+    if (radio) radio.checked = true;
+    switchHeroMediaType('video');
+    document.getElementById('heroBannerVideoUrl').value = b.media_url || '';
+  } else {
+    const radio = document.querySelector('input[name="heroMediaTypeRadio"][value="image"]');
+    if (radio) radio.checked = true;
+    switchHeroMediaType('image');
+    document.getElementById('heroBannerMediaUrl').value = b.media_url || '';
+  }
   window.scrollTo({ top: document.getElementById('heroBannerForm').offsetTop - 100, behavior: 'smooth' });
 }
 

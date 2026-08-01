@@ -528,15 +528,45 @@
               <input type="text" id="heroBannerSubtitle" class="form-input" placeholder="Discover premium matching vacation outfits for the whole family.">
             </div>
 
-            <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap">
+            <div style="background:#eef2ff; border:1px solid var(--primary-light); padding:1rem; border-radius:10px; margin-bottom:10px">
+              <label style="font-weight:800; font-size:0.85rem; color:var(--primary); display:block; margin-bottom:8px">
+                Choose Banner Media Format:
+              </label>
+              <div style="display:flex; gap:20px; flex-wrap:wrap">
+                <label style="font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; gap:6px">
+                  <input type="radio" name="heroMediaTypeRadio" value="image" checked onchange="switchHeroMediaType('image')">
+                  📷 Image Banner (JPG / PNG / WebP)
+                </label>
+                <label style="font-weight:700; font-size:0.85rem; cursor:pointer; color:var(--accent); display:flex; align-items:center; gap:6px">
+                  <input type="radio" name="heroMediaTypeRadio" value="video" onchange="switchHeroMediaType('video')">
+                  🎥 Video Banner (MP4 / WebM HD)
+                </label>
+              </div>
+            </div>
+
+            <!-- Image Input Container -->
+            <div id="heroImageInputContainer" style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap">
               <div class="form-group" style="flex:1; min-width:180px">
-                <label style="font-weight:700; font-size:0.8rem">Upload Image/Video File</label>
-                <input type="file" id="heroBannerFile" accept="image/*,video/*" class="form-input" style="padding:0.4rem">
+                <label style="font-weight:700; font-size:0.8rem">📷 Select Image File</label>
+                <input type="file" id="heroBannerFile" accept="image/*" class="form-input" style="padding:0.4rem">
               </div>
               <div style="font-size:0.8rem; font-weight:700; color:var(--text-light); margin-top:1.2rem">OR</div>
               <div class="form-group" style="flex:1.2; min-width:180px">
-                <label style="font-weight:700; font-size:0.8rem">Paste Image / Video URL</label>
+                <label style="font-weight:700; font-size:0.8rem">Paste Image URL</label>
                 <input type="text" id="heroBannerMediaUrl" class="form-input" placeholder="e.g. images/hero_vacation.png">
+              </div>
+            </div>
+
+            <!-- Video Input Container -->
+            <div id="heroVideoInputContainer" style="display:none; gap:1rem; align-items:center; flex-wrap:wrap; background:#fff1f2; padding:12px; border-radius:8px; border:1px solid #fecdd3">
+              <div class="form-group" style="flex:1; min-width:180px">
+                <label style="font-weight:800; font-size:0.8rem; color:#be123c">🎥 Select MP4 / WebM Video File (Up to 100MB)</label>
+                <input type="file" id="heroBannerVideoFile" accept="video/mp4,video/webm,video/mov,video/*" class="form-input" style="padding:0.4rem; background:#fff">
+              </div>
+              <div style="font-size:0.8rem; font-weight:700; color:var(--text-light); margin-top:1.2rem">OR</div>
+              <div class="form-group" style="flex:1.2; min-width:180px">
+                <label style="font-weight:800; font-size:0.8rem; color:#be123c">Paste Video URL</label>
+                <input type="text" id="heroBannerVideoUrl" class="form-input" placeholder="e.g. https://example.com/video.mp4" style="background:#fff">
               </div>
             </div>
 
