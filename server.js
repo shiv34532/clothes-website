@@ -2109,7 +2109,7 @@ app.post('/api/admin/orders/:id/manual-ship', adminIpFilter, authenticateAdmin, 
 
 // Add New Product
 app.post('/api/products', handleMulterUpload, adminIpFilter, authenticateAdmin, async (req, res) => {
-  const { name, category, subcategory, price, discount_price, stock, description, size_variants, return_window_days } = req.body;
+  const { name, category, subcategory, price, discount_price, stock, description, size_variants, return_window_days, video_url } = req.body;
  
   if (!name || !category || !price) {
     return res.status(400).json({ success: false, message: 'Name, Category, and Price are required' });
@@ -2119,19 +2119,31 @@ app.post('/api/products', handleMulterUpload, adminIpFilter, authenticateAdmin, 
     let images = [];
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
-        const cloudUrl = await uploadToCloudinary(file.buffer, 'products');
-        images.push(cloudUrl);
+        if (!file.mimetype.startsWith('video/')) {
+          const cloudUrl = await uploadToCloudinary(file.buffer, 'products');
+          images.push(cloudUrl);
+        }
       }
-    } else if (req.body.image_url) {
+    }
+    
+    if (images.length === 0 && req.body.image_url) {
       if (req.body.image_url.startsWith('http://') || req.body.image_url.startsWith('https://')) {
         const cloudUrl = await uploadToCloudinary(req.body.image_url.trim(), 'products');
         images = [cloudUrl];
       } else {
         images = [req.body.image_url];
       }
-    } else {
+    } else if (images.length === 0) {
       // Fallback placeholder image
       images = ['https://res.cloudinary.com/wzknhexk/image/upload/v1721564126/placeholder.jpg'];
+    }
+
+    let finalVideoUrl = video_url ? video_url.trim() : null;
+    if (req.files && req.files.length > 0) {
+      const videoFile = req.files.find(f => f.mimetype && f.mimetype.startsWith('video/'));
+      if (videoFile) {
+        finalVideoUrl = await uploadToCloudinary(videoFile.buffer, 'videos');
+      }
     }
 
     let p1 = parseFloat(price);
@@ -2149,9 +2161,9 @@ app.post('/api/products', handleMulterUpload, adminIpFilter, authenticateAdmin, 
     const returnDays = return_window_days !== undefined && return_window_days !== '' ? parseInt(return_window_days) : 7;
  
     const result = await db.run(`
-      INSERT INTO products (name, category, subcategory, price, discount_price, stock, description, size_variants, image_urls, return_window_days)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [name, category, subcategory || null, mrp, selling, parseInt(stock) || 0, description || '', size_variants || 'M', JSON.stringify(images), returnDays]);
+      INSERT INTO products (name, category, subcategory, price, discount_price, stock, description, size_variants, image_urls, return_window_days, video_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [name, category, subcategory || null, mrp, selling, parseInt(stock) || 0, description || '', size_variants || 'M', JSON.stringify(images), returnDays, finalVideoUrl]);
  
     res.status(201).json({ success: true, message: 'Product added successfully', productId: result.insertId });
   } catch (err) {
@@ -2161,19 +2173,20 @@ app.post('/api/products', handleMulterUpload, adminIpFilter, authenticateAdmin, 
 
 // Edit Product
 app.put('/api/products/:id', handleMulterUpload, adminIpFilter, authenticateAdmin, async (req, res) => {
-  const { name, category, subcategory, price, discount_price, stock, description, size_variants, return_window_days } = req.body;
+  const { name, category, subcategory, price, discount_price, stock, description, size_variants, return_window_days, video_url } = req.body;
   
   try {
-    const existing = await db.get('SELECT image_urls FROM products WHERE id = ?', [req.params.id]);
+    const existing = await db.get('SELECT image_urls, video_url FROM products WHERE id = ?', [req.params.id]);
     if (!existing) return res.status(404).json({ success: false, message: 'Product not found' });
 
     let images = JSON.parse(existing.image_urls || '[]');
     if (req.files && req.files.length > 0) {
-      // Replace old images so new upload becomes the main image (images[0])
       const newImages = [];
       for (const file of req.files) {
-        const cloudUrl = await uploadToCloudinary(file, 'products');
-        if (cloudUrl) newImages.push(cloudUrl);
+        if (!file.mimetype.startsWith('video/')) {
+          const cloudUrl = await uploadToCloudinary(file, 'products');
+          if (cloudUrl) newImages.push(cloudUrl);
+        }
       }
       if (newImages.length > 0) {
         images = newImages;
@@ -2184,6 +2197,14 @@ app.put('/api/products/:id', handleMulterUpload, adminIpFilter, authenticateAdmi
         images = [cloudUrl];
       } else {
         images = [req.body.image_url];
+      }
+    }
+
+    let finalVideoUrl = video_url !== undefined ? video_url.trim() : existing.video_url;
+    if (req.files && req.files.length > 0) {
+      const videoFile = req.files.find(f => f.mimetype && f.mimetype.startsWith('video/'));
+      if (videoFile) {
+        finalVideoUrl = await uploadToCloudinary(videoFile.buffer, 'videos');
       }
     }
 
@@ -2203,9 +2224,9 @@ app.put('/api/products/:id', handleMulterUpload, adminIpFilter, authenticateAdmi
 
     await db.run(`
       UPDATE products 
-      SET name = ?, category = ?, subcategory = ?, price = ?, discount_price = ?, stock = ?, description = ?, size_variants = ?, image_urls = ?, return_window_days = ?
+      SET name = ?, category = ?, subcategory = ?, price = ?, discount_price = ?, stock = ?, description = ?, size_variants = ?, image_urls = ?, return_window_days = ?, video_url = ?
       WHERE id = ?
-    `, [name, category, subcategory || null, mrp, selling, parseInt(stock) || 0, description || '', size_variants || 'M', JSON.stringify(images), returnDays, req.params.id]);
+    `, [name, category, subcategory || null, mrp, selling, parseInt(stock) || 0, description || '', size_variants || 'M', JSON.stringify(images), returnDays, finalVideoUrl, req.params.id]);
 
     res.json({ success: true, message: 'Product updated successfully' });
   } catch (err) {
@@ -2219,6 +2240,92 @@ app.delete('/api/products/:id', adminIpFilter, authenticateAdmin, async (req, re
     const result = await db.run('DELETE FROM products WHERE id = ?', [req.params.id]);
     if (result.changes === 0) return res.status(404).json({ success: false, message: 'Product not found' });
     res.json({ success: true, message: 'Product deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================================================
+// HERO BANNERS MANAGEMENT API (MULTIPLE BANNER SLIDER)
+// ==========================================================================
+app.get('/api/hero-banners', async (req, res) => {
+  try {
+    const banners = await db.query("SELECT * FROM hero_banners WHERE status = 'active' ORDER BY priority ASC, id DESC");
+    res.json({ success: true, banners });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/admin/hero-banners', adminIpFilter, authenticateAdmin, async (req, res) => {
+  try {
+    const banners = await db.query("SELECT * FROM hero_banners ORDER BY priority ASC, id DESC");
+    res.json({ success: true, banners });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/hero-banners', handleMulterUpload, adminIpFilter, authenticateAdmin, async (req, res) => {
+  const { title, subtitle, cta_text, link_url, priority, status } = req.body;
+  try {
+    let mediaUrl = 'images/hero_vacation.png';
+    let mediaType = 'image';
+    if (req.files && req.files.length > 0) {
+      mediaUrl = await uploadToCloudinary(req.files[0].buffer, 'banners');
+      if (req.files[0].mimetype && req.files[0].mimetype.startsWith('video/')) {
+        mediaType = 'video';
+      }
+    } else if (req.body.media_url) {
+      mediaUrl = req.body.media_url.trim();
+    }
+
+    const result = await db.run(`
+      INSERT INTO hero_banners (title, subtitle, cta_text, media_url, media_type, link_url, priority, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [title || 'New Banner', subtitle || '', cta_text || 'Shop Now', mediaUrl, mediaType, link_url || 'products.html', parseInt(priority) || 0, status || 'active']);
+
+    res.status(201).json({ success: true, message: 'Hero banner added successfully', bannerId: result.insertId });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.put('/api/hero-banners/:id', handleMulterUpload, adminIpFilter, authenticateAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { title, subtitle, cta_text, link_url, priority, status } = req.body;
+  try {
+    const banner = await db.get('SELECT * FROM hero_banners WHERE id = ?', [id]);
+    if (!banner) return res.status(404).json({ success: false, message: 'Banner not found' });
+
+    let mediaUrl = banner.media_url;
+    let mediaType = banner.media_type;
+    if (req.files && req.files.length > 0) {
+      mediaUrl = await uploadToCloudinary(req.files[0].buffer, 'banners');
+      if (req.files[0].mimetype && req.files[0].mimetype.startsWith('video/')) {
+        mediaType = 'video';
+      }
+    } else if (req.body.media_url && req.body.media_url.trim() !== '') {
+      mediaUrl = req.body.media_url.trim();
+    }
+
+    await db.run(`
+      UPDATE hero_banners
+      SET title = ?, subtitle = ?, cta_text = ?, media_url = ?, media_type = ?, link_url = ?, priority = ?, status = ?
+      WHERE id = ?
+    `, [title || banner.title, subtitle !== undefined ? subtitle : banner.subtitle, cta_text || banner.cta_text, mediaUrl, mediaType, link_url || banner.link_url, parseInt(priority) || banner.priority, status || banner.status, id]);
+
+    res.json({ success: true, message: 'Hero banner updated successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.delete('/api/hero-banners/:id', adminIpFilter, authenticateAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    await db.run('DELETE FROM hero_banners WHERE id = ?', [id]);
+    res.json({ success: true, message: 'Hero banner deleted successfully' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

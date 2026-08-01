@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard & Operations | Little to Large</title>
   <meta name="description" content="Little to Large Admin Management Console for products, orders, inventory, promotions, and customer support.">
+  <link rel="canonical" href="https://littletolargee.com/admin">
   <link rel="stylesheet" href="css/style.css?v=13">
   <link rel="icon" type="image/png" href="/favicon.png?v=4">
   <link rel="shortcut icon" href="/favicon.ico?v=4">
@@ -89,7 +90,8 @@
       <li><a href="#" class="active" data-section="analyticsSection"><i class="fas fa-chart-line"></i> Analytics</a></li>
       <li><a href="#" data-section="productsSection"><i class="fas fa-tshirt"></i> Products Inventory</a></li>
       <li><a href="#" data-section="ordersSection"><i class="fas fa-shipping-fast"></i> Order Fulfillment</a></li>
-      <li><a href="#" data-section="promotionsSection"><i class="fas fa-ad"></i> Promotions & Hero</a></li>
+      <li><a href="#" data-section="promotionsSection"><i class="fas fa-ad"></i> Promotions & Deals</a></li>
+      <li><a href="#" data-section="heroBannersSection"><i class="fas fa-images"></i> Hero Banners</a></li>
       <li><a href="#" data-section="errorSection"><i class="fas fa-bug"></i> Error Tracking</a></li>
       <li><a href="#" data-section="inquiriesSection"><i class="far fa-envelope-open"></i> Customer Inquiries</a></li>
       <li><a href="#" data-section="lookbookSection"><i class="fas fa-book-open"></i> Lookbook Manager</a></li>
@@ -497,6 +499,82 @@
         </div>
       </section>
 
+      <!-- HERO BANNERS SLIDER MANAGER SECTION -->
+      <section id="heroBannersSection" style="display: none;">
+        <div style="background-color:#fff; padding:2rem; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); margin-bottom:2rem">
+          <h2 style="font-size:1.3rem; color:var(--primary); font-weight:800; border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-bottom:1.5rem">
+            🖼️ Homepage Multiple Hero Banners Manager
+          </h2>
+          <p style="font-size:0.85rem; color:var(--text-light); margin-bottom:1.5rem">
+            Add, update, or remove homepage slider banners. Active banners will auto-play on your store homepage.
+          </p>
+
+          <!-- Banner Creation Form -->
+          <form id="heroBannerForm" onsubmit="handleHeroBannerSubmit(event)" style="display:flex; flex-direction:column; gap:1rem; background:#fafafa; padding:1.5rem; border-radius:8px; border:1px solid var(--border-color); margin-bottom:2rem">
+            <input type="hidden" id="heroBannerId">
+            <div style="display:flex; gap:1rem; flex-wrap:wrap">
+              <div class="form-group" style="flex:1.5; min-width:200px">
+                <label style="font-weight:700; font-size:0.8rem">Banner Title</label>
+                <input type="text" id="heroBannerTitle" class="form-input" placeholder="e.g. Grand Festive Diwali Sale" required>
+              </div>
+              <div class="form-group" style="flex:1; min-width:150px">
+                <label style="font-weight:700; font-size:0.8rem">Button Text (CTA)</label>
+                <input type="text" id="heroBannerCta" class="form-input" placeholder="Shop Collection" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label style="font-weight:700; font-size:0.8rem">Subtitle Description</label>
+              <input type="text" id="heroBannerSubtitle" class="form-input" placeholder="Discover premium matching vacation outfits for the whole family.">
+            </div>
+
+            <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap">
+              <div class="form-group" style="flex:1; min-width:180px">
+                <label style="font-weight:700; font-size:0.8rem">Upload Image/Video File</label>
+                <input type="file" id="heroBannerFile" accept="image/*,video/*" class="form-input" style="padding:0.4rem">
+              </div>
+              <div style="font-size:0.8rem; font-weight:700; color:var(--text-light); margin-top:1.2rem">OR</div>
+              <div class="form-group" style="flex:1.2; min-width:180px">
+                <label style="font-weight:700; font-size:0.8rem">Paste Image / Video URL</label>
+                <input type="text" id="heroBannerMediaUrl" class="form-input" placeholder="e.g. images/hero_vacation.png">
+              </div>
+            </div>
+
+            <div style="display:flex; gap:1rem; flex-wrap:wrap">
+              <div class="form-group" style="flex:1">
+                <label style="font-weight:700; font-size:0.8rem">Redirect Link URL</label>
+                <input type="text" id="heroBannerLinkUrl" class="form-input" placeholder="products.html?category=Women">
+              </div>
+              <div class="form-group" style="flex:0.5; min-width:100px">
+                <label style="font-weight:700; font-size:0.8rem">Priority Order</label>
+                <input type="number" id="heroBannerPriority" class="form-input" value="1">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="padding:0.75rem; font-weight:700; font-size:0.9rem">Save Hero Banner</button>
+          </form>
+
+          <!-- Banners List Table -->
+          <h3 style="font-size:1rem; font-weight:800; color:var(--primary); margin-bottom:1rem">Active Homepage Banners</h3>
+          <div style="overflow-x:auto">
+            <table class="admin-table" id="adminHeroBannersTable">
+              <thead>
+                <tr>
+                  <th>Priority</th>
+                  <th>Media Preview</th>
+                  <th>Title & Subtitle</th>
+                  <th>Link & CTA</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Dynamically loaded hero banners -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <!-- 6. ERROR MONITORING SECTION -->
       <section id="errorSection" style="display: none;">
         <div class="admin-table-card">
@@ -730,6 +808,18 @@
           <div class="form-group" style="flex:1.2">
             <label>Paste Image URL</label>
             <input type="text" id="prodImageUrl" name="image_url" class="form-input" placeholder="e.g. https://example.com/image.jpg">
+          </div>
+        </div>
+
+        <div style="display:flex; gap:1rem; align-items:center;">
+          <div class="form-group" style="flex:1">
+            <label>🎬 Upload Product Video (MP4)</label>
+            <input type="file" id="prodVideo" name="video" accept="video/*" class="form-input" style="padding:0.4rem">
+          </div>
+          <div style="font-size:0.8rem; font-weight:700; color:var(--text-light); margin-top:1.2rem">OR</div>
+          <div class="form-group" style="flex:1.2">
+            <label>Paste Video URL</label>
+            <input type="text" id="prodVideoUrl" name="video_url" class="form-input" placeholder="e.g. https://example.com/video.mp4">
           </div>
         </div>
 

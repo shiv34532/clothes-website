@@ -57,7 +57,7 @@ function setupSidebarNavigation() {
 }
 
 function showSection(sectionId) {
-  const sections = ['analyticsSection', 'ordersSection', 'productsSection', 'inquiriesSection', 'promotionsSection', 'errorSection', 'lookbookSection', 'settingsSection'];
+  const sections = ['analyticsSection', 'ordersSection', 'productsSection', 'inquiriesSection', 'promotionsSection', 'heroBannersSection', 'errorSection', 'lookbookSection', 'settingsSection'];
   sections.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = id === sectionId ? 'block' : 'none';
@@ -73,6 +73,7 @@ function showSection(sectionId) {
     loadAdminCoupons();
     prefillPromoDates();
   }
+  else if (sectionId === 'heroBannersSection') loadAdminHeroBanners();
   else if (sectionId === 'errorSection') loadAdminErrors();
   else if (sectionId === 'lookbookSection') loadAdminLookbook();
   else if (sectionId === 'settingsSection') loadAdminShippingSettings();
@@ -1388,5 +1389,122 @@ async function triggerCompleteStoreReset() {
     }
   } catch (err) {
     showToast('Failed to connect to reset API', 'error');
+  }
+}
+
+/* ==========================================================================
+   HERO BANNERS MANAGEMENT LOGIC
+   ========================================================================== */
+let allHeroBanners = [];
+
+async function loadAdminHeroBanners() {
+  try {
+    const res = await fetch('/api/admin/hero-banners', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      allHeroBanners = data.banners;
+      const tbody = document.querySelector('#adminHeroBannersTable tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (data.banners.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:1.5rem; color:#888">No active hero banners found. Add a banner above!</td></tr>';
+        return;
+      }
+
+      data.banners.forEach(b => {
+        const mediaTag = b.media_type === 'video' ? 
+          `<video src="${formatLocalPath(b.media_url)}" style="width:70px; height:45px; object-fit:cover; border-radius:4px" muted></video>` :
+          `<img src="${formatLocalPath(b.media_url)}" style="width:70px; height:45px; object-fit:cover; border-radius:4px" onerror="this.src='images/hero_vacation.png'">`;
+
+        tbody.innerHTML += `
+          <tr>
+            <td><strong style="color:var(--primary)">#${b.priority}</strong></td>
+            <td>${mediaTag}</td>
+            <td><strong>${b.title}</strong><br><span style="font-size:0.75rem; color:#666">${b.subtitle || ''}</span></td>
+            <td><span style="font-size:0.8rem; font-weight:700; color:var(--accent)">${b.cta_text || 'Shop Now'}</span><br><span style="font-size:0.75rem; color:#888">${b.link_url || 'products.html'}</span></td>
+            <td>
+              <button onclick="editHeroBanner(${b.id})" class="btn" style="padding:0.3rem 0.6rem; font-size:0.75rem; background:var(--primary); color:#fff"><i class="fas fa-edit"></i> Edit</button>
+              <button onclick="deleteHeroBanner(${b.id})" class="btn" style="padding:0.3rem 0.6rem; font-size:0.75rem; background:var(--danger); color:#fff"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+  } catch (err) {
+    console.error('Failed to load hero banners:', err);
+  }
+}
+
+async function handleHeroBannerSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('heroBannerId').value;
+  const formData = new FormData();
+  formData.append('title', document.getElementById('heroBannerTitle').value);
+  formData.append('subtitle', document.getElementById('heroBannerSubtitle').value);
+  formData.append('cta_text', document.getElementById('heroBannerCta').value);
+  formData.append('media_url', document.getElementById('heroBannerMediaUrl').value);
+  formData.append('link_url', document.getElementById('heroBannerLinkUrl').value);
+  formData.append('priority', document.getElementById('heroBannerPriority').value);
+
+  const fileInput = document.getElementById('heroBannerFile');
+  if (fileInput && fileInput.files.length > 0) {
+    formData.append('file', fileInput.files[0]);
+  }
+
+  const url = id ? `/api/hero-banners/${id}` : '/api/hero-banners';
+  const method = id ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method: method,
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message, 'success');
+      document.getElementById('heroBannerForm').reset();
+      document.getElementById('heroBannerId').value = '';
+      loadAdminHeroBanners();
+    } else {
+      showToast(data.message || 'Failed to save banner', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to connect to banner server', 'error');
+  }
+}
+
+function editHeroBanner(id) {
+  const b = allHeroBanners.find(banner => banner.id === id);
+  if (!b) return;
+  document.getElementById('heroBannerId').value = b.id;
+  document.getElementById('heroBannerTitle').value = b.title || '';
+  document.getElementById('heroBannerSubtitle').value = b.subtitle || '';
+  document.getElementById('heroBannerCta').value = b.cta_text || '';
+  document.getElementById('heroBannerMediaUrl').value = b.media_url || '';
+  document.getElementById('heroBannerLinkUrl').value = b.link_url || '';
+  document.getElementById('heroBannerPriority').value = b.priority || 1;
+  window.scrollTo({ top: document.getElementById('heroBannerForm').offsetTop - 100, behavior: 'smooth' });
+}
+
+async function deleteHeroBanner(id) {
+  if (!confirm('Are you sure you want to delete this hero banner?')) return;
+  try {
+    const res = await fetch(`/api/hero-banners/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Banner deleted successfully');
+      loadAdminHeroBanners();
+    } else {
+      showToast(data.message, 'error');
+    }
+  } catch (err) {
+    showToast('Failed to delete banner', 'error');
   }
 }

@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Product Details | Little to Large</title>
+  <meta name="description" content="View high-definition product images, size options, color swatches, customer reviews, and pincode delivery check on Little to Large.">
+  <link id="canonicalUrl" rel="canonical" href="https://littletolargee.com/product-detail">
   <link rel="stylesheet" href="css/style.css?v=15">
   <link rel="stylesheet" href="css/ux-premium.css">
   <link rel="icon" type="image/png" href="/favicon.png?v=4">
@@ -75,7 +77,12 @@
 
       <!-- Sizing Options -->
       <div class="detail-variants">
-        <h4>Select Size:</h4>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px">
+          <h4 style="margin:0">Select Size:</h4>
+          <button type="button" onclick="openSizeChartModal()" class="size-chart-trigger-btn">
+            <i class="fas fa-ruler-combined"></i> 📏 Size Guide
+          </button>
+        </div>
         <div class="size-selector" id="sizeOptionsContainer">
           <!-- Injected size chips -->
         </div>
@@ -243,6 +250,11 @@
     }
 
     function renderProductDetails(p) {
+      document.title = `${p.name} | Little to Large Clothing`;
+      const canonicalTag = document.getElementById('canonicalUrl');
+      if (canonicalTag) {
+        canonicalTag.href = `https://littletolargee.com/product-detail?id=${p.id}`;
+      }
       document.getElementById('breadcrumbProdName').textContent = p.name;
       document.getElementById('detailTitle').textContent = p.name;
       document.getElementById('detailCategory').textContent = `${p.category} | ${p.subcategory}`;
@@ -698,6 +710,7 @@
               <div class="product-card" style="box-shadow:var(--shadow-sm); border:1px solid var(--border-color); border-radius:var(--radius-lg); overflow:hidden; background-color:#fff">
                 <div class="product-img-wrapper" onclick="window.location.href='product-detail.html?id=${p.id}'" style="cursor:pointer; position:relative; padding-bottom:125%; background:#fcfcfc">
                   <img src="${mainImg}" alt="${p.name}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover" onerror="this.src='/images/products/placeholder.jpg'">
+                  ${p.video_url ? '<div class="video-badge">🎬 Video</div>' : ''}
                 </div>
                 <div class="product-details" style="padding:1rem">
                   <span class="product-cat" style="font-size:0.75rem; text-transform:uppercase; color:var(--text-light); font-weight:700">${p.category} | ${p.subcategory}</span>
@@ -717,6 +730,138 @@
         document.getElementById('recommendationsGrid').innerHTML = '<div style="grid-column: 1/-1; color:var(--text-light); text-align:center">Failed to connect to recommendation engine.</div>';
       }
     }
+
+    // Product Video Overlay Player
+    function showProductVideo(videoUrl) {
+      const modal = document.getElementById('productVideoModal');
+      const player = document.getElementById('productVideoPlayer');
+      player.src = videoUrl;
+      modal.classList.add('active');
+      player.play().catch(e => console.log('Autoplay blocked:', e));
+    }
+
+    function closeProductVideo() {
+      const modal = document.getElementById('productVideoModal');
+      const player = document.getElementById('productVideoPlayer');
+      player.pause();
+      player.src = '';
+      modal.classList.remove('active');
+    }
+
+    // Size Guide Modal Data & Switcher
+    const sizeChartsData = {
+      kids: [
+        { size: '18-24M', brandSize: '1-2Y', chest: '21.0', waist: '19.8' },
+        { size: '2-4Y', brandSize: '2-4Y', chest: '22.5', waist: '21.5' },
+        { size: '4-6Y', brandSize: '4-6Y', chest: '24.0', waist: '22.0' },
+        { size: '6-8Y', brandSize: '6-8Y', chest: '26.0', waist: '23.3' },
+        { size: '8-10Y', brandSize: '8-10Y', chest: '28.0', waist: '24.8' }
+      ],
+      women: [
+        { size: 'XS', brandSize: 'XS (32)', chest: '32.0', waist: '26.0' },
+        { size: 'S', brandSize: 'S (34)', chest: '34.0', waist: '28.0' },
+        { size: 'M', brandSize: 'M (36)', chest: '36.0', waist: '30.0' },
+        { size: 'L', brandSize: 'L (38)', chest: '38.0', waist: '32.0' },
+        { size: 'XL', brandSize: 'XL (40)', chest: '40.0', waist: '34.0' },
+        { size: 'XXL', brandSize: 'XXL (42)', chest: '42.0', waist: '36.0' }
+      ],
+      men: [
+        { size: 'S', brandSize: 'S (38)', chest: '38.0', waist: '32.0' },
+        { size: 'M', brandSize: 'M (40)', chest: '40.0', waist: '34.0' },
+        { size: 'L', brandSize: 'L (42)', chest: '42.0', waist: '36.0' },
+        { size: 'XL', brandSize: 'XL (44)', chest: '44.0', waist: '38.0' },
+        { size: 'XXL', brandSize: 'XXL (46)', chest: '46.0', waist: '40.0' }
+      ]
+    };
+
+    function renderSizeChartTable(chartType) {
+      const data = sizeChartsData[chartType] || sizeChartsData.kids;
+      const container = document.getElementById('sizeChartTableContainer');
+      let html = `
+        <table class="size-chart-table">
+          <thead>
+            <tr>
+              <th style="width:40px">Select</th>
+              <th>Size</th>
+              <th>Brand Size</th>
+              <th>To Fit Chest (in)</th>
+              <th>To Fit Waist (in)</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      data.forEach(row => {
+        html += `
+          <tr onclick="selectSizeFromChart('${row.size}')">
+            <td><input type="radio" name="chartRadio" value="${row.size}"></td>
+            <td><strong>${row.size}</strong></td>
+            <td>${row.brandSize}</td>
+            <td>${row.chest}</td>
+            <td>${row.waist}</td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    function switchSizeChartTab(btn, chartType) {
+      document.querySelectorAll('.size-chart-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      renderSizeChartTable(chartType);
+    }
+
+    function openSizeChartModal() {
+      renderSizeChartTable('kids');
+      document.getElementById('sizeChartModalOverlay').classList.add('active');
+    }
+
+    function closeSizeChartModal(e) {
+      if (!e || e.target.id === 'sizeChartModalOverlay' || e.target.closest('.size-chart-close-btn')) {
+        document.getElementById('sizeChartModalOverlay').classList.remove('active');
+      }
+    }
+
+    function selectSizeFromChart(sizeVal) {
+      const chips = document.querySelectorAll('#sizeOptionsContainer .size-chip');
+      chips.forEach(chip => {
+        if (chip.textContent.trim().toUpperCase() === sizeVal.toUpperCase()) {
+          chip.click();
+        }
+      });
+      document.getElementById('sizeChartModalOverlay').classList.remove('active');
+    }
   </script>
+
+  <!-- Interactive Product Video Overlay Modal -->
+  <div id="productVideoModal" class="size-chart-modal-overlay" onclick="closeProductVideo()">
+    <div class="size-chart-modal" style="max-width:800px; padding:15px; background:#000; border-radius:16px" onclick="event.stopPropagation()">
+      <button class="size-chart-close-btn" onclick="closeProductVideo()" style="top:10px; right:10px; z-index:10"><i class="fas fa-times"></i></button>
+      <video id="productVideoPlayer" controls style="width:100%; max-height:75vh; border-radius:12px" autoplay muted playsinline></video>
+    </div>
+  </div>
+
+  <!-- Interactive Size Guide Modal (Matching User Screenshot) -->
+  <div id="sizeChartModalOverlay" class="size-chart-modal-overlay" onclick="closeSizeChartModal(event)">
+    <div class="size-chart-modal" onclick="event.stopPropagation()">
+      <button class="size-chart-close-btn" onclick="closeSizeChartModal()"><i class="fas fa-times"></i></button>
+      <h3 style="font-size:1.2rem; font-weight:800; color:var(--primary); margin-bottom:6px; display:flex; align-items:center; gap:8px">
+        <span>📏</span> Interactive Size Measurement Guide
+      </h3>
+      <p style="font-size:0.82rem; color:var(--text-light); margin-bottom:15px">Click any row in the chart to automatically select your size for this product.</p>
+
+      <div class="size-chart-tabs">
+        <div class="size-chart-tab active" onclick="switchSizeChartTab(this, 'kids')">🧒 Kids Wear</div>
+        <div class="size-chart-tab" onclick="switchSizeChartTab(this, 'women')">👩 Women's Outfits</div>
+        <div class="size-chart-tab" onclick="switchSizeChartTab(this, 'men')">👨 Men's Shirts & Ethnic</div>
+      </div>
+
+      <div id="sizeChartTableContainer" class="size-chart-table-wrapper">
+        <!-- Dynamically rendered size table matching user screenshot -->
+      </div>
+    </div>
+  </div>
 </body>
 </html>

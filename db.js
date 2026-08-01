@@ -340,6 +340,22 @@ async function createTables() {
     )
   `);
 
+  // Multiple Hero Banners table for homepage slider manager
+  await run(`
+    CREATE TABLE IF NOT EXISTS hero_banners (
+      id ${idType},
+      title VARCHAR(150),
+      subtitle VARCHAR(255),
+      cta_text VARCHAR(50) DEFAULT 'Shop Now',
+      media_url TEXT NOT NULL,
+      media_type VARCHAR(50) DEFAULT 'image',
+      link_url TEXT DEFAULT 'products.html',
+      priority INTEGER DEFAULT 0,
+      status VARCHAR(50) DEFAULT 'active',
+      created_at ${datetimeType} DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // Error Logs table
   await run(`
     CREATE TABLE IF NOT EXISTS error_logs (
@@ -610,6 +626,39 @@ async function seedDatabase() {
     await run("UPDATE homepage_settings SET media_url = 'images/hero_vacation.png', hero_title = 'Coordinated Styles for Every Generation', hero_subtitle = 'Discover premium matching vacation outfits, lounge wear, and festival wear tailored for the entire family.' WHERE id = 1");
   } catch (e) {
     console.error('Failed to migrate/update hero slide backgrounds to PNG:', e.message);
+  }
+
+  // Update Kurti product description in database
+  try {
+    const kurtiDesc = "Brighten your daily style with this vibrant lime green short kurti from Little to Largée. Featuring a chic floral print, comfortable 3/4th sleeves, and a flattering buttoned neckline, it pairs effortlessly with your favorite jeans or trousers for a fresh, everyday look.\n\nFabric: 100% Breathable Cotton\nCare: Gentle machine wash";
+    await run("UPDATE products SET description = ? WHERE LOWER(name) LIKE '%kurti%' OR LOWER(name) LIKE '%lime%' OR LOWER(name) LIKE '%maroon%' OR LOWER(name) LIKE '%baby%'", [kurtiDesc]);
+    console.log('✔ Updated Kurti product description in database.');
+  } catch (e) {
+    console.error('Failed to update Kurti product description:', e.message);
+  }
+
+  // Seed default hero banners for homepage slider
+  try {
+    const bannerCount = await get('SELECT COUNT(*) as count FROM hero_banners');
+    if (parseInt(bannerCount.count) === 0) {
+      console.log('Seeding default homepage hero banners...');
+      await run(`
+        INSERT INTO hero_banners (title, subtitle, cta_text, media_url, media_type, link_url, priority, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `, ['Coordinated Family Styles', 'Discover matching vacation outfits, lounge wear, and festival wear for the entire family.', 'Shop Collection', 'images/hero_vacation.png', 'image', 'products.html', 1, 'active']);
+
+      await run(`
+        INSERT INTO hero_banners (title, subtitle, cta_text, media_url, media_type, link_url, priority, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `, ['Grand Ethnic Festival Sale', 'Flat 15% discount on all silk ethnic wear, dupattas, and handcrafted kurtis.', 'Explore Offers', 'images/hero_ethnic.png', 'image', 'offers.html', 2, 'active']);
+
+      await run(`
+        INSERT INTO hero_banners (title, subtitle, cta_text, media_url, media_type, link_url, priority, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `, ['Trending Kids Fashion', 'Ultra soft 100% organic cotton outfits & footwear for little ones.', 'Shop Kids Wear', 'images/hero_kids.png', 'image', 'products.html?category=kids', 3, 'active']);
+    }
+  } catch (e) {
+    console.error('Failed to seed hero banners:', e.message);
   }
 
   // Seed default system settings
