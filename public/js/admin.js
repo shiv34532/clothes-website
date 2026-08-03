@@ -356,7 +356,12 @@ async function loadAdminOrders() {
             </td>
             <td>${date}</td>
             <td><strong>₹${parseFloat(o.total_amount).toFixed(2)}</strong></td>
-            <td>${o.payment_method} (${o.payment_status})</td>
+            <td>
+              ${o.payment_method} 
+              (${ (o.payment_status === 'Success' || o.payment_status === 'Completed') ? 
+                '<span style="color:#16a34a; font-weight:700">Completed</span>' : 
+                '<span style="color:#dc2626; font-weight:700">Pending (Unpaid)</span>' })
+            </td>
             <td>
               <select onchange="updateOrderStatus(${o.id}, this.value)" class="form-select" style="padding:0.3rem 0.5rem; border-radius:4px; border:1px solid var(--border-color); font-weight:700; color:var(--primary)">
                 <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>

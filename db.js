@@ -672,6 +672,14 @@ async function seedDatabase() {
   } catch (e) {
     console.error('Failed to seed default settings:', e.message);
   }
+
+  // Fix any unverified online payments that were mistakenly set to 'Completed' without Razorpay verification
+  try {
+    await run("UPDATE payments SET status = 'Pending' WHERE status IN ('Completed', 'Success') AND method != 'COD' AND (transaction_id LIKE 'PENDING-%' OR transaction_id LIKE 'COD-%' OR transaction_id NOT LIKE 'pay_%')");
+    console.log('✔ Fixed unverified online payments status to Pending.');
+  } catch (e) {
+    console.error('Failed to fix unverified payments status:', e.message);
+  }
 }
 
 module.exports = {

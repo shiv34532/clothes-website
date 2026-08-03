@@ -1118,9 +1118,9 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
       await db.run('UPDATE products SET stock = stock - ? WHERE id = ?', [item.quantity, item.product_id]);
     }
 
-    // 3. Create Payment Transaction entry
-    const finalTxId = transaction_id || 'COD-' + orderId + '-' + Math.floor(Math.random() * 1000000);
-    const payStatus = payment_method === 'COD' ? 'Pending' : 'Completed';
+    // 3. Create Payment Transaction entry (Always 'Pending' initially until Razorpay HMAC verification)
+    const finalTxId = transaction_id || (payment_method === 'COD' ? 'COD-' + orderId + '-' + Math.floor(Math.random() * 1000000) : 'PENDING-' + orderId + '-' + Math.floor(Math.random() * 1000000));
+    const payStatus = 'Pending';
     await db.run(`
       INSERT INTO payments (order_id, transaction_id, amount, method, status)
       VALUES (?, ?, ?, ?, ?)
