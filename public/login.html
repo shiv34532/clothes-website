@@ -116,45 +116,6 @@
             <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required>
           </div>
           <button type="submit" class="auth-btn">Sign In</button>
-          
-          <div style="text-align: center; margin: 1.2rem 0; color: var(--text-light); font-size: 0.85rem; font-weight: 600;">
-            — OR —
-          </div>
-          <button type="button" class="auth-btn" style="background-color: var(--accent);" onclick="toggleOtpForm(true)">
-            📲 Sign In with Mobile OTP
-          </button>
-        </form>
-
-        <!-- OTP-Based Login Form (Hidden initially) -->
-        <form id="otpLoginForm" style="display: none;">
-          <h3 style="font-size: 1.4rem; color: var(--primary); font-weight: 800; margin-bottom: 1.2rem;">Mobile OTP Login</h3>
-          
-          <div id="phoneInputGroup">
-            <div class="form-group">
-              <label>Indian Mobile Number</label>
-              <div style="display: flex; gap: 8px">
-                <span style="padding: 0.75rem; background: #eee; border: 1px solid var(--border-color); border-radius: 8px; font-weight: 700; font-size: 0.9rem;">+91</span>
-                <input type="tel" id="loginPhone" class="form-input" placeholder="Enter 10-digit number" maxlength="10" required>
-              </div>
-            </div>
-            <button type="button" class="auth-btn" onclick="sendMobileOtp()">Get Verification Code</button>
-          </div>
-
-          <div id="otpInputGroup" style="display: none; margin-top: 1rem;">
-            <div class="form-group">
-              <label>Enter 6-Digit OTP</label>
-              <input type="text" id="loginOtp" class="form-input" style="text-align:center; font-size:1.5rem; letter-spacing:8px; font-weight:800" placeholder="123456" maxlength="6">
-            </div>
-            
-            <button type="submit" class="auth-btn">Verify & Sign In</button>
-          </div>
-
-          <div style="text-align: center; margin-top: 1.5rem;">
-            <a href="#" onclick="toggleOtpForm(false)" style="color: var(--primary); font-weight: 700; font-size: 0.85rem;"><i class="fas fa-arrow-left"></i> Back to Email Sign In</a>
-          </div>
-          
-          <!-- Invisible reCAPTCHA container for Firebase Phone Auth -->
-          <div id="recaptcha-container"></div>
         </form>
       </div>
 
