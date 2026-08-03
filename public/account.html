@@ -211,7 +211,7 @@
                 </div>
                 <div class="validation-input-group">
                   <label style="font-size:0.8rem; font-weight:700">Pincode</label>
-                  <input type="text" id="profPincode" class="form-input" placeholder="6-digit pincode" maxlength="6" required oninput="validateField(this, /^\d{6}$/, 'Enter valid 6-digit Pincode')">
+                  <input type="text" id="profPincode" class="form-input" placeholder="380001" maxlength="6" required oninput="validateField(this, /^(36|37|38|39)\d{4}$/, 'Please enter a valid Gujarat PIN Code.')">
                   <span class="error-msg"></span>
                 </div>
               </div>
@@ -246,7 +246,7 @@
                 </div>
                 <div class="validation-input-group">
                   <label style="font-size:0.8rem; font-weight:700">Pincode 2</label>
-                  <input type="text" id="profPincodeAlt" class="form-input" placeholder="Pincode 2" maxlength="6" oninput="validateField(this, /^(\d{6})?$/, 'Enter valid 6-digit Pincode')">
+                  <input type="text" id="profPincodeAlt" class="form-input" placeholder="Pincode 2" maxlength="6" oninput="validateField(this, /^((36|37|38|39)\d{4})?$/, 'Please enter a valid Gujarat PIN Code.')">
                   <span class="error-msg"></span>
                 </div>
               </div>

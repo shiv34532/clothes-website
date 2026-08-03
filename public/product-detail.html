@@ -451,11 +451,12 @@
     function checkPincode() {
       const pin = document.getElementById('pinInput').value.trim();
       const result = document.getElementById('pinResult');
+      const gujaratPincodeRegex = /^(36|37|38|39)\d{4}$/;
       
-      if (pin.length < 6 || isNaN(pin)) {
+      if (!gujaratPincodeRegex.test(pin)) {
         result.style.display = 'block';
         result.style.color = 'var(--danger)';
-        result.textContent = '❌ Please enter a valid 6-digit Pincode';
+        result.textContent = '❌ Please enter a valid Gujarat PIN Code.';
         return;
       }
 

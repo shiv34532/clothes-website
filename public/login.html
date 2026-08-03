@@ -163,7 +163,8 @@
             </div>
             <div class="form-group" style="flex: 1">
               <label>Pincode</label>
-              <input type="text" id="regPincode" class="form-input" placeholder="560001" maxlength="6">
+              <input type="text" id="regPincode" class="form-input" placeholder="380001" maxlength="6">
+              <div id="regPincodeError" class="error-msg" style="color: #dc2626; font-size: 0.8rem; font-weight: 700; margin-top: 4px; display: none;">Please enter a valid Gujarat PIN Code.</div>
             </div>
           </div>
 
@@ -384,6 +385,21 @@
       if (payload.phone.length < 10 || isNaN(payload.phone)) {
         showToast('Enter valid 10-digit phone number', 'error');
         return;
+      }
+
+      // Validate Gujarat PIN Code regex
+      const gujaratPincodeRegex = /^(36|37|38|39)\d{4}$/;
+      const regPincodeErrEl = document.getElementById('regPincodeError');
+      if (payload.pincode && !gujaratPincodeRegex.test(payload.pincode)) {
+        if (regPincodeErrEl) {
+          regPincodeErrEl.textContent = 'Please enter a valid Gujarat PIN Code.';
+          regPincodeErrEl.style.display = 'block';
+        }
+        showToast('Please enter a valid Gujarat PIN Code.', 'error');
+        document.getElementById('regPincode').focus();
+        return;
+      } else if (regPincodeErrEl) {
+        regPincodeErrEl.style.display = 'none';
       }
 
       try {

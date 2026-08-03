@@ -293,10 +293,25 @@ async function processOrderSubmit(e) {
   const addressLine2 = document.getElementById('shippingAddressLine2').value.trim();
   const state = document.getElementById('shippingState').value;
   const pincode = document.getElementById('shippingPincode').value.trim();
+  const pincodeErrEl = document.getElementById('shippingPincodeError');
 
   if (!name || !phone || !address || !addressLine2 || !state || !pincode) {
     showToast('Please fill in all shipping details, including Landmark!', 'error');
     return;
+  }
+
+  // Validate Gujarat PIN Code regex
+  const gujaratPincodeRegex = /^(36|37|38|39)\d{4}$/;
+  if (!gujaratPincodeRegex.test(pincode)) {
+    if (pincodeErrEl) {
+      pincodeErrEl.textContent = 'Please enter a valid Gujarat PIN Code.';
+      pincodeErrEl.style.display = 'block';
+    }
+    showToast('Please enter a valid Gujarat PIN Code.', 'error');
+    document.getElementById('shippingPincode').focus();
+    return;
+  } else if (pincodeErrEl) {
+    pincodeErrEl.style.display = 'none';
   }
 
   // Calculate order amount

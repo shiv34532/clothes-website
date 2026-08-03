@@ -514,6 +514,11 @@ app.post('/api/auth/firebase-register', async (req, res) => {
     return res.status(400).json({ success: false, message: 'Missing registration details or token' });
   }
 
+  const gujaratPincodeRegex = /^(36|37|38|39)\d{4}$/;
+  if (pincode && pincode.toString().trim() !== '' && !gujaratPincodeRegex.test(pincode.toString().trim())) {
+    return res.status(400).json({ success: false, message: 'Please enter a valid Gujarat PIN Code.' });
+  }
+
   try {
     const { payload, error } = await verifyFirebaseIdToken(idToken);
     if (error) {
@@ -532,7 +537,7 @@ app.post('/api/auth/firebase-register', async (req, res) => {
     const result = await db.run(`
       INSERT INTO customers (name, email, phone, password_hash, address_line, city, state, pincode)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `, [name, email, phone, 'firebase-auth-oauth', address || '', city || '', state || '', pincode || '']);
+    `, [name, email, phone, 'firebase-auth-oauth', address || '', city || '', state || '', pincode ? pincode.toString().trim() : '']);
     
     const customer = await db.get('SELECT * FROM customers WHERE id = ?', [result.insertId]);
 
@@ -568,6 +573,11 @@ app.post('/api/auth/register', async (req, res) => {
   
   if (!name || !email || !phone || !password) {
     return res.status(400).json({ success: false, message: 'Missing required registration details' });
+  }
+
+  const gujaratPincodeRegex = /^(36|37|38|39)\d{4}$/;
+  if (pincode && pincode.toString().trim() !== '' && !gujaratPincodeRegex.test(pincode.toString().trim())) {
+    return res.status(400).json({ success: false, message: 'Please enter a valid Gujarat PIN Code.' });
   }
 
   try {
@@ -755,6 +765,15 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
 // Update Profile
 app.put('/api/auth/me', authenticateToken, async (req, res) => {
   const { name, phone, address_line, city, state, pincode, avatar_url, phone_alt, address_line_2, city_2, state_2, pincode_2 } = req.body;
+
+  const gujaratPincodeRegex = /^(36|37|38|39)\d{4}$/;
+  if (pincode && pincode.toString().trim() !== '' && !gujaratPincodeRegex.test(pincode.toString().trim())) {
+    return res.status(400).json({ success: false, message: 'Please enter a valid Gujarat PIN Code.' });
+  }
+  if (pincode_2 && pincode_2.toString().trim() !== '' && !gujaratPincodeRegex.test(pincode_2.toString().trim())) {
+    return res.status(400).json({ success: false, message: 'Please enter a valid Gujarat PIN Code.' });
+  }
+
   try {
     await db.run(`
       UPDATE customers 
@@ -1039,10 +1058,22 @@ app.post('/api/orders/send-otp', async (req, res) => {
 
 // Place New Order
 app.post('/api/orders', authenticateToken, async (req, res) => {
-  const { items, total_amount, shipping_address, payment_method, transaction_id, otp, phone } = req.body;
+  const { items, total_amount, shipping_address, payment_method, transaction_id, otp, phone, pincode } = req.body;
 
   if (!items || !items.length || !total_amount || !shipping_address || !payment_method) {
     return res.status(400).json({ success: false, message: 'Missing order information' });
+  }
+
+  // Validate Gujarat PIN Code
+  const gujaratPincodeRegex = /^(36|37|38|39)\d{4}$/;
+  let orderPin = (pincode || '').toString().trim();
+  if (!orderPin && shipping_address) {
+    const pinMatch = shipping_address.match(/\b\d{6}\b/);
+    if (pinMatch) orderPin = pinMatch[0];
+  }
+
+  if (!orderPin || !gujaratPincodeRegex.test(orderPin)) {
+    return res.status(400).json({ success: false, message: 'Please enter a valid Gujarat PIN Code.' });
   }
 
   try {
