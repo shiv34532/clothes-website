@@ -374,14 +374,17 @@
       const colorsSection = document.getElementById('colorVariantsSection');
       colorsContainer.innerHTML = '';
       
-      if (p.color && p.color.trim()) {
-        const colors = p.color.split(',').map(c => c.trim()).filter(Boolean);
+      const rawColorStr = p.color_variants || p.color || 'Lime Green, Red, Maroon';
+      if (rawColorStr && rawColorStr.trim()) {
+        const colors = rawColorStr.split(',').map(c => c.trim()).filter(Boolean);
         if (colors.length > 0) {
           colorsSection.style.display = 'block';
           colors.forEach((col, idx) => {
             if (idx === 0) selectedColor = col;
             colorsContainer.innerHTML += `
-              <span class="color-option ${idx === 0 ? 'active' : ''}" onclick="selectColor(this, '${col}')" style="display:inline-block; padding: 0.4rem 1.2rem; border: 1px solid var(--border-color); border-radius: 50px; font-size: 0.85rem; font-weight: 700; cursor: pointer; text-transform: capitalize;">${col}</span>
+              <span class="color-option ${idx === 0 ? 'active' : ''}" onclick="selectColor(this, '${col}')" style="display:inline-flex; align-items:center; gap:6px; padding: 0.4rem 1.2rem; border: 1px solid var(--border-color); border-radius: 50px; font-size: 0.85rem; font-weight: 700; cursor: pointer; text-transform: capitalize; transition:all 0.2s ease;">
+                <span style="width:12px; height:12px; border-radius:50%; background-color:${getColorCssCode(col)}; border:1px solid #ccc; display:inline-block"></span> ${col}
+              </span>
             `;
           });
         } else {
@@ -391,6 +394,16 @@
       } else {
         colorsSection.style.display = 'none';
         selectedColor = 'Default';
+      }
+
+      // Return & Replacement Policy Notice
+      const returnNoticeEl = document.getElementById('detailReturnNotice');
+      if (returnNoticeEl) {
+        if (parseInt(p.return_window_days) === 0) {
+          returnNoticeEl.innerHTML = '<span style="color:#dc2626; font-weight:800">🚫 Non-Refundable & Non-Returnable Item (Final Sale)</span>';
+        } else {
+          returnNoticeEl.innerHTML = `<span style="color:#16a34a; font-weight:800">↺ ${p.return_window_days || 7} Days Replacement Only</span> <small style="color:#64748b">(Strictly Non-Refundable. Replacement allowed within ${p.return_window_days || 7} days after delivery. User responsible for damage after delivery.)</small>`;
+        }
       }
 
       // Rating Stars
@@ -431,10 +444,40 @@
 
     let selectedColor = 'Default';
 
+    function getColorCssCode(cName) {
+      const lower = cName.toLowerCase();
+      if (lower.includes('lime')) return '#32cd32';
+      if (lower.includes('green')) return '#16a34a';
+      if (lower.includes('red')) return '#dc2626';
+      if (lower.includes('maroon')) return '#800000';
+      if (lower.includes('navy')) return '#1e3a8a';
+      if (lower.includes('blue')) return '#2563eb';
+      if (lower.includes('pink')) return '#ec4899';
+      if (lower.includes('black')) return '#18181b';
+      if (lower.includes('white')) return '#ffffff';
+      if (lower.includes('gold') || lower.includes('yellow')) return '#eab308';
+      return '#64748b';
+    }
+
     function selectColor(el, color) {
       document.querySelectorAll('.color-option').forEach(c => c.classList.remove('active'));
       el.classList.add('active');
       selectedColor = color;
+
+      // Photo switching based on color mapping
+      if (activeProduct && activeProduct.color_images && activeProduct.color_images.trim()) {
+        const mappings = activeProduct.color_images.split(',');
+        for (const m of mappings) {
+          const parts = m.split(':');
+          if (parts.length >= 2 && parts[0].trim().toLowerCase() === color.trim().toLowerCase()) {
+            const imgUrl = parts.slice(1).join(':').trim();
+            if (imgUrl) {
+              const mainImg = document.getElementById('mainProdImage');
+              if (mainImg) mainImg.src = formatLocalPath(imgUrl);
+            }
+          }
+        }
+      }
     }
 
     function changeQty(diff) {

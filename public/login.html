@@ -115,6 +115,12 @@
             <label>Password</label>
             <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required>
           </div>
+          <div class="form-group" style="margin-top:1rem; display:flex; align-items:flex-start; gap:8px">
+            <input type="checkbox" id="termsCheckLogin" style="margin-top:3px; cursor:pointer; width:16px; height:16px" required>
+            <label for="termsCheckLogin" style="font-size:0.82rem; color:var(--text-dark); cursor:pointer; line-height:1.4">
+              I agree to the <a href="#" onclick="openTermsModal(event)" style="color:var(--primary); font-weight:700; text-decoration:underline">Terms & Conditions and Privacy Policy</a>
+            </label>
+          </div>
           <button type="submit" class="auth-btn">Sign In</button>
         </form>
       </div>
@@ -168,6 +174,13 @@
             </div>
           </div>
 
+          <div class="form-group" style="margin-top:1rem; display:flex; align-items:flex-start; gap:8px">
+            <input type="checkbox" id="termsCheckReg" style="margin-top:3px; cursor:pointer; width:16px; height:16px" required>
+            <label for="termsCheckReg" style="font-size:0.82rem; color:var(--text-dark); cursor:pointer; line-height:1.4">
+              I agree to the <a href="#" onclick="openTermsModal(event)" style="color:var(--primary); font-weight:700; text-decoration:underline">Terms & Conditions and Privacy Policy</a>
+            </label>
+          </div>
+
           <button type="submit" class="auth-btn">Register Account</button>
         </form>
       </div>
@@ -183,6 +196,40 @@
 
     </div>
   </main>
+
+  <!-- Terms & Conditions Modal Overlay -->
+  <div id="termsModal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.7); z-index: 99999; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+    <div style="background: #fff; width: 92%; max-width: 560px; max-height: 85vh; border-radius: 16px; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35); overflow-y: auto; display: flex; flex-direction: column; position: relative;">
+      <button onclick="closeTermsModal()" style="position: absolute; top: 18px; right: 18px; background: #f1f5f9; border: none; font-size: 1.2rem; cursor: pointer; color: #475569; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;">&times;</button>
+      
+      <h2 style="font-size: 1.4rem; color: var(--primary); font-weight: 800; border-bottom: 3px solid var(--marigold); padding-bottom: 8px; margin-bottom: 1.2rem; display:flex; align-items:center; gap:8px">
+        📜 Terms & Conditions & Security Policy
+      </h2>
+
+      <div style="font-size: 0.88rem; color: #334155; line-height: 1.6; display: flex; flex-direction: column; gap: 1.2rem;">
+        <div style="background: #f8fafc; border-left: 4px solid var(--primary); padding: 14px; border-radius: 8px;">
+          <strong style="color: var(--primary); font-size: 0.95rem; display:block; margin-bottom:4px">1. Data Protection & Security Policy:</strong>
+          <p style="margin: 0; font-size: 0.85rem; color: #475569;">
+            The user data collected on Little to Large <strong>cannot be used for any other websites</strong> or shared with unauthorized third parties. All passwords, customer credentials, and sensitive personal information are stored using industry-standard high-security hashing (bcrypt) and SSL encryption protocols.
+          </p>
+        </div>
+
+        <div style="background: #fff7ed; border-left: 4px solid #ea580c; padding: 14px; border-radius: 8px;">
+          <strong style="color: #ea580c; font-size: 0.95rem; display:block; margin-bottom:4px">2. Non-Refundable & Return Policy:</strong>
+          <p style="margin: 0 0 6px 0; font-size: 0.85rem; color: #475569;">
+            Products purchased on Little to Large are <strong>strictly Non-Refundable</strong>. Only <strong>Replacement / Return</strong> is allowed based on the return window days specified by the brand for each product.
+          </p>
+          <div style="font-size: 0.82rem; font-weight: 700; color: #9a3412; background:#ffedd5; padding:8px; border-radius:6px; margin-top:6px">
+            ⚠️ <strong>Physical Damage & Delivery Notice:</strong> The user is solely responsible for any damage occurring after delivery. Returns or replacements are allowed strictly within the return window date specified by the brand.
+          </div>
+        </div>
+      </div>
+
+      <button onclick="acceptTermsAndClose()" class="auth-btn" style="margin-top: 1.8rem; background: var(--primary); font-weight:800">
+        ✓ I Have Read & Agree to Terms
+      </button>
+    </div>
+  </div>
 
   <!-- Footer -->
   <footer></footer>
@@ -436,8 +483,33 @@
       }
     });
 
+    function openTermsModal(e) {
+      if (e) e.preventDefault();
+      document.getElementById('termsModal').style.display = 'flex';
+    }
+
+    function closeTermsModal() {
+      document.getElementById('termsModal').style.display = 'none';
+    }
+
+    function acceptTermsAndClose() {
+      const c1 = document.getElementById('termsCheckLogin');
+      const c2 = document.getElementById('termsCheckReg');
+      if (c1) c1.checked = true;
+      if (c2) c2.checked = true;
+      closeTermsModal();
+    }
+
     // Google Sign-In with Firebase Auth (Popup Flow)
     async function signInWithGoogleFirebase() {
+      const c1 = document.getElementById('termsCheckLogin');
+      const c2 = document.getElementById('termsCheckReg');
+      if ((c1 && !c1.checked) && (c2 && !c2.checked)) {
+        openTermsModal();
+        showToast('Please check & accept the Terms & Conditions to continue with Google Login', 'error');
+        return;
+      }
+
       const provider = new firebase.auth.GoogleAuthProvider();
       try {
         startGlobalProgressBar();

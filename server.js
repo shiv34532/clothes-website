@@ -2143,7 +2143,7 @@ app.post('/api/admin/orders/:id/manual-ship', adminIpFilter, authenticateAdmin, 
 
 // Add New Product
 app.post('/api/products', handleMulterUpload, adminIpFilter, authenticateAdmin, async (req, res) => {
-  const { name, category, subcategory, price, discount_price, stock, description, size_variants, return_window_days, video_url } = req.body;
+  const { name, category, subcategory, price, discount_price, stock, description, size_variants, return_window_days, video_url, color_variants, color_images } = req.body;
  
   if (!name || !category || !price) {
     return res.status(400).json({ success: false, message: 'Name, Category, and Price are required' });
@@ -2193,11 +2193,13 @@ app.post('/api/products', handleMulterUpload, adminIpFilter, authenticateAdmin, 
     }
 
     const returnDays = return_window_days !== undefined && return_window_days !== '' ? parseInt(return_window_days) : 7;
- 
+    const colors = color_variants || 'Lime Green, Red, Maroon';
+    const cImages = color_images || '';
+
     const result = await db.run(`
-      INSERT INTO products (name, category, subcategory, price, discount_price, stock, description, size_variants, image_urls, return_window_days, video_url)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [name, category, subcategory || null, mrp, selling, parseInt(stock) || 0, description || '', size_variants || 'M', JSON.stringify(images), returnDays, finalVideoUrl]);
+      INSERT INTO products (name, category, subcategory, price, discount_price, stock, description, size_variants, image_urls, return_window_days, video_url, color_variants, color_images)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [name, category, subcategory || null, mrp, selling, parseInt(stock) || 0, description || '', size_variants || 'M', JSON.stringify(images), returnDays, finalVideoUrl, colors, cImages]);
  
     res.status(201).json({ success: true, message: 'Product added successfully', productId: result.insertId });
   } catch (err) {
@@ -2207,7 +2209,7 @@ app.post('/api/products', handleMulterUpload, adminIpFilter, authenticateAdmin, 
 
 // Edit Product
 app.put('/api/products/:id', handleMulterUpload, adminIpFilter, authenticateAdmin, async (req, res) => {
-  const { name, category, subcategory, price, discount_price, stock, description, size_variants, return_window_days, video_url } = req.body;
+  const { name, category, subcategory, price, discount_price, stock, description, size_variants, return_window_days, video_url, color_variants, color_images } = req.body;
   
   try {
     const existing = await db.get('SELECT image_urls, video_url FROM products WHERE id = ?', [req.params.id]);
@@ -2255,12 +2257,14 @@ app.put('/api/products/:id', handleMulterUpload, adminIpFilter, authenticateAdmi
     }
 
     const returnDays = return_window_days !== undefined && return_window_days !== '' ? parseInt(return_window_days) : 7;
+    const colors = color_variants !== undefined ? color_variants : 'Lime Green, Red, Maroon';
+    const cImages = color_images !== undefined ? color_images : '';
 
     await db.run(`
       UPDATE products 
-      SET name = ?, category = ?, subcategory = ?, price = ?, discount_price = ?, stock = ?, description = ?, size_variants = ?, image_urls = ?, return_window_days = ?, video_url = ?
+      SET name = ?, category = ?, subcategory = ?, price = ?, discount_price = ?, stock = ?, description = ?, size_variants = ?, image_urls = ?, return_window_days = ?, video_url = ?, color_variants = ?, color_images = ?
       WHERE id = ?
-    `, [name, category, subcategory || null, mrp, selling, parseInt(stock) || 0, description || '', size_variants || 'M', JSON.stringify(images), returnDays, finalVideoUrl, req.params.id]);
+    `, [name, category, subcategory || null, mrp, selling, parseInt(stock) || 0, description || '', size_variants || 'M', JSON.stringify(images), returnDays, finalVideoUrl, colors, cImages, req.params.id]);
 
     res.json({ success: true, message: 'Product updated successfully' });
   } catch (err) {

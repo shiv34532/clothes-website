@@ -557,6 +557,8 @@ function openEditProductModal(id) {
   document.getElementById('prodStock').value = product.stock;
   document.getElementById('prodSizes').value = product.size_variants;
   document.getElementById('prodReturnWindow').value = product.return_window_days !== undefined ? product.return_window_days : '7';
+  document.getElementById('prodColorVariants').value = product.color_variants || product.color || 'Lime Green, Red, Maroon';
+  document.getElementById('prodColorImages').value = product.color_images || '';
   document.getElementById('prodDesc').value = product.description;
   
   const urls = JSON.parse(product.image_urls || '[]');
