@@ -198,8 +198,8 @@ function securityHeaders(req, res, next) {
 app.use(securityHeaders);
 app.use('/api/', rateLimiter);
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
 // Redirect .html requests to clean URLs
 app.use((req, res, next) => {
@@ -278,17 +278,28 @@ async function uploadToCloudinary(input, folder = 'products') {
                       folder === 'videos' ||
                       /\.(mp4|webm|mov|avi|mkv|m4v)$/i.test(originalName);
       const resourceType = isVideo ? 'video' : 'auto';
-      const uploadMime = isVideo ? (mime.startsWith('video/') ? mime : 'video/mp4') : mime;
 
-      console.log(`[Cloudinary] Uploading buffer of ${buffer.length} bytes (mime: ${uploadMime}, isVideo: ${isVideo}, resourceType: ${resourceType}) to folder: ${folder}`);
-      const b64 = buffer.toString('base64');
-      const dataUri = `data:${uploadMime};base64,${b64}`;
-      const result = await cloudinary.uploader.upload(dataUri, {
-        folder: `little_to_large/${folder}`,
-        resource_type: resourceType
+      console.log(`[Cloudinary] Stream uploading buffer of ${buffer.length} bytes (isVideo: ${isVideo}, resourceType: ${resourceType}) to folder: ${folder}`);
+      
+      return new Promise((resolve) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder: `little_to_large/${folder}`,
+            resource_type: resourceType,
+            chunk_size: 6000000
+          },
+          (error, result) => {
+            if (error) {
+              console.error('[Cloudinary Stream Upload Error]:', error);
+              return resolve('https://res.cloudinary.com/wzknhexk/image/upload/v1721564126/placeholder.jpg');
+            }
+            console.log(`[Cloudinary Stream Upload Success]: ${result.secure_url}`);
+            resolve(result.secure_url);
+          }
+        );
+        const { Readable } = require('stream');
+        Readable.from(buffer).pipe(uploadStream);
       });
-      console.log(`[Cloudinary] Buffer upload success: ${result.secure_url}`);
-      return result.secure_url;
     }
 
     // Case 2: String - Remote HTTP/HTTPS URL
