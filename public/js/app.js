@@ -590,6 +590,21 @@ function toggleMobileSearch() {
   }
 }
 
+// Hover-to-Play Video Handler for Product Cards
+function handleCardVideoHover(wrapper, isHover) {
+  if (!wrapper) return;
+  const videoEl = wrapper.querySelector('.card-hover-video');
+  if (videoEl) {
+    if (isHover) {
+      videoEl.style.display = 'block';
+      videoEl.play().catch(e => console.log('Hover video autoplay info:', e.message));
+    } else {
+      videoEl.pause();
+      videoEl.style.display = 'none';
+    }
+  }
+}
+
 // Global Single URL Hiding Handler (keeps address bar as littletolargee.com)
 window.addEventListener('load', () => {
   setTimeout(() => {

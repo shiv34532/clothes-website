@@ -2457,11 +2457,7 @@ html {
    PRODUCT VIDEO PLAYER BADGE & GALLERY STYLES
    ========================================================================== */
 .video-badge {
-  position: absolute; top: 12px; right: 12px;
-  background: rgba(225, 29, 72, 0.92); color: #ffffff;
-  padding: 4px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 800;
-  display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(225, 29, 72, 0.4);
-  backdrop-filter: blur(4px); z-index: 2; animation: pulseGlow 2s infinite;
+  display: none !important;
 }
 
 @keyframes pulseGlow {
