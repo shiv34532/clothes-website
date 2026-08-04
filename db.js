@@ -231,6 +231,9 @@ async function createTables() {
       color VARCHAR(100),
       style VARCHAR(100),
       gender VARCHAR(50),
+      return_window_days INTEGER DEFAULT 7,
+      color_variants ${textType},
+      color_images ${textType},
       created_at ${datetimeType} DEFAULT CURRENT_TIMESTAMP
     )
   `);
@@ -426,6 +429,8 @@ async function createTables() {
     `ALTER TABLE products ADD COLUMN color VARCHAR(100)`,
     `ALTER TABLE products ADD COLUMN style VARCHAR(100)`,
     `ALTER TABLE products ADD COLUMN gender VARCHAR(50)`,
+    `ALTER TABLE products ADD COLUMN color_variants TEXT`,
+    `ALTER TABLE products ADD COLUMN color_images TEXT`,
     `ALTER TABLE order_items ADD COLUMN color VARCHAR(50)`,
     `ALTER TABLE orders ADD COLUMN shiprocket_order_id VARCHAR(50)`,
     `ALTER TABLE orders ADD COLUMN shiprocket_shipment_id VARCHAR(50)`,
