@@ -260,20 +260,29 @@ async function uploadToCloudinary(input, folder = 'products') {
     // Extract buffer if passed a Multer file object or raw Buffer
     let buffer = null;
     let mime = 'image/jpeg';
+    let originalName = '';
+    let fieldName = '';
 
     if (Buffer.isBuffer(input)) {
       buffer = input;
     } else if (input && Buffer.isBuffer(input.buffer)) {
       buffer = input.buffer;
       if (input.mimetype) mime = input.mimetype;
+      if (input.originalname) originalName = input.originalname;
+      if (input.fieldname) fieldName = input.fieldname;
     }
 
     if (buffer) {
-      const isVideo = mime.startsWith('video/');
+      const isVideo = (mime && mime.startsWith('video/')) || 
+                      fieldName === 'video' || 
+                      folder === 'videos' ||
+                      /\.(mp4|webm|mov|avi|mkv|m4v)$/i.test(originalName);
       const resourceType = isVideo ? 'video' : 'auto';
-      console.log(`[Cloudinary] Uploading buffer of ${buffer.length} bytes (mime: ${mime}, resourceType: ${resourceType}) to folder: ${folder}`);
+      const uploadMime = isVideo ? (mime.startsWith('video/') ? mime : 'video/mp4') : mime;
+
+      console.log(`[Cloudinary] Uploading buffer of ${buffer.length} bytes (mime: ${uploadMime}, isVideo: ${isVideo}, resourceType: ${resourceType}) to folder: ${folder}`);
       const b64 = buffer.toString('base64');
-      const dataUri = `data:${mime};base64,${b64}`;
+      const dataUri = `data:${uploadMime};base64,${b64}`;
       const result = await cloudinary.uploader.upload(dataUri, {
         folder: `little_to_large/${folder}`,
         resource_type: resourceType
@@ -2172,11 +2181,16 @@ app.post('/api/products', handleMulterUpload, adminIpFilter, authenticateAdmin, 
       images = ['https://res.cloudinary.com/wzknhexk/image/upload/v1721564126/placeholder.jpg'];
     }
 
-    let finalVideoUrl = video_url ? video_url.trim() : null;
+    let finalVideoUrl = (video_url && video_url.trim()) ? video_url.trim() : null;
     if (req.files && req.files.length > 0) {
-      const videoFile = req.files.find(f => f.mimetype && f.mimetype.startsWith('video/'));
+      const videoFile = req.files.find(f => 
+        (f.mimetype && f.mimetype.startsWith('video/')) || 
+        f.fieldname === 'video' || 
+        (f.originalname && /\.(mp4|webm|mov|avi|mkv|m4v)$/i.test(f.originalname))
+      );
       if (videoFile) {
-        finalVideoUrl = await uploadToCloudinary(videoFile.buffer, 'videos');
+        console.log('[Product API] Uploading product video file:', videoFile.originalname);
+        finalVideoUrl = await uploadToCloudinary(videoFile, 'videos');
       }
     }
 
@@ -2219,7 +2233,7 @@ app.put('/api/products/:id', handleMulterUpload, adminIpFilter, authenticateAdmi
     if (req.files && req.files.length > 0) {
       const newImages = [];
       for (const file of req.files) {
-        if (!file.mimetype.startsWith('video/')) {
+        if (!file.mimetype.startsWith('video/') && file.fieldname !== 'video' && !/\.(mp4|webm|mov|avi|mkv|m4v)$/i.test(file.originalname || '')) {
           const cloudUrl = await uploadToCloudinary(file, 'products');
           if (cloudUrl) newImages.push(cloudUrl);
         }
@@ -2236,11 +2250,16 @@ app.put('/api/products/:id', handleMulterUpload, adminIpFilter, authenticateAdmi
       }
     }
 
-    let finalVideoUrl = video_url !== undefined ? video_url.trim() : existing.video_url;
+    let finalVideoUrl = video_url !== undefined && video_url.trim() !== '' ? video_url.trim() : existing.video_url;
     if (req.files && req.files.length > 0) {
-      const videoFile = req.files.find(f => f.mimetype && f.mimetype.startsWith('video/'));
+      const videoFile = req.files.find(f => 
+        (f.mimetype && f.mimetype.startsWith('video/')) || 
+        f.fieldname === 'video' || 
+        (f.originalname && /\.(mp4|webm|mov|avi|mkv|m4v)$/i.test(f.originalname))
+      );
       if (videoFile) {
-        finalVideoUrl = await uploadToCloudinary(videoFile.buffer, 'videos');
+        console.log('[Product API Edit] Uploading new product video file:', videoFile.originalname);
+        finalVideoUrl = await uploadToCloudinary(videoFile, 'videos');
       }
     }
 

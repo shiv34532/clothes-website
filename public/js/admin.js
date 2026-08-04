@@ -561,6 +561,9 @@ function openEditProductModal(id) {
   document.getElementById('prodColorImages').value = product.color_images || '';
   document.getElementById('prodDesc').value = product.description;
   
+  const prodVidEl = document.getElementById('prodVideoUrl');
+  if (prodVidEl) prodVidEl.value = product.video_url || '';
+
   const urls = JSON.parse(product.image_urls || '[]');
   document.getElementById('prodImageUrl').value = urls.length > 0 ? urls[0] : '';
   document.getElementById('productAiPreviewArea').style.display = 'none';
