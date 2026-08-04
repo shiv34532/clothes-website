@@ -1619,6 +1619,33 @@ app.get('/api/payment/config', (req, res) => {
   res.json({ success: true, key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_yourKeyHere' });
 });
 
+// Cloudinary Direct Upload Signature Endpoint (for instant client-side video uploads with progress bar)
+app.get('/api/admin/cloudinary-sign', adminIpFilter, authenticateAdmin, (req, res) => {
+  try {
+    const timestamp = Math.round(new Date().getTime() / 1000);
+    const folder = 'little_to_large/videos';
+    const paramsToSign = {
+      timestamp: timestamp,
+      folder: folder
+    };
+    const secret = process.env.CLOUDINARY_API_SECRET || 'UioxSzxXyfcVORlZRZy_36JOS68';
+    const apiKey = process.env.CLOUDINARY_API_KEY || '775349879285534';
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'wzknhexk';
+    
+    const signature = cloudinary.utils.api_sign_request(paramsToSign, secret);
+    res.json({
+      success: true,
+      signature,
+      timestamp,
+      folder,
+      api_key: apiKey,
+      cloud_name: cloudName
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // Create Razorpay Order
 app.post('/api/payment/create-order', authenticateToken, async (req, res) => {
   const { amount } = req.body;

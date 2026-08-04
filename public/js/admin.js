@@ -538,6 +538,8 @@ function openAddProductModal() {
   document.getElementById('prodReturnWindow').value = '7';
   document.getElementById('productAiPreviewArea').style.display = 'none';
   document.getElementById('productAiPrompt').value = '';
+  const vidWrap = document.getElementById('videoUploadProgressWrapper');
+  if (vidWrap) vidWrap.style.display = 'none';
   document.getElementById('productModal').style.display = 'flex';
 }
 
@@ -569,7 +571,85 @@ function openEditProductModal(id) {
   document.getElementById('productAiPreviewArea').style.display = 'none';
   document.getElementById('productAiPrompt').value = '';
 
+  const vidWrap = document.getElementById('videoUploadProgressWrapper');
+  if (vidWrap) vidWrap.style.display = 'none';
+
   document.getElementById('productModal').style.display = 'flex';
+}
+
+// Fast Direct Video Upload Handler with Real-time Progress Bar
+async function uploadProductVideoDirectly(input) {
+  if (!input.files || input.files.length === 0) return;
+  const file = input.files[0];
+  
+  const wrapper = document.getElementById('videoUploadProgressWrapper');
+  const statusText = document.getElementById('videoUploadStatusText');
+  const percentText = document.getElementById('videoUploadPercentText');
+  const progressBar = document.getElementById('videoUploadProgressBar');
+  const urlInput = document.getElementById('prodVideoUrl');
+
+  if (wrapper) wrapper.style.display = 'block';
+  if (statusText) statusText.textContent = '⚡ Requesting Upload Signature...';
+  if (percentText) percentText.textContent = '0%';
+  if (progressBar) progressBar.style.width = '0%';
+
+  try {
+    const signRes = await fetch('/api/admin/cloudinary-sign', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const signData = await signRes.json();
+
+    if (!signData.success) {
+      if (statusText) statusText.textContent = '❌ Failed to get upload signature';
+      showToast('Failed to initialize video upload signature', 'error');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('api_key', signData.api_key);
+    formData.append('timestamp', signData.timestamp);
+    formData.append('signature', signData.signature);
+    formData.append('folder', signData.folder);
+
+    const xhr = new XMLHttpRequest();
+    const endpoint = `https://api.cloudinary.com/v1_1/${signData.cloud_name}/video/upload`;
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        if (progressBar) progressBar.style.width = percent + '%';
+        if (percentText) percentText.textContent = percent + '%';
+        if (statusText) statusText.textContent = `🚀 Uploading Video: ${percent}%`;
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        const resData = JSON.parse(xhr.responseText);
+        if (urlInput) urlInput.value = resData.secure_url;
+        if (statusText) statusText.textContent = '✅ Video Uploaded Successfully!';
+        if (percentText) percentText.textContent = '100%';
+        if (progressBar) progressBar.style.width = '100%';
+        showToast('🎉 Video uploaded & linked! Click Save Product.', 'success');
+      } else {
+        if (statusText) statusText.textContent = '❌ Upload Failed';
+        showToast('Video upload failed on Cloudinary', 'error');
+      }
+    };
+
+    xhr.onerror = () => {
+      if (statusText) statusText.textContent = '❌ Network Error during upload';
+      showToast('Network error while uploading video', 'error');
+    };
+
+    xhr.open('POST', endpoint, true);
+    xhr.send(formData);
+
+  } catch (err) {
+    if (statusText) statusText.textContent = '❌ Upload Failed';
+    showToast('Failed to start video upload', 'error');
+  }
 }
 
 function closeProductModal() {

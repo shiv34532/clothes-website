@@ -860,12 +860,23 @@
         <div style="display:flex; gap:1rem; align-items:center;">
           <div class="form-group" style="flex:1">
             <label>🎬 Upload Product Video (MP4)</label>
-            <input type="file" id="prodVideo" name="video" accept="video/*" class="form-input" style="padding:0.4rem">
+            <input type="file" id="prodVideo" name="video" accept="video/*" class="form-input" style="padding:0.4rem" onchange="uploadProductVideoDirectly(this)">
           </div>
           <div style="font-size:0.8rem; font-weight:700; color:var(--text-light); margin-top:1.2rem">OR</div>
           <div class="form-group" style="flex:1.2">
             <label>Paste Video URL</label>
             <input type="text" id="prodVideoUrl" name="video_url" class="form-input" placeholder="e.g. https://example.com/video.mp4">
+          </div>
+        </div>
+
+        <!-- Video Upload Progress Bar -->
+        <div id="videoUploadProgressWrapper" style="display:none; margin-top:-5px; margin-bottom:15px; padding:10px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px">
+          <div style="display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700; color:#334155; margin-bottom:4px">
+            <span id="videoUploadStatusText">🎬 Uploading Video...</span>
+            <span id="videoUploadPercentText">0%</span>
+          </div>
+          <div style="width:100%; height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden">
+            <div id="videoUploadProgressBar" style="width:0%; height:100%; background:linear-gradient(90deg, #6366f1, #10b981); transition:width 0.2s ease"></div>
           </div>
         </div>
 
