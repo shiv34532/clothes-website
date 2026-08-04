@@ -590,18 +590,24 @@ function toggleMobileSearch() {
   }
 }
 
-// Hover-to-Play Video Handler for Product Cards
+// Hover-to-Play Video Handler for Product Cards (Fail-safe: Never turns black)
 function handleCardVideoHover(wrapper, isHover) {
   if (!wrapper) return;
   const videoEl = wrapper.querySelector('.card-hover-video');
-  if (videoEl) {
-    if (isHover) {
-      videoEl.style.display = 'block';
-      videoEl.play().catch(e => console.log('Hover video autoplay info:', e.message));
-    } else {
-      videoEl.pause();
-      videoEl.style.display = 'none';
+  if (!videoEl || !videoEl.src || videoEl.src.includes('null') || videoEl.src.includes('undefined')) return;
+
+  if (isHover) {
+    const playPromise = videoEl.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        videoEl.style.display = 'block';
+      }).catch(err => {
+        videoEl.style.display = 'none';
+      });
     }
+  } else {
+    videoEl.pause();
+    videoEl.style.display = 'none';
   }
 }
 
