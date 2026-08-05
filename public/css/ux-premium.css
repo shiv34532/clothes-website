@@ -1047,44 +1047,73 @@ body.drawer-open {
 
 /* Mobile Responsive overrides for split hero layout */
 @media (max-width: 768px) {
+  .hero-slider {
+    height: 440px !important;
+    margin-bottom: 2rem !important;
+  }
   .hero-slide-grid {
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
     align-items: center !important;
     text-align: center !important;
-    gap: 0.8rem !important;
-    padding: 1.5rem 1rem !important;
+    gap: 0.6rem !important;
+    padding: 1rem 0.8rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
   .slide-content {
     order: 1 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+  .slide-content h1 {
+    font-size: clamp(1.15rem, 5vw, 1.45rem) !important;
+    font-weight: 800 !important;
+    line-height: 1.25 !important;
+    word-break: break-word !important;
+    margin-bottom: 0.3rem !important;
+    padding: 0 4px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .slide-content p {
+    font-size: 0.82rem !important;
+    line-height: 1.35 !important;
+    margin-bottom: 0.8rem !important;
+    max-width: 95% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  .slide-content .btn {
+    padding: 0.45rem 1.4rem !important;
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    border-radius: 50px !important;
+    display: inline-block !important;
   }
   .slide-image-frame {
-    display: flex !important; /* Show image container on mobile! */
+    display: flex !important;
     order: 2 !important;
     justify-content: center !important;
     align-items: center !important;
-    max-height: 140px !important;
     width: 100% !important;
+    max-width: 320px !important;
+    height: 180px !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    margin: 0 auto !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
   }
   .hero-slide-img {
-    max-height: 130px !important;
-    max-width: 100% !important;
-    width: auto !important;
-    object-fit: contain !important;
-  }
-  .slide-content h1 {
-    font-size: 1.6rem !important;
-    margin-bottom: 0.4rem !important;
-    line-height: 1.2 !important;
-  }
-  .slide-content p {
-    font-size: 0.85rem !important;
-    margin-bottom: 0.8rem !important;
-  }
-  .slide-content .btn {
-    padding: 0.45rem 1.2rem !important;
-    font-size: 0.82rem !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 180px !important;
+    object-fit: cover !important;
+    border-radius: 12px !important;
   }
   .thumbnail-list {
     flex-wrap: wrap !important;

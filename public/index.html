@@ -7,8 +7,8 @@
   <meta name="description" content="Shop premium clothing for your entire family online in India. Ethnic wear, western outfits, kids apparel, and handcrafted accessories from Little to Large.">
   <link rel="canonical" href="https://littletolargee.com/">
   <meta name="google-site-verification" content="VFQnkN8VAEipEoSPzYF063I84_fhuKVxRY-QsdM8tvs" />
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/ux-premium.css">
+  <link rel="stylesheet" href="css/style.css?v=21">
+  <link rel="stylesheet" href="css/ux-premium.css?v=21">
   <link rel="icon" type="image/png" href="/favicon.png?v=4">
   <link rel="shortcut icon" href="/favicon.ico?v=4">
 </head>
@@ -215,7 +215,7 @@
                   <div class="slide-image-frame">
                     ${(b.media_type === 'video' || (b.media_url && (b.media_url.endsWith('.mp4') || b.media_url.endsWith('.webm') || b.media_url.endsWith('.mov') || b.media_url.includes('/video/upload/')))) ? 
                       `<video src="${formatLocalPath(b.media_url)}" autoplay muted loop playsinline class="hero-slide-img" style="width:100%; height:100%; object-fit:cover; border-radius:12px"></video>` :
-                      `<img src="${formatLocalPath(b.media_url)}" alt="${b.title}" class="hero-slide-img" onerror="this.src='images/hero_vacation.png'">`
+                      `<img src="${formatLocalPath(b.media_url)}" alt="${b.title}" class="hero-slide-img" onerror="this.onerror=null; this.src='images/hero_vacation.png';">`
                     }
                   </div>
                 </div>
