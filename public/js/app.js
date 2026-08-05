@@ -43,6 +43,87 @@ window.systemSettings = {
   free_shipping_threshold: 999
 };
 
+// Global helper to convert color names to valid CSS colors/gradients
+function getColorCssCode(cName) {
+  if (!cName) return '#64748b';
+  const lower = cName.trim().toLowerCase();
+  
+  if (lower === 'multicolor' || lower === 'multi' || lower === 'all') {
+    return 'linear-gradient(135deg, #ef4444 0%, #3b82f6 33%, #22c55e 66%, #eab308 100%)';
+  }
+  
+  const colorMap = {
+    'lime': '#32cd32',
+    'lime green': '#32cd32',
+    'green': '#16a34a',
+    'dark green': '#14532d',
+    'olive': '#65a30d',
+    'red': '#dc2626',
+    'dark red': '#991b1b',
+    'maroon': '#800000',
+    'navy': '#1e3a8a',
+    'navy blue': '#1e3a8a',
+    'blue': '#2563eb',
+    'sky blue': '#0ea5e9',
+    'royal blue': '#1d4ed8',
+    'pink': '#ec4899',
+    'light pink': '#f472b6',
+    'fuchsia': '#d946ef',
+    'magenta': '#d946ef',
+    'purple': '#a855f7',
+    'violet': '#7c3aed',
+    'indigo': '#4f46e5',
+    'black': '#18181b',
+    'charcoal': '#334155',
+    'white': '#ffffff',
+    'gold': '#eab308',
+    'yellow': '#eab308',
+    'saffron': '#f97316',
+    'orange': '#f97316',
+    'mustard': '#d97706',
+    'beige': '#f5f5dc',
+    'cream': '#fffdd0',
+    'peach': '#ffdab9',
+    'teal': '#0d9488',
+    'cyan': '#06b6d4',
+    'brown': '#78350f',
+    'tan': '#d2b48c',
+    'grey': '#6b7280',
+    'gray': '#6b7280',
+    'silver': '#9ca3af',
+    'lavender': '#e9d5ff',
+    'mint': '#6ee7b7',
+    'coral': '#fb7185'
+  };
+  
+  return colorMap[lower] || lower;
+}
+
+// Global handler for selecting color on a product card
+function selectCardColor(event, el, colorName) {
+  if (event) event.stopPropagation();
+  const card = el.closest('.product-card');
+  if (card) {
+    card.querySelectorAll('.color-dot').forEach(dot => {
+      dot.style.border = '1px solid #ccc';
+      dot.classList.remove('active');
+    });
+    el.style.border = '2px solid var(--primary, #1e1b4b)';
+    el.classList.add('active');
+    card.dataset.selectedColor = colorName;
+  }
+}
+
+// Global handler for adding to cart from product card with selected color
+function handleAddCartClick(event, btn, product) {
+  if (event) event.stopPropagation();
+  const card = btn.closest('.product-card');
+  const selectedColor = (card && card.dataset.selectedColor) 
+    ? card.dataset.selectedColor 
+    : (product.selectedColor || (product.color_variants ? product.color_variants.split(',')[0].trim() : (product.color ? product.color.split(',')[0].trim() : 'Default')));
+  addToCart(product, 'M', 1, selectedColor);
+}
+
 // Initialize synchronously from localStorage cache to prevent race conditions during first render
 try {
   const cachedSettings = localStorage.getItem('l2l_settings');
@@ -335,7 +416,7 @@ function renderHeaderFooter() {
       <div class="top-bar">
         🚚 Free Shipping across India on orders above ₹999 | <span>Festive Sale: Up to 40% OFF</span>
       </div>
-      <div class="container navbar" style="max-width: 1400px; width: 95%;">
+      <div class="container navbar" style="max-width: 1400px; width: 100%; box-sizing: border-box;">
         <button class="hamburger-btn" onclick="toggleNavDrawer()"><i class="fas fa-bars"></i></button>
         
         <a href="index.html" class="logo" style="display: inline-flex; align-items: center; gap: 8px;">
@@ -365,7 +446,7 @@ function renderHeaderFooter() {
             ${user ? `<img src="${avatarImg}" class="header-avatar" alt="Avatar">` : `<i class="far fa-user"></i>`}
           </a>
           
-          <a href="/account?tab=wishlist" class="action-icon" title="Wishlist">
+          <a href="/account?tab=wishlist" class="action-icon desktop-only-icon" title="Wishlist">
             <i class="far fa-heart"></i>
           </a>
 
@@ -374,8 +455,8 @@ function renderHeaderFooter() {
             <span class="badge cart-badge">0</span>
           </a>
 
-          ${isAdmin ? `<a href="/admin" class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.8rem;">Admin</a>` : ''}
-          ${user ? `<button onclick="logout()" class="btn btn-accent" style="padding: 0.4rem 1rem; font-size: 0.8rem;">Logout</button>` : `<a href="/login" class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.8rem;">Login</a>`}
+          ${isAdmin ? `<a href="/admin" class="btn btn-primary desktop-only-btn" style="padding: 0.4rem 1rem; font-size: 0.8rem;">Admin</a>` : ''}
+          ${user ? `<button onclick="logout()" class="btn btn-accent desktop-only-btn" style="padding: 0.4rem 1rem; font-size: 0.8rem;">Logout</button>` : `<a href="/login" class="btn btn-primary desktop-only-btn" style="padding: 0.4rem 1rem; font-size: 0.8rem;">Login</a>`}
         </div>
       </div>
       

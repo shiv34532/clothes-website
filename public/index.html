@@ -282,6 +282,19 @@
                     ${stars}
                     <span class="rating-num">(${p.rating || '5.0'})</span>
                   </div>
+                  ${(() => {
+                    const rawColorStr = p.color_variants || p.color || '';
+                    if (rawColorStr && rawColorStr.trim()) {
+                      const colors = rawColorStr.split(',').map(c => c.trim()).filter(Boolean);
+                      if (colors.length > 0) {
+                        return `<div style="display:flex; gap:6px; margin: 4px 0; align-items:center;">
+                          <span style="font-size:0.75rem; color:var(--text-light)">Colors:</span>
+                          ${colors.map((col, idx) => `<span class="color-dot ${idx === 0 ? 'active' : ''}" style="width:14px; height:14px; border-radius:50%; background:${getColorCssCode(col)}; border:${idx === 0 ? '2px solid var(--primary)' : '1px solid #ccc'}; display:inline-block; cursor:pointer;" title="${col}" onclick="selectCardColor(event, this, '${col}')"></span>`).join('')}
+                        </div>`;
+                      }
+                    }
+                    return '';
+                  })()}
                   <div class="product-pricing">
                     <span class="price">₹${priceVal}</span>
                     ${oldPriceHtml}
@@ -292,7 +305,7 @@
                       <i class="fas fa-ban"></i> Out of Stock
                     </button>
                   ` : `
-                    <button class="btn-add-cart" onclick="handleAddToCart(${JSON.stringify(p).replace(/"/g, '&quot;')})">
+                    <button class="btn-add-cart" onclick="handleAddCartClick(event, this, ${JSON.stringify(p).replace(/"/g, '&quot;')})">
                       <i class="fas fa-shopping-basket"></i> Add to Box
                     </button>
                   `}

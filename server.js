@@ -534,9 +534,11 @@ app.post('/api/auth/firebase-register', async (req, res) => {
     return res.status(400).json({ success: false, message: 'Missing registration details or token' });
   }
 
-  const gujaratPincodeRegex = /^(36|37|38|39)\d{4}$/;
-  if (pincode && pincode.toString().trim() !== '' && !gujaratPincodeRegex.test(pincode.toString().trim())) {
-    return res.status(400).json({ success: false, message: 'Please enter a valid Gujarat PIN Code.' });
+  if (pincode && pincode.toString().trim() !== '') {
+    const checkPin = await isPincodeServiceable(pincode.toString().trim());
+    if (!checkPin.valid) {
+      return res.status(400).json({ success: false, message: checkPin.message });
+    }
   }
 
   try {
@@ -587,6 +589,39 @@ app.post('/api/auth/firebase-register', async (req, res) => {
   }
 });
 
+// Helper: Check if PIN Code is serviceable based on Admin Settings
+async function isPincodeServiceable(pinCode) {
+  if (!pinCode || typeof pinCode !== 'string') return { valid: false, message: 'PIN Code is required.' };
+  const cleanPin = pinCode.trim();
+  if (!/^\d{6}$/.test(cleanPin)) {
+    return { valid: false, message: 'PIN Code must contain exactly 6 numeric digits.' };
+  }
+
+  try {
+    const allowedRow = await db.get("SELECT value FROM settings WHERE key = 'allowed_pincodes'");
+    const msgRow = await db.get("SELECT value FROM settings WHERE key = 'pincode_error_message'");
+    
+    const allowedRule = allowedRow && allowedRow.value ? allowedRow.value.trim() : '36, 37, 38, 39';
+    const errorMsg = msgRow && msgRow.value ? msgRow.value.trim() : 'Delivery is currently unavailable to this PIN Code.';
+
+    if (!allowedRule || allowedRule.toUpperCase() === 'ALL' || allowedRule.toUpperCase() === 'ANY' || allowedRule === '*') {
+      return { valid: true };
+    }
+
+    const rules = allowedRule.split(/[\n, ]+/).map(r => r.trim()).filter(Boolean);
+    const isMatched = rules.some(r => cleanPin.startsWith(r) || cleanPin === r);
+
+    if (isMatched) {
+      return { valid: true };
+    } else {
+      return { valid: false, message: errorMsg };
+    }
+  } catch (err) {
+    return { valid: true };
+  }
+}
+
+
 // Register Customer
 app.post('/api/auth/register', async (req, res) => {
   const { name, email, phone, password, address, city, state, pincode } = req.body;
@@ -595,9 +630,11 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ success: false, message: 'Missing required registration details' });
   }
 
-  const gujaratPincodeRegex = /^(36|37|38|39)\d{4}$/;
-  if (pincode && pincode.toString().trim() !== '' && !gujaratPincodeRegex.test(pincode.toString().trim())) {
-    return res.status(400).json({ success: false, message: 'Please enter a valid Gujarat PIN Code.' });
+  if (pincode && pincode.toString().trim() !== '') {
+    const check = await isPincodeServiceable(pincode.toString());
+    if (!check.valid) {
+      return res.status(400).json({ success: false, message: check.message });
+    }
   }
 
   try {
@@ -786,12 +823,17 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
 app.put('/api/auth/me', authenticateToken, async (req, res) => {
   const { name, phone, address_line, city, state, pincode, avatar_url, phone_alt, address_line_2, city_2, state_2, pincode_2 } = req.body;
 
-  const gujaratPincodeRegex = /^(36|37|38|39)\d{4}$/;
-  if (pincode && pincode.toString().trim() !== '' && !gujaratPincodeRegex.test(pincode.toString().trim())) {
-    return res.status(400).json({ success: false, message: 'Please enter a valid Gujarat PIN Code.' });
+  if (pincode && pincode.toString().trim() !== '') {
+    const check = await isPincodeServiceable(pincode.toString());
+    if (!check.valid) {
+      return res.status(400).json({ success: false, message: check.message });
+    }
   }
-  if (pincode_2 && pincode_2.toString().trim() !== '' && !gujaratPincodeRegex.test(pincode_2.toString().trim())) {
-    return res.status(400).json({ success: false, message: 'Please enter a valid Gujarat PIN Code.' });
+  if (pincode_2 && pincode_2.toString().trim() !== '') {
+    const check = await isPincodeServiceable(pincode_2.toString());
+    if (!check.valid) {
+      return res.status(400).json({ success: false, message: check.message });
+    }
   }
 
   try {
@@ -1084,16 +1126,16 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
     return res.status(400).json({ success: false, message: 'Missing order information' });
   }
 
-  // Validate Gujarat PIN Code
-  const gujaratPincodeRegex = /^(36|37|38|39)\d{4}$/;
+  // Validate PIN Code Serviceability
   let orderPin = (pincode || '').toString().trim();
   if (!orderPin && shipping_address) {
     const pinMatch = shipping_address.match(/\b\d{6}\b/);
     if (pinMatch) orderPin = pinMatch[0];
   }
 
-  if (!orderPin || !gujaratPincodeRegex.test(orderPin)) {
-    return res.status(400).json({ success: false, message: 'Please enter a valid Gujarat PIN Code.' });
+  const pinCheck = await isPincodeServiceable(orderPin);
+  if (!pinCheck.valid) {
+    return res.status(400).json({ success: false, message: pinCheck.message });
   }
 
   try {
@@ -1938,6 +1980,51 @@ app.post('/api/admin/settings', adminIpFilter, authenticateAdmin, async (req, re
   }
 });
 
+// GET Public Pincode Check Endpoint
+app.get('/api/pincode/check', async (req, res) => {
+  const pincode = req.query.pincode;
+  if (!pincode) return res.status(400).json({ success: false, message: 'PIN Code query parameter is required' });
+  const result = await isPincodeServiceable(pincode.toString());
+  if (result.valid) {
+    res.json({ success: true, message: 'PIN Code is serviceable for delivery.' });
+  } else {
+    res.json({ success: false, message: result.message });
+  }
+});
+
+// GET Pincode Settings (Admin Only)
+app.get('/api/admin/pincodes', adminIpFilter, authenticateAdmin, async (req, res) => {
+  try {
+    const allowedRow = await db.get("SELECT value FROM settings WHERE key = 'allowed_pincodes'");
+    const msgRow = await db.get("SELECT value FROM settings WHERE key = 'pincode_error_message'");
+    res.json({
+      success: true,
+      allowed_pincodes: allowedRow ? allowedRow.value : '36, 37, 38, 39',
+      pincode_error_message: msgRow ? msgRow.value : 'Delivery is currently unavailable to this PIN Code.'
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST Update Pincode Settings (Admin Only)
+app.post('/api/admin/pincodes', adminIpFilter, authenticateAdmin, async (req, res) => {
+  const { allowed_pincodes, pincode_error_message } = req.body;
+  try {
+    if (allowed_pincodes !== undefined) {
+      await db.run("DELETE FROM settings WHERE key = 'allowed_pincodes'");
+      await db.run("INSERT INTO settings (key, value) VALUES ('allowed_pincodes', ?)", [allowed_pincodes.trim()]);
+    }
+    if (pincode_error_message !== undefined) {
+      await db.run("DELETE FROM settings WHERE key = 'pincode_error_message'");
+      await db.run("INSERT INTO settings (key, value) VALUES ('pincode_error_message', ?)", [pincode_error_message.trim()]);
+    }
+    res.json({ success: true, message: 'PIN Code delivery settings updated successfully!' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // GET Shiprocket Config (Admin Only)
 app.get('/api/admin/shiprocket-config', adminIpFilter, authenticateAdmin, async (req, res) => {
   try {
@@ -2245,13 +2332,13 @@ app.post('/api/products', handleMulterUpload, adminIpFilter, authenticateAdmin, 
     }
 
     const returnDays = return_window_days !== undefined && return_window_days !== '' ? parseInt(return_window_days) : 7;
-    const colors = color_variants || 'Lime Green, Red, Maroon';
-    const cImages = color_images || '';
+    const colors = color_variants && color_variants.trim() ? color_variants.trim() : null;
+    const cImages = color_images && color_images.trim() ? color_images.trim() : null;
 
     const result = await db.run(`
-      INSERT INTO products (name, category, subcategory, price, discount_price, stock, description, size_variants, image_urls, return_window_days, video_url, color_variants, color_images)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [name, category, subcategory || null, mrp, selling, parseInt(stock) || 0, description || '', size_variants || 'M', JSON.stringify(images), returnDays, finalVideoUrl, colors, cImages]);
+      INSERT INTO products (name, category, subcategory, price, discount_price, stock, description, size_variants, image_urls, return_window_days, video_url, color_variants, color_images, color)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [name, category, subcategory || null, mrp, selling, parseInt(stock) || 0, description || '', size_variants || 'M', JSON.stringify(images), returnDays, finalVideoUrl, colors, cImages, colors]);
  
     res.status(201).json({ success: true, message: 'Product added successfully', productId: result.insertId });
   } catch (err) {
@@ -2314,14 +2401,14 @@ app.put('/api/products/:id', handleMulterUpload, adminIpFilter, authenticateAdmi
     }
 
     const returnDays = return_window_days !== undefined && return_window_days !== '' ? parseInt(return_window_days) : 7;
-    const colors = color_variants !== undefined ? color_variants : 'Lime Green, Red, Maroon';
-    const cImages = color_images !== undefined ? color_images : '';
+    const colors = color_variants && color_variants.trim() ? color_variants.trim() : null;
+    const cImages = color_images !== undefined ? color_images : null;
 
     await db.run(`
       UPDATE products 
-      SET name = ?, category = ?, subcategory = ?, price = ?, discount_price = ?, stock = ?, description = ?, size_variants = ?, image_urls = ?, return_window_days = ?, video_url = ?, color_variants = ?, color_images = ?
+      SET name = ?, category = ?, subcategory = ?, price = ?, discount_price = ?, stock = ?, description = ?, size_variants = ?, image_urls = ?, return_window_days = ?, video_url = ?, color_variants = ?, color_images = ?, color = ?
       WHERE id = ?
-    `, [name, category, subcategory || null, mrp, selling, parseInt(stock) || 0, description || '', size_variants || 'M', JSON.stringify(images), returnDays, finalVideoUrl, colors, cImages, req.params.id]);
+    `, [name, category, subcategory || null, mrp, selling, parseInt(stock) || 0, description || '', size_variants || 'M', JSON.stringify(images), returnDays, finalVideoUrl, colors, cImages, colors, req.params.id]);
 
     res.json({ success: true, message: 'Product updated successfully' });
   } catch (err) {

@@ -1749,18 +1749,28 @@ footer {
     display: none !important;
   }
   .nav-actions .btn,
-  .nav-actions a[title="Wishlist"] {
+  .nav-actions a[title="Wishlist"],
+  .desktop-only-btn,
+  .desktop-only-icon {
     display: none !important;
   }
   .logo span {
-    font-size: 1.1rem !important;
+    font-size: 1rem !important;
+  }
+  .logo img {
+    width: 26px !important;
+    height: 26px !important;
   }
   .nav-actions {
-    gap: 0.8rem !important;
+    gap: 0.4rem !important;
   }
   
   .navbar {
-    padding: 0.8rem 0;
+    padding: 0.6rem 0.4rem !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
   }
   
   .hero-slider {
@@ -2254,12 +2264,71 @@ footer {
   }
 
   /* Account Page Mobile Tab & Container Wrappers */
-  .account-container {
-    padding: 10px !important;
+  .account-container, .account-layout {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    padding-bottom: 120px !important; /* Bottom clearance for floating widgets */
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
-    overflow-x: hidden !important;
+  }
+
+  .account-card {
+    padding: 1.2rem 0.9rem !important;
+    border-radius: 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .account-card h2 {
+    font-size: 1.2rem !important;
+    margin-bottom: 1rem !important;
+    word-break: break-word !important;
+  }
+
+  .profile-subtabs {
+    display: flex !important;
+    gap: 6px !important;
+    margin-bottom: 1.2rem !important;
+    border-bottom: 2px solid #e4e4e7 !important;
+    padding-bottom: 8px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+  }
+
+  .profile-subtabs::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .subtab-btn {
+    padding: 0.5rem 0.8rem !important;
+    font-size: 0.8rem !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    border-radius: 6px !important;
+  }
+
+  .avatar-picker-grid {
+    display: flex !important;
+    gap: 12px !important;
+    overflow-x: auto !important;
+    padding: 6px 2px !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+  }
+
+  .avatar-picker-grid::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .avatar-option {
+    flex-shrink: 0 !important;
+    width: 46px !important;
+    height: 46px !important;
   }
 
   .account-tabs {
@@ -2279,34 +2348,55 @@ footer {
     white-space: nowrap !important;
   }
 
-  /* Shopper Guide Floating Widget Mobile Positioning (Move to bottom-left to avoid covering chatbot & action buttons) */
+  /* Shopper Guide & Chatbot Floating Widget Mobile Positioning */
   #shopperGuideBtn {
-    bottom: 90px !important;
-    left: 15px !important;
+    bottom: 15px !important;
+    left: 12px !important;
     right: auto !important;
-    padding: 8px 14px !important;
-    font-size: 0.8rem !important;
+    padding: 6px 12px !important;
+    font-size: 0.75rem !important;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    z-index: 990 !important;
   }
 
   #shopperGuideCard {
-    bottom: 140px !important;
+    bottom: 60px !important;
     left: -420px !important;
     right: auto !important;
-    width: calc(100vw - 30px) !important;
+    width: calc(100vw - 24px) !important;
     max-width: 320px !important;
     opacity: 0 !important;
     pointer-events: none !important;
     visibility: hidden !important;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    z-index: 995 !important;
   }
 
   #shopperGuideCard.active {
-    left: 15px !important;
+    left: 12px !important;
     right: auto !important;
     opacity: 1 !important;
     pointer-events: auto !important;
     visibility: visible !important;
+  }
+
+  .chatbot-widget {
+    bottom: 15px !important;
+    right: 12px !important;
+    z-index: 990 !important;
+  }
+
+  .chatbot-toggle {
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 1.2rem !important;
+  }
+
+  .validation-input-group:focus-within,
+  .form-group:focus-within,
+  .form-input:focus {
+    position: relative !important;
+    z-index: 10005 !important;
   }
 }
 

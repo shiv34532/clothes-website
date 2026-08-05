@@ -384,7 +384,7 @@
       const colorsSection = document.getElementById('colorVariantsSection');
       colorsContainer.innerHTML = '';
       
-      const rawColorStr = p.color_variants || p.color || 'Lime Green, Red, Maroon';
+      const rawColorStr = p.color_variants || p.color || '';
       if (rawColorStr && rawColorStr.trim()) {
         const colors = rawColorStr.split(',').map(c => c.trim()).filter(Boolean);
         if (colors.length > 0) {
@@ -393,7 +393,7 @@
             if (idx === 0) selectedColor = col;
             colorsContainer.innerHTML += `
               <span class="color-option ${idx === 0 ? 'active' : ''}" onclick="selectColor(this, '${col}')" style="display:inline-flex; align-items:center; gap:6px; padding: 0.4rem 1.2rem; border: 1px solid var(--border-color); border-radius: 50px; font-size: 0.85rem; font-weight: 700; cursor: pointer; text-transform: capitalize; transition:all 0.2s ease;">
-                <span style="width:12px; height:12px; border-radius:50%; background-color:${getColorCssCode(col)}; border:1px solid #ccc; display:inline-block"></span> ${col}
+                <span style="width:14px; height:14px; border-radius:50%; background:${getColorCssCode(col)}; border:1px solid #ccc; display:inline-block"></span> ${col}
               </span>
             `;
           });
@@ -471,18 +471,53 @@
     let selectedColor = 'Default';
 
     function getColorCssCode(cName) {
-      const lower = cName.toLowerCase();
-      if (lower.includes('lime')) return '#32cd32';
-      if (lower.includes('green')) return '#16a34a';
-      if (lower.includes('red')) return '#dc2626';
-      if (lower.includes('maroon')) return '#800000';
-      if (lower.includes('navy')) return '#1e3a8a';
-      if (lower.includes('blue')) return '#2563eb';
-      if (lower.includes('pink')) return '#ec4899';
-      if (lower.includes('black')) return '#18181b';
-      if (lower.includes('white')) return '#ffffff';
-      if (lower.includes('gold') || lower.includes('yellow')) return '#eab308';
-      return '#64748b';
+      if (!cName) return '#64748b';
+      const lower = cName.trim().toLowerCase();
+      
+      const colorMap = {
+        'lime': '#32cd32',
+        'lime green': '#32cd32',
+        'green': '#16a34a',
+        'dark green': '#14532d',
+        'red': '#dc2626',
+        'maroon': '#800000',
+        'navy': '#1e3a8a',
+        'navy blue': '#1e3a8a',
+        'blue': '#2563eb',
+        'sky blue': '#0ea5e9',
+        'royal blue': '#1d4ed8',
+        'pink': '#ec4899',
+        'fuchsia': '#d946ef',
+        'magenta': '#d946ef',
+        'purple': '#a855f7',
+        'violet': '#7c3aed',
+        'indigo': '#4f46e5',
+        'black': '#18181b',
+        'charcoal': '#334155',
+        'white': '#ffffff',
+        'gold': '#eab308',
+        'yellow': '#eab308',
+        'saffron': '#f97316',
+        'orange': '#f97316',
+        'beige': '#f5f5dc',
+        'cream': '#fffdd0',
+        'peach': '#ffdab9',
+        'teal': '#0d9488',
+        'cyan': '#06b6d4',
+        'brown': '#78350f',
+        'tan': '#d2b48c',
+        'grey': '#6b7280',
+        'gray': '#6b7280',
+        'olive': '#65a30d',
+        'multicolor': 'linear-gradient(135deg, #ef4444, #eab308, #3b82f6, #10b981)',
+        'multi-color': 'linear-gradient(135deg, #ef4444, #eab308, #3b82f6, #10b981)',
+        'multicoloured': 'linear-gradient(135deg, #ef4444, #eab308, #3b82f6, #10b981)'
+      };
+
+      for (const [k, v] of Object.entries(colorMap)) {
+        if (lower.includes(k)) return v;
+      }
+      return cName.trim();
     }
 
     function selectColor(el, color) {
@@ -517,15 +552,14 @@
     }
 
     // Pincode availability
-    function checkPincode() {
+    async function checkPincode() {
       const pin = document.getElementById('pinInput').value.trim();
       const result = document.getElementById('pinResult');
-      const gujaratPincodeRegex = /^(36|37|38|39)\d{4}$/;
       
-      if (!gujaratPincodeRegex.test(pin)) {
+      if (!pin || pin.length !== 6 || !/^\d{6}$/.test(pin)) {
         result.style.display = 'block';
         result.style.color = 'var(--danger)';
-        result.textContent = '❌ Please enter a valid Gujarat PIN Code.';
+        result.textContent = '❌ Please enter a valid 6-digit numeric PIN Code.';
         return;
       }
 
@@ -533,10 +567,20 @@
       result.style.color = 'var(--primary)';
       result.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking availability...';
 
-      setTimeout(() => {
-        result.style.color = 'var(--success)';
-        result.innerHTML = `✅ Delivery available to <strong>${pin}</strong>!<br>Estimated Delivery: 2-3 Days. Cash on Delivery supported.`;
-      }, 1000);
+      try {
+        const res = await fetch(`/api/pincode/check?pincode=${encodeURIComponent(pin)}`);
+        const data = await res.json();
+        if (data.success) {
+          result.style.color = 'var(--success)';
+          result.innerHTML = `✅ Delivery available to <strong>${pin}</strong>!<br>Estimated Delivery: 2-4 Business Days. Cash on Delivery supported.`;
+        } else {
+          result.style.color = 'var(--danger)';
+          result.textContent = `❌ ${data.message || 'Delivery is currently unavailable to this PIN Code.'}`;
+        }
+      } catch (err) {
+        result.style.color = 'var(--danger)';
+        result.textContent = '❌ Error checking PIN code. Please try again.';
+      }
     }
 
     // Mouse hover zoom engine

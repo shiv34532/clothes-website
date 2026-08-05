@@ -448,12 +448,13 @@
                   </div>
                   
                   ${(() => {
-                    if (p.color && p.color.trim()) {
-                      const colors = p.color.split(',').map(c => c.trim()).filter(Boolean);
+                    const rawColorStr = p.color_variants || p.color || '';
+                    if (rawColorStr && rawColorStr.trim()) {
+                      const colors = rawColorStr.split(',').map(c => c.trim()).filter(Boolean);
                       if (colors.length > 0) {
                         return `<div style="display:flex; gap:6px; margin: 6px 0; align-items:center;">
                           <span style="font-size:0.75rem; color:var(--text-light)">Colors:</span>
-                          ${colors.map((col, idx) => `<span class="color-dot ${idx === 0 ? 'active' : ''}" style="width:12px; height:12px; border-radius:50%; background-color:${col}; border:${idx === 0 ? '2px solid var(--primary)' : '1px solid #ddd'}; display:inline-block; cursor:pointer;" title="${col}" onclick="selectCardColor(event, this, '${col}')"></span>`).join('')}
+                          ${colors.map((col, idx) => `<span class="color-dot ${idx === 0 ? 'active' : ''}" style="width:14px; height:14px; border-radius:50%; background:${getColorCssCode(col)}; border:${idx === 0 ? '2px solid var(--primary)' : '1px solid #ccc'}; display:inline-block; cursor:pointer; transition:transform 0.2s ease;" title="${col}" onclick="selectCardColor(event, this, '${col}')"></span>`).join('')}
                         </div>`;
                       }
                     }

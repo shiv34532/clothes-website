@@ -300,18 +300,24 @@ async function processOrderSubmit(e) {
     return;
   }
 
-  // Validate Gujarat PIN Code regex
-  const gujaratPincodeRegex = /^(36|37|38|39)\d{4}$/;
-  if (!gujaratPincodeRegex.test(pincode)) {
-    if (pincodeErrEl) {
-      pincodeErrEl.textContent = 'Please enter a valid Gujarat PIN Code.';
-      pincodeErrEl.style.display = 'block';
+  // Validate PIN Code serviceability via API
+  try {
+    const pinRes = await fetch(`/api/pincode/check?pincode=${encodeURIComponent(pincode)}`);
+    const pinData = await pinRes.json();
+    if (!pinData.success) {
+      const errMsg = pinData.message || 'Delivery is currently unavailable to this PIN Code.';
+      if (pincodeErrEl) {
+        pincodeErrEl.textContent = errMsg;
+        pincodeErrEl.style.display = 'block';
+      }
+      showToast(errMsg, 'error');
+      document.getElementById('shippingPincode').focus();
+      return;
+    } else if (pincodeErrEl) {
+      pincodeErrEl.style.display = 'none';
     }
-    showToast('Please enter a valid Gujarat PIN Code.', 'error');
-    document.getElementById('shippingPincode').focus();
-    return;
-  } else if (pincodeErrEl) {
-    pincodeErrEl.style.display = 'none';
+  } catch (err) {
+    console.warn('Pincode check error during checkout:', err);
   }
 
   // Calculate order amount

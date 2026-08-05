@@ -511,15 +511,22 @@ async function loadAdminProducts() {
 
       data.products.forEach(p => {
         const image = JSON.parse(p.image_urls || '[]')[0] || '/images/products/placeholder.jpg';
+        const colorStr = p.color_variants || p.color || '';
+        const colorBadges = colorStr ? colorStr.split(',').map(c => `<span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${getColorCssCode(c.trim())}; margin-right:3px; border:1px solid #ccc;" title="${c.trim()}"></span>`).join('') : '';
+
         tbody.innerHTML += `
           <tr>
             <td><img src="${image}" style="width:40px; height:50px; object-fit:cover; border-radius:4px"></td>
-            <td><strong>${p.name}</strong><br><span style="font-size:0.75rem; color:#888">${p.category} | ${p.subcategory}</span></td>
+            <td>
+              <strong>${p.name}</strong><br>
+              <span style="font-size:0.75rem; color:#888">${p.category} | ${p.subcategory || 'General'}</span>
+              ${colorBadges ? `<div style="display:flex; align-items:center; gap:2px; margin-top:4px;"><span style="font-size:0.7rem; color:#666">Colors:</span> ${colorBadges}</div>` : ''}
+            </td>
             <td><strong>₹${p.discount_price || p.price}</strong> ${p.discount_price ? `<br><span style="text-decoration:line-through; font-size:0.75rem; color:#999">₹${p.price}</span>` : ''}</td>
             <td>${p.stock} units</td>
             <td>${p.size_variants}</td>
             <td>
-              <button onclick="openEditProductModal(${p.id})" class="btn" style="padding:0.3rem 0.6rem; font-size:0.75rem; background:var(--primary); color:#fff"><i class="fas fa-edit"></i></button>
+              <button onclick="openEditProductModal(${p.id})" class="btn" style="padding:0.3rem 0.6rem; font-size:0.75rem; background:var(--primary); color:#fff"><i class="fas fa-edit"></i> Edit</button>
               <button onclick="deleteProduct(${p.id})" class="btn" style="padding:0.3rem 0.6rem; font-size:0.75rem; background:var(--danger); color:#fff"><i class="fas fa-trash"></i></button>
             </td>
           </tr>
@@ -559,7 +566,7 @@ function openEditProductModal(id) {
   document.getElementById('prodStock').value = product.stock;
   document.getElementById('prodSizes').value = product.size_variants;
   document.getElementById('prodReturnWindow').value = product.return_window_days !== undefined ? product.return_window_days : '7';
-  document.getElementById('prodColorVariants').value = product.color_variants || product.color || 'Lime Green, Red, Maroon';
+  document.getElementById('prodColorVariants').value = product.color_variants || product.color || '';
   document.getElementById('prodColorImages').value = product.color_images || '';
   document.getElementById('prodDesc').value = product.description;
   
@@ -1295,10 +1302,117 @@ async function loadAdminShippingSettings() {
     if (data.success) {
       document.getElementById('shiprocketEmail').value = data.email || '';
       document.getElementById('shiprocketPickup').value = data.pickup_location || 'Primary';
-      document.getElementById('shiprocketPassword').value = ''; // keep blank for security
     }
   } catch (err) {
     console.error('Failed to load Shiprocket settings:', err);
+  }
+
+  // Load PIN Code settings
+  loadAdminPincodeSettings();
+}
+
+async function loadAdminPincodeSettings() {
+  try {
+    const res = await fetch('/api/admin/pincodes', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      const allowedEl = document.getElementById('settingAllowedPincodes');
+      const msgEl = document.getElementById('settingPincodeErrMsg');
+      if (allowedEl) allowedEl.value = data.allowed_pincodes || '36, 37, 38, 39';
+      if (msgEl) msgEl.value = data.pincode_error_message || 'Delivery is currently unavailable to this PIN Code.';
+    }
+  } catch (err) {
+    console.error('Failed to load PIN code settings:', err);
+  }
+}
+
+async function saveAdminPincodeSettings(e) {
+  e.preventDefault();
+  const allowed_pincodes = document.getElementById('settingAllowedPincodes').value.trim();
+  const pincode_error_message = document.getElementById('settingPincodeErrMsg').value.trim();
+
+  if (!allowed_pincodes) {
+    showToast('Please enter allowed PIN codes or ALL', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/admin/pincodes', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ allowed_pincodes, pincode_error_message })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('🎉 PIN Code delivery settings saved successfully!', 'success');
+    } else {
+      showToast(data.message || 'Failed to save PIN code settings', 'error');
+    }
+  } catch (err) {
+    showToast('Error saving PIN code settings', 'error');
+  }
+}
+
+function setAdminPincodePreset(preset) {
+  const allowedEl = document.getElementById('settingAllowedPincodes');
+  const msgEl = document.getElementById('settingPincodeErrMsg');
+
+  if (preset === 'ALL') {
+    allowedEl.value = 'ALL';
+    msgEl.value = 'Delivery is currently unavailable to this PIN Code.';
+  } else if (preset === 'GUJARAT') {
+    allowedEl.value = '36, 37, 38, 39';
+    msgEl.value = 'We currently deliver only to PIN Codes in Gujarat.';
+  } else if (preset === 'MH') {
+    allowedEl.value = '40, 41, 42, 43, 44';
+    msgEl.value = 'We currently deliver only to PIN Codes in Maharashtra.';
+  } else if (preset === 'DELHI') {
+    allowedEl.value = '11, 12, 20';
+    msgEl.value = 'We currently deliver only to PIN Codes in Delhi NCR.';
+  }
+  showToast(`Applied preset: ${preset}`, 'info');
+}
+
+async function testAdminPincode() {
+  const pinInput = document.getElementById('adminTestPincodeInput');
+  const resultEl = document.getElementById('adminTestPincodeResult');
+  const pin = pinInput ? pinInput.value.trim() : '';
+
+  if (!pin || pin.length !== 6 || !/^\d{6}$/.test(pin)) {
+    resultEl.style.display = 'block';
+    resultEl.style.backgroundColor = '#fef2f2';
+    resultEl.style.color = '#991b1b';
+    resultEl.style.border = '1px solid #fca5a5';
+    resultEl.innerHTML = '❌ Please enter a valid 6-digit numeric PIN Code to test.';
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/pincode/check?pincode=${encodeURIComponent(pin)}`);
+    const data = await res.json();
+    resultEl.style.display = 'block';
+    if (data.success) {
+      resultEl.style.backgroundColor = '#f0fdf4';
+      resultEl.style.color = '#166534';
+      resultEl.style.border = '1px solid #86efac';
+      resultEl.innerHTML = `✅ <strong>PIN ${pin} is SERVICEABLE!</strong> Customers at this PIN Code CAN place orders.`;
+    } else {
+      resultEl.style.backgroundColor = '#fef2f2';
+      resultEl.style.color = '#991b1b';
+      resultEl.style.border = '1px solid #fca5a5';
+      resultEl.innerHTML = `❌ <strong>PIN ${pin} is NOT SERVICEABLE.</strong><br>Customer Error Message: "${data.message || 'Unavailable'}"`;
+    }
+  } catch (err) {
+    resultEl.style.display = 'block';
+    resultEl.style.backgroundColor = '#fffbeb';
+    resultEl.style.color = '#92400e';
+    resultEl.style.border = '1px solid #fde68a';
+    resultEl.innerHTML = '⚠️ Error checking PIN code serviceability.';
   }
 }
 

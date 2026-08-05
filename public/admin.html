@@ -693,6 +693,58 @@
 
         <div style="background-color:#fff; padding:2.5rem; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); max-width:650px; margin: 2rem auto 0 auto;">
           <h2 style="font-size:1.5rem; color:var(--primary); font-weight:800; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:1.5rem; display:flex; align-items:center; gap:10px">
+            📍 Delivery PIN Code Management (Order Pincode Control)
+          </h2>
+          <p style="font-size:0.85rem; color:var(--text-light); margin-bottom:1.5rem; line-height:1.6">
+            Control which PIN codes or regions are allowed for placing orders on your store. You can specify state/city PIN prefixes (e.g. <code>38, 39</code>), exact 6-digit PIN codes (e.g. <code>380001, 380002</code>), or set to <code>ALL</code> for Pan-India delivery.
+          </p>
+
+          <!-- Quick Presets -->
+          <div style="margin-bottom: 1.5rem; background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px dashed var(--border-color);">
+            <label style="font-size:0.8rem; font-weight:800; color:var(--primary); display:block; margin-bottom:0.5rem">⚡ Quick Preset Templates:</label>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+              <button type="button" onclick="setAdminPincodePreset('ALL')" class="btn btn-secondary" style="padding:0.35rem 0.8rem; font-size:0.78rem;">🇮🇳 Allow Pan-India (ALL)</button>
+              <button type="button" onclick="setAdminPincodePreset('GUJARAT')" class="btn btn-secondary" style="padding:0.35rem 0.8rem; font-size:0.78rem;">🌄 Gujarat Only (36, 37, 38, 39)</button>
+              <button type="button" onclick="setAdminPincodePreset('MH')" class="btn btn-secondary" style="padding:0.35rem 0.8rem; font-size:0.78rem;">🏙️ Mumbai/MH (40, 41, 42, 43, 44)</button>
+              <button type="button" onclick="setAdminPincodePreset('DELHI')" class="btn btn-secondary" style="padding:0.35rem 0.8rem; font-size:0.78rem;">🏛️ Delhi NCR (11, 12, 20)</button>
+            </div>
+          </div>
+
+          <form id="pincodeSettingsForm" onsubmit="saveAdminPincodeSettings(event)" style="display:flex; flex-direction:column; gap:1.5rem">
+            <div class="form-group">
+              <label style="font-size:0.85rem; font-weight:800; color:var(--primary); display:block; margin-bottom:0.4rem">Allowed PIN Codes / Prefixes</label>
+              <textarea id="settingAllowedPincodes" class="form-input" rows="4" required placeholder="e.g. 36, 37, 38, 39 OR 380001, 380002 OR ALL" style="width:100%; box-sizing:border-box; font-family:monospace; font-size:0.9rem; resize:vertical;"></textarea>
+              <small style="color:var(--text-light); font-size:0.75rem; display:block; margin-top:4px">
+                Enter 2-digit/3-digit prefixes or 6-digit PIN codes separated by commas or new lines. Type <strong>ALL</strong> or <strong>*</strong> to enable ordering for all PIN codes across India.
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label style="font-size:0.85rem; font-weight:800; color:var(--primary); display:block; margin-bottom:0.4rem">Custom Error Message for Non-Deliverable PINs</label>
+              <input type="text" id="settingPincodeErrMsg" class="form-input" required placeholder="e.g. Delivery is currently unavailable to this PIN Code." style="width:100%; box-sizing:border-box">
+              <small style="color:var(--text-light); font-size:0.75rem; display:block; margin-top:4px">This message will be shown to customers on product pages and checkout if their PIN code is not allowed.</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="padding:0.8rem 2rem; font-size:0.9rem; font-weight:700; width:100%; cursor:pointer">
+              💾 Save Delivery PIN Code Settings
+            </button>
+          </form>
+
+          <!-- Live PIN Code Tester -->
+          <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+            <h3 style="font-size:1.1rem; color:var(--primary); font-weight:800; margin-bottom:0.8rem; display:flex; align-items:center; gap:6px;">
+              🧪 Live PIN Code Serviceability Tester
+            </h3>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <input type="text" id="adminTestPincodeInput" class="form-input" maxlength="6" placeholder="Enter 6-digit PIN (e.g. 380001)" style="flex:1;">
+              <button type="button" onclick="testAdminPincode()" class="btn btn-accent" style="padding:0.65rem 1.2rem; font-size:0.85rem;">Test PIN</button>
+            </div>
+            <div id="adminTestPincodeResult" style="margin-top:0.8rem; display:none; padding:0.8rem; border-radius:6px; font-size:0.85rem; font-weight:600;"></div>
+          </div>
+        </div>
+
+        <div style="background-color:#fff; padding:2.5rem; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); max-width:650px; margin: 2rem auto 0 auto;">
+          <h2 style="font-size:1.5rem; color:var(--primary); font-weight:800; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:1.5rem; display:flex; align-items:center; gap:10px">
             🚀 Shiprocket API Configurator
           </h2>
           <p style="font-size:0.85rem; color:var(--text-light); margin-bottom:2rem; line-height:1.6">

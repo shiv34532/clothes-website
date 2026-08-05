@@ -673,6 +673,8 @@ async function seedDatabase() {
       console.log('Seeding default system settings...');
       await run("INSERT INTO settings (key, value) VALUES ('shipping_fee', '1')");
       await run("INSERT INTO settings (key, value) VALUES ('free_shipping_threshold', '999')");
+      await run("INSERT INTO settings (key, value) VALUES ('allowed_pincodes', '36, 37, 38, 39')");
+      await run("INSERT INTO settings (key, value) VALUES ('pincode_error_message', 'Please enter a valid Gujarat PIN Code.')");
     }
   } catch (e) {
     console.error('Failed to seed default settings:', e.message);
