@@ -263,6 +263,7 @@
             }
 
             const wishlist = getLocalWishlist();
+            const isInWishlist = Array.isArray(wishlist) && wishlist.some(item => (typeof item === 'object' ? item.id : item) === p.id);
             const hasValidVideo = p.video_url && typeof p.video_url === 'string' && p.video_url.trim() !== '' && p.video_url.trim() !== 'null' && p.video_url.trim() !== 'undefined';
             const hoverAttrs = hasValidVideo ? 'onmouseenter="handleCardVideoHover(this, true)" onmouseleave="handleCardVideoHover(this, false)"' : '';
 
@@ -336,7 +337,7 @@
               }
 
               const wishlist = getLocalWishlist();
-              const isInWishlist = wishlist.includes(p.id);
+              const isInWishlist = Array.isArray(wishlist) && wishlist.some(item => (typeof item === 'object' ? item.id : item) === p.id);
 
               newGrid.innerHTML += `
                 <div class="product-card">
