@@ -304,17 +304,26 @@ function initInteractiveShopperGuide() {
     return;
   }
 
+  const isMobile = window.innerWidth <= 768;
+
   const guideBtn = document.createElement('div');
   guideBtn.id = 'shopperGuideBtn';
   guideBtn.className = 'shopper-guide-btn';
   guideBtn.innerHTML = `<i class="fas fa-lightbulb"></i> Guide`;
   guideBtn.style.cssText = `
+    position: fixed;
+    bottom: ${isMobile ? '16px' : '85px'};
+    left: ${isMobile ? '14px' : 'auto'};
+    right: ${isMobile ? 'auto' : '20px'};
     background: linear-gradient(135deg, var(--marigold), #f59e0b);
     color: var(--primary);
+    padding: ${isMobile ? '6px 14px' : '10px 18px'};
     border-radius: 50px;
     font-weight: 800;
+    font-size: ${isMobile ? '0.75rem' : '0.85rem'};
     box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
     cursor: pointer;
+    z-index: 999;
     display: flex;
     align-items: center;
     gap: 6px;

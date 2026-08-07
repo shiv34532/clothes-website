@@ -272,6 +272,7 @@ header {
   overflow: hidden;
   margin-bottom: 4rem;
   border-bottom: 4px solid var(--marigold);
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%) !important;
 }
 
 .slide {
@@ -288,6 +289,7 @@ header {
   align-items: center;
   background-size: cover;
   background-position: center;
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
 }
 
 .slide.active {

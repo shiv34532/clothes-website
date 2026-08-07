@@ -205,7 +205,7 @@
         if (data.success && data.banners && data.banners.length > 0) {
           data.banners.forEach((b, idx) => {
             slidesHtml += `
-              <div class="slide ${idx === 0 ? 'active' : ''}">
+              <div class="slide ${idx === 0 ? 'active' : ''}" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);">
                 <div class="slide-overlay"></div>
                 <div class="container hero-slide-grid">
                   <div class="slide-content">
