@@ -834,7 +834,7 @@
       }
     }
 
-    // Product Video Overlay Player with Mobile Autoplay & Fallback Safety
+    // Product Video Overlay Player with Mobile Autoplay & Infinite Loop Protection
     function showProductVideo(videoUrl) {
       if (!videoUrl || !videoUrl.trim()) {
         showToast('Product video unavailable for this item', 'info');
@@ -846,8 +846,17 @@
       
       if (!player || !modal) return;
 
-      player.onerror = () => {
-        showToast('Unable to stream product video. Network or format issue.', 'error');
+      // Always clear previous error handler to avoid event duplication
+      player.onerror = null;
+
+      let errorShown = false;
+      player.onerror = (e) => {
+        player.onerror = null; // Detach immediately!
+        if (!errorShown) {
+          errorShown = true;
+          console.warn('Video playback error:', e);
+          showToast('Product video stream currently unavailable.', 'info');
+        }
         closeProductVideo();
       };
       
@@ -869,8 +878,10 @@
       const modal = document.getElementById('productVideoModal');
       const player = document.getElementById('productVideoPlayer');
       if (player) {
+        player.onerror = null; // Detach listener BEFORE clearing src to stop recursive event firing!
         player.pause();
-        player.src = '';
+        player.removeAttribute('src');
+        player.load();
       }
       if (modal) {
         modal.classList.remove('active');
