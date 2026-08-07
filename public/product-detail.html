@@ -449,18 +449,7 @@
       }
     }
 
-    function showProductVideo(videoUrl) {
-      document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
-      const vidBadge = document.querySelector('.video-thumb-badge');
-      if (vidBadge) vidBadge.classList.add('active');
 
-      const wrapper = document.getElementById('zoomContainer');
-      if (wrapper) {
-        wrapper.innerHTML = `
-          <video src="${videoUrl}" controls autoplay loop muted playsinline style="width:100%; max-height:480px; border-radius:12px; object-fit:contain; background:#000; box-shadow:var(--shadow-md);"></video>
-        `;
-      }
-    }
 
     function selectSize(el, size) {
       document.querySelectorAll('.size-option').forEach(s => s.classList.remove('active'));
@@ -845,21 +834,47 @@
       }
     }
 
-    // Product Video Overlay Player
+    // Product Video Overlay Player with Mobile Autoplay & Fallback Safety
     function showProductVideo(videoUrl) {
+      if (!videoUrl || !videoUrl.trim()) {
+        showToast('Product video unavailable for this item', 'info');
+        return;
+      }
+      const formatted = formatLocalPath(videoUrl.trim());
       const modal = document.getElementById('productVideoModal');
       const player = document.getElementById('productVideoPlayer');
-      player.src = videoUrl;
+      
+      if (!player || !modal) return;
+
+      player.onerror = () => {
+        showToast('Unable to stream product video. Network or format issue.', 'error');
+        closeProductVideo();
+      };
+      
+      player.src = formatted;
+      player.muted = true;
+      player.setAttribute('playsinline', '');
+      player.setAttribute('webkit-playsinline', '');
       modal.classList.add('active');
-      player.play().catch(e => console.log('Autoplay blocked:', e));
+      
+      const playPromise = player.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(e => {
+          console.log('Mobile video autoplay handled:', e);
+        });
+      }
     }
 
     function closeProductVideo() {
       const modal = document.getElementById('productVideoModal');
       const player = document.getElementById('productVideoPlayer');
-      player.pause();
-      player.src = '';
-      modal.classList.remove('active');
+      if (player) {
+        player.pause();
+        player.src = '';
+      }
+      if (modal) {
+        modal.classList.remove('active');
+      }
     }
 
     // Size Guide Modal Data & Switcher
@@ -951,9 +966,9 @@
 
   <!-- Interactive Product Video Overlay Modal -->
   <div id="productVideoModal" class="size-chart-modal-overlay" onclick="closeProductVideo()">
-    <div class="size-chart-modal" style="max-width:800px; padding:15px; background:#000; border-radius:16px" onclick="event.stopPropagation()">
-      <button class="size-chart-close-btn" onclick="closeProductVideo()" style="top:10px; right:10px; z-index:10"><i class="fas fa-times"></i></button>
-      <video id="productVideoPlayer" controls style="width:100%; max-height:75vh; border-radius:12px" autoplay muted playsinline></video>
+    <div class="size-chart-modal" style="max-width:800px; padding:15px; background:#000; border-radius:16px; position:relative" onclick="event.stopPropagation()">
+      <button class="size-chart-close-btn" onclick="closeProductVideo()" style="top:10px; right:10px; z-index:10; background:rgba(255,255,255,0.2); color:#fff; width:36px; height:36px; border-radius:50%; border:none; cursor:pointer;"><i class="fas fa-times"></i></button>
+      <video id="productVideoPlayer" controls style="width:100%; max-height:75vh; border-radius:12px; background:#000;" autoplay muted playsinline webkit-playsinline preload="auto"></video>
     </div>
   </div>
 
