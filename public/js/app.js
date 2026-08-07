@@ -398,6 +398,14 @@ function renderHeaderFooter() {
   const user = getCurrentUser();
   const isAdmin = user && user.email === 'admin@littlelarge.in';
 
+  // Inject theme-color meta tag dynamically for seamless mobile status bar matching
+  if (!document.querySelector('meta[name="theme-color"]')) {
+    const themeMeta = document.createElement('meta');
+    themeMeta.name = 'theme-color';
+    themeMeta.content = '#1e1b4b';
+    document.head.appendChild(themeMeta);
+  }
+
   // Inject font awesome link in head dynamically if missing
   if (!document.querySelector('link[href*="cdnjs.cloudflare.com/ajax/libs/font-awesome"]')) {
     const link = document.createElement('link');
@@ -414,7 +422,8 @@ function renderHeaderFooter() {
     const avatarImg = user && user.avatar_url ? user.avatar_url : 'https://cdn-icons-png.flaticon.com/512/147/147144.png';
     headerTag.innerHTML = `
       <div class="top-bar">
-        🚚 Free Shipping across India on orders above ₹999 | <span>Festive Sale: Up to 40% OFF</span>
+        <span class="topbar-desktop">🚚 Free Shipping across India on orders above ₹999 | <span class="topbar-highlight">Festive Sale: Up to 40% OFF</span></span>
+        <span class="topbar-mobile">🚚 Free Shipping > ₹999 &nbsp;•&nbsp; <span>40% OFF FESTIVE SALE</span></span>
       </div>
       <div class="container navbar" style="max-width: 1400px; width: 100%; box-sizing: border-box;">
         <button class="hamburger-btn" onclick="toggleNavDrawer()"><i class="fas fa-bars"></i></button>

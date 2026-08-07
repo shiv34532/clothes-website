@@ -120,18 +120,30 @@ header {
 }
 
 .top-bar {
-  background-color: var(--primary);
+  background: linear-gradient(90deg, #1e1b4b 0%, #2e2a72 50%, #1e1b4b 100%);
   color: #fff;
   font-size: 0.8rem;
-  padding: 0.4rem 0;
+  padding: 0.45rem 1rem;
   text-align: center;
-  font-weight: 500;
-  letter-spacing: 0.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  border-bottom: 2px solid var(--marigold);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  position: relative;
+  z-index: 101;
 }
 
-.top-bar span {
+.topbar-highlight {
   color: var(--marigold);
-  font-weight: 700;
+  font-weight: 800;
+}
+
+.topbar-desktop {
+  display: inline;
+}
+
+.topbar-mobile {
+  display: none;
 }
 
 .navbar {
@@ -1765,6 +1777,28 @@ footer {
     gap: 0.4rem !important;
   }
   
+  .topbar-desktop {
+    display: none !important;
+  }
+  .topbar-mobile {
+    display: inline-block !important;
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    white-space: nowrap !important;
+  }
+  .topbar-mobile span {
+    color: var(--marigold) !important;
+  }
+  .top-bar {
+    padding: 0.35rem 0.4rem !important;
+    line-height: 1.2 !important;
+    max-height: 30px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
   .navbar {
     padding: 0.6rem 0.4rem !important;
     width: 100% !important;
