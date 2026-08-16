@@ -2354,7 +2354,17 @@ app.put('/api/products/:id', handleMulterUpload, adminIpFilter, authenticateAdmi
     const existing = await db.get('SELECT image_urls, video_url FROM products WHERE id = ?', [req.params.id]);
     if (!existing) return res.status(404).json({ success: false, message: 'Product not found' });
 
-    let images = JSON.parse(existing.image_urls || '[]');
+    let images = [];
+    if (req.body.image_urls) {
+      try {
+        images = JSON.parse(req.body.image_urls);
+      } catch (e) {
+        images = [req.body.image_urls];
+      }
+    } else {
+      images = JSON.parse(existing.image_urls || '[]');
+    }
+
     if (req.files && req.files.length > 0) {
       const newImages = [];
       for (const file of req.files) {
@@ -2366,7 +2376,7 @@ app.put('/api/products/:id', handleMulterUpload, adminIpFilter, authenticateAdmi
       if (newImages.length > 0) {
         images = newImages;
       }
-    } else if (req.body.image_url) {
+    } else if (req.body.image_url && req.body.image_url.trim() !== '') {
       if (req.body.image_url.startsWith('http://') || req.body.image_url.startsWith('https://')) {
         const cloudUrl = await uploadToCloudinary(req.body.image_url.trim(), 'products');
         images = [cloudUrl];
@@ -2375,7 +2385,7 @@ app.put('/api/products/:id', handleMulterUpload, adminIpFilter, authenticateAdmi
       }
     }
 
-    let finalVideoUrl = video_url !== undefined && video_url.trim() !== '' ? video_url.trim() : existing.video_url;
+    let finalVideoUrl = video_url !== undefined ? video_url.trim() : existing.video_url;
     if (req.files && req.files.length > 0) {
       const videoFile = req.files.find(f => 
         (f.mimetype && f.mimetype.startsWith('video/')) || 

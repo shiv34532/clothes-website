@@ -547,7 +547,64 @@ function openAddProductModal() {
   document.getElementById('productAiPrompt').value = '';
   const vidWrap = document.getElementById('videoUploadProgressWrapper');
   if (vidWrap) vidWrap.style.display = 'none';
+  renderProductMediaDeletePreview([], '');
   document.getElementById('productModal').style.display = 'flex';
+}
+
+let currentEditingProductPhotos = [];
+let currentEditingProductVideo = '';
+
+function renderProductMediaDeletePreview(urls, videoUrl) {
+  currentEditingProductPhotos = Array.isArray(urls) ? [...urls] : [];
+  currentEditingProductVideo = videoUrl || '';
+
+  const listEl = document.getElementById('productMediaPreviewList');
+  if (!listEl) return;
+
+  let html = '';
+
+  // Photos
+  currentEditingProductPhotos.forEach((imgUrl, idx) => {
+    html += `
+      <div style="position:relative; width:65px; height:80px; border-radius:6px; overflow:hidden; border:1px solid #cbd5e1; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <img src="${formatLocalPath(imgUrl)}" style="width:100%; height:100%; object-fit:cover;">
+        <button type="button" onclick="removeProductPhotoAtIndex(${idx})" style="position:absolute; top:2px; right:2px; background:rgba(220,38,38,0.9); color:#fff; border:none; border-radius:50%; width:20px; height:20px; font-size:10px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Delete Photo">✕</button>
+      </div>
+    `;
+  });
+
+  // Video
+  if (currentEditingProductVideo && currentEditingProductVideo.trim() !== '') {
+    html += `
+      <div style="position:relative; width:80px; height:80px; border-radius:6px; overflow:hidden; border:1px solid #8b5cf6; background:#1e1b4b; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; text-align:center; padding:4px;">
+        <i class="fas fa-video" style="font-size:18px; color:#a78bfa;"></i>
+        <span style="font-size:9px; font-weight:bold; margin-top:2px;">Product Video</span>
+        <button type="button" onclick="removeProductVideo()" style="position:absolute; top:2px; right:2px; background:rgba(220,38,38,0.9); color:#fff; border:none; border-radius:50%; width:20px; height:20px; font-size:10px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Delete Video">✕</button>
+      </div>
+    `;
+  }
+
+  if (currentEditingProductPhotos.length === 0 && (!currentEditingProductVideo || currentEditingProductVideo.trim() === '')) {
+    html = '<span style="font-size:0.75rem; color:#94a3b8">No media uploaded yet.</span>';
+  }
+
+  listEl.innerHTML = html;
+}
+
+function removeProductPhotoAtIndex(idx) {
+  if (idx >= 0 && idx < currentEditingProductPhotos.length) {
+    currentEditingProductPhotos.splice(idx, 1);
+    renderProductMediaDeletePreview(currentEditingProductPhotos, currentEditingProductVideo);
+    showToast('Photo removed! Click Save Product to apply.', 'info');
+  }
+}
+
+function removeProductVideo() {
+  currentEditingProductVideo = '';
+  const vidInput = document.getElementById('prodVideoUrl');
+  if (vidInput) vidInput.value = '';
+  renderProductMediaDeletePreview(currentEditingProductPhotos, currentEditingProductVideo);
+  showToast('Video removed! Click Save Product to apply.', 'info');
 }
 
 function openEditProductModal(id) {
@@ -580,6 +637,8 @@ function openEditProductModal(id) {
 
   const vidWrap = document.getElementById('videoUploadProgressWrapper');
   if (vidWrap) vidWrap.style.display = 'none';
+
+  renderProductMediaDeletePreview(urls, product.video_url || '');
 
   document.getElementById('productModal').style.display = 'flex';
 }
@@ -675,6 +734,11 @@ async function handleProductFormSubmit(e) {
 
   const form = document.getElementById('productForm');
   const formData = new FormData(form);
+
+  if (editingProductId) {
+    formData.set('image_urls', JSON.stringify(currentEditingProductPhotos));
+    formData.set('video_url', currentEditingProductVideo);
+  }
 
   const url = editingProductId ? `/api/products/${editingProductId}` : '/api/products';
   const method = editingProductId ? 'PUT' : 'POST';
