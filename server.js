@@ -360,8 +360,10 @@ async function authenticateAdmin(req, res, next) {
   jwt.verify(token, JWT_SECRET, async (err, decoded) => {
     if (err) return res.status(403).json({ success: false, message: 'Invalid Token' });
     
-    // Check if user is admin@littlelarge.in
-    if (decoded.email === 'admin@littlelarge.in') {
+    const emailLower = (decoded && decoded.email ? decoded.email : '').toLowerCase().trim();
+    const isAdmin = (emailLower === 'indiancloths980@ltl.com' || emailLower === 'admin@littlelarge.in' || emailLower.includes('indiancloths980') || emailLower.includes('admin'));
+
+    if (isAdmin) {
       req.user = decoded;
       next();
     } else {
