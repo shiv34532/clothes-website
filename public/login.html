@@ -448,36 +448,47 @@
       }
 
       try {
-        // 1. Create account on Firebase
-        showToast('Creating account on Firebase...', 'info');
-        const userCredential = await auth.createUserWithEmailAndPassword(payload.email, payload.password);
-        const firebaseUser = userCredential.user;
-        const idToken = await firebaseUser.getIdToken();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
 
-        // 2. Post registration payload + idToken to backend
-        const syncPayload = { ...payload, idToken };
-        delete syncPayload.password; // Do not send plain password to server
-
-        const res = await fetch('/api/auth/firebase-register', {
+        // 1. Register account directly in backend database (/api/auth/register)
+        const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(syncPayload)
+          body: JSON.stringify(payload)
         });
         const data = await res.json();
         
         if (data.success) {
           saveToken(data.token, data.user);
-          showToast('Registration successful! Welcome to the family.', 'success');
+          showToast('🎉 Account registered successfully! Welcome to Little to Large.', 'success');
+          
+          // 2. Optionally sync with Firebase Auth in background
+          try {
+            const userCredential = await auth.createUserWithEmailAndPassword(payload.email, payload.password);
+            const firebaseUser = userCredential.user;
+            const idToken = await firebaseUser.getIdToken();
+            await fetch('/api/auth/firebase-register', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ...payload, idToken })
+            });
+          } catch (fbErr) {
+            console.log('Firebase auth sync skipped:', fbErr.message);
+          }
+
           setTimeout(() => {
             window.location.href = 'index.html';
-          }, 1200);
+          }, 800);
+          return;
         } else {
-          // If backend sync fails, delete the user from Firebase so they can try again
-          await firebaseUser.delete();
-          showToast(data.message || 'Registration sync failed', 'error');
+          showToast(data.message || 'Registration failed', 'error');
         }
       } catch (err) {
-        showToast(err.message || 'Server registration failed', 'error');
+        showToast('Registration failed: ' + (err.message || 'Server connection error'), 'error');
+      } finally {
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = false;
       }
     });
 

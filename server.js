@@ -552,16 +552,27 @@ app.post('/api/auth/firebase-register', async (req, res) => {
     const email = payload.email;
     
     // Check if email or phone already exists
-    const existing = await db.get('SELECT id FROM customers WHERE email = ? OR phone = ?', [email, phone]);
+    let existing = await db.get('SELECT * FROM customers WHERE LOWER(email) = ?', [email.toLowerCase()]);
     if (existing) {
-      return res.status(400).json({ success: false, message: 'An account with this email or mobile number already exists.' });
+      const token = jwt.sign(
+        { id: existing.id, name: existing.name, email: existing.email },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+      return res.json({
+        success: true,
+        token,
+        user: { id: existing.id, name: existing.name, email: existing.email, phone: existing.phone }
+      });
     }
+
+    const passHash = req.body.password ? await bcrypt.hash(req.body.password, 10) : await bcrypt.hash('firebase_auth_user', 10);
 
     // Create new customer
     const result = await db.run(`
       INSERT INTO customers (name, email, phone, password_hash, address_line, city, state, pincode)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `, [name, email, phone, 'firebase-auth-oauth', address || '', city || '', state || '', pincode ? pincode.toString().trim() : '']);
+    `, [name, email, phone, passHash, address || '', city || '', state || '', pincode ? pincode.toString().trim() : '']);
     
     const customer = await db.get('SELECT * FROM customers WHERE id = ?', [result.insertId]);
 
