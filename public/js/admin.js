@@ -735,8 +735,8 @@ async function handleProductFormSubmit(e) {
   const form = document.getElementById('productForm');
   const formData = new FormData(form);
 
-  if (editingProductId) {
-    formData.set('image_urls', JSON.stringify(currentEditingProductPhotos));
+  formData.set('image_urls', JSON.stringify(currentEditingProductPhotos || []));
+  if (currentEditingProductVideo) {
     formData.set('video_url', currentEditingProductVideo);
   }
 

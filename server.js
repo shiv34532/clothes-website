@@ -2287,24 +2287,49 @@ app.post('/api/products', handleMulterUpload, adminIpFilter, authenticateAdmin, 
  
   try {
     let images = [];
-    if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
-        if (!file.mimetype.startsWith('video/')) {
-          const cloudUrl = await uploadToCloudinary(file.buffer, 'products');
-          images.push(cloudUrl);
+
+    if (req.body.image_urls) {
+      try {
+        const parsed = JSON.parse(req.body.image_urls);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          images = parsed;
+        }
+      } catch (e) {
+        if (typeof req.body.image_urls === 'string' && req.body.image_urls.trim() !== '') {
+          images = [req.body.image_urls.trim()];
         }
       }
     }
-    
-    if (images.length === 0 && req.body.image_url) {
-      if (req.body.image_url.startsWith('http://') || req.body.image_url.startsWith('https://')) {
-        const cloudUrl = await uploadToCloudinary(req.body.image_url.trim(), 'products');
+
+    if (req.files && req.files.length > 0) {
+      const uploadedImages = [];
+      for (const file of req.files) {
+        if (!file.mimetype.startsWith('video/') && file.fieldname !== 'video' && !/\.(mp4|webm|mov|avi|mkv|m4v)$/i.test(file.originalname || '')) {
+          const cloudUrl = await uploadToCloudinary(file, 'products');
+          if (cloudUrl && !cloudUrl.includes('placeholder.jpg')) {
+            uploadedImages.push(cloudUrl);
+          }
+        }
+      }
+      if (uploadedImages.length > 0) {
+        images = [...images, ...uploadedImages];
+      }
+    }
+
+    if (images.length === 0 && req.body.image_url && req.body.image_url.trim() !== '') {
+      const rawUrl = req.body.image_url.trim();
+      if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+        const cloudUrl = await uploadToCloudinary(rawUrl, 'products');
         images = [cloudUrl];
       } else {
-        images = [req.body.image_url];
+        images = [rawUrl];
       }
-    } else if (images.length === 0) {
-      // Fallback placeholder image
+    }
+
+    // Remove empty strings and duplicates
+    images = Array.from(new Set(images.filter(img => img && typeof img === 'string' && img.trim() !== '')));
+
+    if (images.length === 0) {
       images = ['https://res.cloudinary.com/wzknhexk/image/upload/v1721564126/placeholder.jpg'];
     }
 
