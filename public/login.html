@@ -286,55 +286,53 @@
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value.trim();
 
-      try {
-        let idToken;
-        try {
-          // 1. Try Firebase Authentication first
-          const userCredential = await auth.signInWithEmailAndPassword(email, password);
-          idToken = await userCredential.user.getIdToken();
-        } catch (fbErr) {
-          // If Firebase fails and it's the admin email, fallback to local DB check
-          if (email === 'admin@littlelarge.in') {
-            const res = await fetch('/api/auth/login', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email, password })
-            });
-            const data = await res.json();
-            if (data.success) {
-              saveToken(data.token, data.user);
-              showToast(`Welcome back Admin!`, 'success');
-              setTimeout(() => { window.location.href = 'admin.html'; }, 1000);
-              return;
-            }
-          }
-          throw fbErr; // Otherwise propagate Firebase error
-        }
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
 
-        // 2. Sync token with backend to establish session and get local token
-        const res = await fetch('/api/auth/firebase-login', {
+      try {
+        // 1. Authenticate directly via backend API (/api/auth/login)
+        const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken })
+          body: JSON.stringify({ email, password })
         });
         const data = await res.json();
         
         if (data.success) {
           saveToken(data.token, data.user);
-          showToast(`Welcome back, ${data.user.name}!`, 'success');
+          const cleanEmail = (email || '').trim().toLowerCase();
+          const isAdmin = (cleanEmail === 'indiancloths980@ltl.com' || cleanEmail === 'admin@littlelarge.in' || cleanEmail.includes('indiancloths980') || cleanEmail.includes('admin'));
+          showToast(isAdmin ? `Welcome back Admin!` : `Login successful!`, 'success');
+          setTimeout(() => { window.location.href = isAdmin ? 'admin.html' : 'index.html'; }, 600);
+          return;
+        }
+
+        // 2. Fallback to Firebase SDK if account was registered via Firebase Auth
+        try {
+          const userCredential = await auth.signInWithEmailAndPassword(email, password);
+          const idToken = await userCredential.user.getIdToken();
           
-          setTimeout(() => {
-            if (data.user.email === 'admin@littlelarge.in') {
-              window.location.href = 'admin.html';
-            } else {
-              window.location.href = 'index.html';
-            }
-          }, 1200);
-        } else {
-          showToast(data.message || 'Firebase login sync failed', 'error');
+          const fbRes = await fetch('/api/auth/firebase-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken })
+          });
+          const fbData = await fbRes.json();
+          if (fbData.success) {
+            saveToken(fbData.token, fbData.user);
+            const cleanEmail = (email || '').trim().toLowerCase();
+            const isAdmin = (cleanEmail === 'indiancloths980@ltl.com' || cleanEmail === 'admin@littlelarge.in' || cleanEmail.includes('indiancloths980') || cleanEmail.includes('admin'));
+            showToast(`Welcome back, ${fbData.user.name}!`, 'success');
+            setTimeout(() => { window.location.href = isAdmin ? 'admin.html' : 'index.html'; }, 600);
+            return;
+          }
+        } catch (fbErr) {
+          showToast(data.message || 'Invalid email address or password.', 'error');
         }
       } catch (err) {
-        showToast(err.message || 'Login failed: Check email or password', 'error');
+        showToast('Login request failed. Please check your connection.', 'error');
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
       }
     });
 

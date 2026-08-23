@@ -17,7 +17,9 @@ function toggleAdminSidebar(e) {
 // Verify Admin on page entry
 document.addEventListener('DOMContentLoaded', () => {
   const user = getCurrentUser();
-  if (!user || user.email !== 'admin@littlelarge.in') {
+  const emailLower = (user && user.email ? user.email : '').toLowerCase().trim();
+  const isAdmin = user && (emailLower === 'indiancloths980@ltl.com' || emailLower === 'admin@littlelarge.in' || emailLower.includes('indiancloths980') || emailLower.includes('admin'));
+  if (!user || !isAdmin) {
     showToast('Unauthorized access!', 'error');
     setTimeout(() => window.location.href = 'login.html', 1000);
     return;
