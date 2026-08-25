@@ -211,6 +211,7 @@
   <!-- Scripts -->
   <script src="js/ux-premium.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/demo-data.js"></script>
   <script src="js/chatbot.js"></script>
   <script>
     let activeSizeFilter = null;
@@ -386,7 +387,12 @@
       try {
         const res = await fetch(`/api/products?${urlParams.toString()}`);
         const data = await res.json();
-        
+
+        // If API returns no products, fall back to client-only demo data (no DB changes)
+        if ((!data || !data.success || !Array.isArray(data.products) || data.products.length === 0) && window.demoProducts) {
+          data = { success: true, products: window.demoProducts };
+        }
+
         completeGlobalProgressBar();
 
         if (data.success) {
@@ -529,21 +535,11 @@
 
     // Voice & Image AI Searches & Bottom Sheets
     function handleProductCardClick(event, productId, wrapper) {
-      const video = wrapper.querySelector('video');
-      if (window.innerWidth <= 768 && video) {
-        event.stopPropagation();
-        if (video.paused) {
-          // Play video on first tap
-          document.querySelectorAll('video').forEach(v => { v.pause(); v.style.opacity = '0'; });
-          video.play();
-          video.style.opacity = '1';
-        } else {
-          // Navigate to details on second tap
-          video.pause();
-          video.style.opacity = '0';
-          window.location.href = `product-detail.html?id=${productId}`;
-        }
-      } else {
+      // Delegate to shared helper which unmutes and plays video on user gesture
+      try {
+        toggleCardVideo(event, productId, wrapper);
+      } catch (e) {
+        // Fallback: navigate to details
         window.location.href = `product-detail.html?id=${productId}`;
       }
     }

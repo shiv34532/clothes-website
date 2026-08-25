@@ -40,4 +40,9 @@
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=1</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
 </urlset>

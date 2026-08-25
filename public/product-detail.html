@@ -34,6 +34,13 @@
         <!-- Render thumbnails dynamically -->
       </div>
 
+      <div id="productVideoCard" style="margin-top:1.5rem; background:linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%); border:1px solid var(--border-color); border-radius:12px; padding:15px; box-shadow:var(--shadow-sm); display:none;">
+        <h4 style="font-size:0.85rem; font-weight:800; color:var(--primary); margin-bottom:10px; display:flex; align-items:center; justify-content:center; gap:6px;">
+          <span style="font-size:1.1rem;">🎬</span> Product Video
+        </h4>
+        <video id="productVideoPlayer" controls playsinline preload="metadata" style="width:100%; border-radius:8px; background:#111827;"></video>
+      </div>
+
       <!-- Interactive 3D 360° Product Rotation Entity -->
       <div id="interactive360Container" style="margin-top:1.5rem; background:#fff; border:1px solid var(--border-color); border-radius:12px; padding:15px; box-shadow:var(--shadow-sm); text-align:center;">
         <h4 style="font-size:0.85rem; font-weight:800; color:var(--primary); margin-bottom:10px; display:flex; align-items:center; justify-content:center; gap:6px;">
@@ -266,6 +273,18 @@
         stockEl.style.color = 'var(--danger)';
       } else {
         stockEl.textContent = 'In Stock (Ready to Ship)';
+      }
+
+      // Product video
+      const videoCard = document.getElementById('productVideoCard');
+      const videoPlayer = document.getElementById('productVideoPlayer');
+      const videoUrl = p.video_url || '';
+      if (videoUrl) {
+        videoCard.style.display = 'block';
+        videoPlayer.src = formatLocalPath(videoUrl);
+      } else {
+        videoCard.style.display = 'none';
+        videoPlayer.removeAttribute('src');
       }
 
       // Image Gallery

@@ -131,15 +131,7 @@
 
   <!-- Promotional Banner -->
   <section class="container" style="margin-bottom: 5rem;">
-    <div style="background: linear-gradient(135deg, hsl(243, 75%, 19%) 0%, hsl(16, 96%, 53%) 100%); border-radius: var(--radius-lg); padding: 4rem; color: #fff; position: relative; overflow: hidden; box-shadow: var(--shadow-lg);">
-      <div style="position: absolute; right: -50px; top: -50px; width: 300px; height: 300px; border-radius: 50%; background: rgba(255, 255, 255, 0.05);"></div>
-      <div style="position: relative; z-index: 2; max-width: 550px;">
-        <span style="background-color: var(--marigold); color: var(--primary); padding: 0.4rem 1rem; border-radius: 50px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase;">Mega Combo Sale</span>
-        <h2 style="font-size: 2.5rem; font-weight: 800; line-height: 1.2; margin: 1rem 0;">Get Flat ₹500 OFF on Family Twins Collection</h2>
-        <p style="font-size: 1.05rem; margin-bottom: 2rem; color: rgba(255,255,255,0.9)">Twin in matching saffron kurtas or floral dresses with your little ones. Use code <strong>TWINNING500</strong> at checkout.</p>
-        <a href="products.html" class="btn">Shop Twinning Outfits</a>
-      </div>
-    </div>
+    <div id="promoBannerStrip" style="display:grid; gap:1rem;"></div>
   </section>
 
   <!-- Dynamic Footer Injected by app.js -->
@@ -148,6 +140,7 @@
   <!-- Scripts -->
   <script src="js/ux-premium.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/demo-data.js"></script>
   <script src="js/chatbot.js"></script>
   <script>
     // Dynamic Hero Slider loader
@@ -192,12 +185,47 @@
       return url;
     }
 
+    function renderPromoBannerStrip(promotions) {
+      const strip = document.getElementById('promoBannerStrip');
+      if (!strip) return;
+      if (!promotions || promotions.length === 0) {
+        strip.innerHTML = `
+          <div style="background: linear-gradient(135deg, hsl(243, 75%, 19%) 0%, hsl(16, 96%, 53%) 100%); border-radius: var(--radius-lg); padding: 2rem 2.5rem; color: #fff; position: relative; overflow: hidden; box-shadow: var(--shadow-lg);">
+            <div style="position: absolute; right: -50px; top: -50px; width: 300px; height: 300px; border-radius: 50%; background: rgba(255,255,255,0.05);"></div>
+            <div style="position: relative; z-index: 2; max-width: 550px;">
+              <span style="background-color: var(--marigold); color: var(--primary); padding: 0.4rem 1rem; border-radius: 50px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase;">Mega Combo Sale</span>
+              <h2 style="font-size: 2.2rem; font-weight: 800; line-height: 1.2; margin: 1rem 0;">Get Flat ₹500 OFF on Family Twins Collection</h2>
+              <p style="font-size: 1rem; margin-bottom: 1.5rem; color: rgba(255,255,255,0.9)">Twin in matching saffron kurtas or floral dresses with your little ones.</p>
+              <a href="products.html" class="btn">Shop Twinning Outfits</a>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      strip.innerHTML = promotions.map((p) => `
+        <a href="${p.link_url || 'products.html'}" style="display:block; background: ${p.bg_color || 'linear-gradient(135deg, hsl(243, 75%, 19%) 0%, hsl(16, 96%, 53%) 100%)'}; border-radius: var(--radius-lg); padding: 2rem 2.5rem; color: #fff; position: relative; overflow: hidden; box-shadow: var(--shadow-lg); transition: transform 0.3s ease;">
+          <div style="position: absolute; right: -60px; top: -60px; width: 240px; height: 240px; border-radius: 50%; background: rgba(255,255,255,0.08);"></div>
+          <div style="position: relative; z-index: 2; max-width: 650px;">
+            <span style="background-color: var(--marigold); color: var(--primary); padding: 0.35rem 0.9rem; border-radius: 50px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase;">${p.title}</span>
+            <h2 style="font-size: 1.6rem; font-weight: 800; line-height: 1.2; margin: 0.8rem 0;">${p.subtitle || 'Fresh styles curated for your family'}</h2>
+            <p style="font-size: 0.95rem; margin-bottom: 1rem; color: rgba(255,255,255,0.9)">${p.subtitle ? 'Tap to explore the latest offers.' : 'Explore the latest collection now.'}</p>
+            <span class="btn" style="padding: 0.7rem 1.3rem;">View Offer</span>
+          </div>
+        </a>
+      `).join('');
+    }
+
     async function loadHeroAndPromotions() {
       try {
         // 1. Fetch homepage settings
         const settingsRes = await fetch('/api/homepage-settings');
         const settingsData = await settingsRes.json();
         let mainSlideHtml = '';
+        // If API didn't provide settings, fall back to demo homepage settings
+        if ((!settingsData || !settingsData.success || !settingsData.settings) && window.demoHomepageSettings) {
+          settingsData = { success: true, settings: window.demoHomepageSettings };
+        }
 
         if (settingsData.success && settingsData.settings) {
           const s = settingsData.settings;
@@ -254,7 +282,10 @@
 
         // 2. Fetch promotions
         const promoRes = await fetch('/api/promotions');
-        const promoData = await promoRes.json();
+        let promoData = await promoRes.json();
+        if ((!promoData || !promoData.success || !Array.isArray(promoData.promotions) || promoData.promotions.length === 0) && window.demoPromotions) {
+          promoData = { success: true, promotions: window.demoPromotions };
+        }
         let slidesHtml = mainSlideHtml;
         let dotsHtml = `<div class="slider-dot active" onclick="setSlide(0)"></div>`;
 
@@ -279,6 +310,7 @@
           });
         }
 
+        renderPromoBannerStrip(promoData.success ? promoData.promotions : []);
         document.getElementById('heroSlider').innerHTML = slidesHtml + `<div class="slider-nav">${dotsHtml}</div>`;
         initSliderLogic();
       } catch (err) {
@@ -322,8 +354,9 @@
             grid.innerHTML += `
               <div class="product-card">
                 ${p.discount_price ? `<span class="badge-tag">Sale</span>` : ''}
-                <div class="product-img-wrapper" onclick="window.location.href='product-detail.html?id=${p.id}'" style="cursor:pointer">
+                <div class="product-img-wrapper" onclick="handleFeaturedProductClick(event, ${p.id}, this)" style="cursor:pointer; position:relative">
                   <img src="${mainImg}" alt="${p.name}" onerror="this.src='/images/products/placeholder.jpg'">
+                  ${p.video_url ? `<video class="product-video-overlay" src="${p.video_url}" muted loop playsinline style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0"></video>` : ''}
                 </div>
                 <button class="wishlist-btn ${isInWishlist ? 'active' : ''}" onclick="event.stopPropagation(); handleWishlistToggle(${p.id}, this)">
                   <i class="fas fa-heart"></i>
@@ -380,8 +413,9 @@
               newGrid.innerHTML += `
                 <div class="product-card">
                   <span class="badge-tag" style="background:#10b981">New</span>
-                  <div class="product-img-wrapper" onclick="window.location.href='product-detail.html?id=${p.id}'" style="cursor:pointer">
+                  <div class="product-img-wrapper" onclick="handleFeaturedProductClick(event, ${p.id}, this)" style="cursor:pointer; position:relative">
                     <img src="${mainImg}" alt="${p.name}" onerror="this.src='/images/products/placeholder.jpg'">
+                    ${p.video_url ? `<video class="product-video-overlay" src="${p.video_url}" muted loop playsinline style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0"></video>` : ''}
                   </div>
                   <button class="wishlist-btn ${isInWishlist ? 'active' : ''}" onclick="event.stopPropagation(); handleWishlistToggle(${p.id}, this)">
                     <i class="fas fa-heart"></i>
@@ -434,6 +468,14 @@
       const sizes = product.size_variants.split(',');
       const defaultSize = sizes[0] || 'M';
       addToCart(product, defaultSize, 1);
+    }
+
+    function handleFeaturedProductClick(event, productId, wrapper) {
+      try {
+        toggleCardVideo(event, productId, wrapper);
+      } catch (e) {
+        window.location.href = `product-detail.html?id=${productId}`;
+      }
     }
 
     loadHeroAndPromotions();

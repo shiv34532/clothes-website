@@ -530,6 +530,8 @@ function openAddProductModal() {
   document.getElementById('productModalTitle').textContent = 'Add New Clothing Product';
   document.getElementById('productForm').reset();
   document.getElementById('prodReturnWindow').value = '7';
+  document.getElementById('prodVideoUrl').value = '';
+  document.getElementById('prodVideoFile').value = '';
   document.getElementById('productAiPreviewArea').style.display = 'none';
   document.getElementById('productAiPrompt').value = '';
   document.getElementById('productModal').style.display = 'flex';
@@ -555,6 +557,8 @@ function openEditProductModal(id) {
   
   const urls = JSON.parse(product.image_urls || '[]');
   document.getElementById('prodImageUrl').value = urls.length > 0 ? urls[0] : '';
+  document.getElementById('prodVideoUrl').value = product.video_url || '';
+  document.getElementById('prodVideoFile').value = '';
   document.getElementById('productAiPreviewArea').style.display = 'none';
   document.getElementById('productAiPrompt').value = '';
 

@@ -536,6 +536,65 @@ function renderHeaderFooter() {
   updateCartBadge();
 }
 
+// Play/unmute product card video on user gesture (shared helper)
+function toggleCardVideo(event, productId, wrapper) {
+  const video = wrapper ? wrapper.querySelector('video') : null;
+  if (video) {
+    event.stopPropagation();
+
+    // Pause and mute all other videos first
+    document.querySelectorAll('video').forEach(v => {
+      if (v !== video) {
+        try { v.pause(); v.muted = true; v.style.opacity = '0'; } catch(e){}
+      }
+    });
+
+    // If paused, unmute and play (user gesture allows sound)
+    if (video.paused) {
+      try {
+        video.muted = false;
+        video.volume = 1;
+        const playPromise = video.play();
+        if (playPromise && playPromise.catch) playPromise.catch(() => {});
+        video.style.opacity = '1';
+      } catch (e) {}
+    } else {
+      // On second tap, navigate to product detail
+      try { video.pause(); video.muted = true; video.style.opacity = '0'; } catch(e){}
+      window.location.href = `product-detail.html?id=${productId}`;
+    }
+  } else {
+    // No video - navigate normally
+    window.location.href = `product-detail.html?id=${productId}`;
+  }
+}
+
+// Unmute/play an inline video inside a wrapper without navigating
+function toggleInlineVideo(event, wrapper) {
+  const video = wrapper ? wrapper.querySelector('video') : null;
+  if (!video) return;
+  event.stopPropagation();
+
+  // Pause and mute all other videos first
+  document.querySelectorAll('video').forEach(v => {
+    if (v !== video) {
+      try { v.pause(); v.muted = true; v.style.opacity = '0'; } catch(e){}
+    }
+  });
+
+  if (video.paused) {
+    try {
+      video.muted = false;
+      video.volume = 1;
+      const p = video.play();
+      if (p && p.catch) p.catch(() => {});
+      video.style.opacity = '1';
+    } catch (e) {}
+  } else {
+    try { video.pause(); video.muted = true; video.style.opacity = '0'; } catch(e){}
+  }
+}
+
 // Global Cookie Consent actions
 window.acceptCookies = function(allowAll) {
   localStorage.setItem("cookie_preference", allowAll ? "accepted" : "essential_only");

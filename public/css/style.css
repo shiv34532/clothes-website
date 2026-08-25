@@ -44,6 +44,24 @@ body {
   color: var(--text-dark);
   line-height: 1.6;
   overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(30, 27, 75, 0.08);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--primary) 0%, var(--marigold) 100%);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--primary-light) 0%, var(--accent) 100%);
 }
 
 h1, h2, h3, .logo, .footer-logo, .hero-title, .section-title {
