@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
@@ -16,9 +17,9 @@ const cloudinary = require('cloudinary').v2;
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'wzknhexk',
   api_key: process.env.CLOUDINARY_API_KEY || '775349879285534',
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'UioxSzxXyfcVORlZRZy_36JOS68'
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'UioxSzxXyfcVORlZRZy_36JOS68',
+  timeout: 120000
 });
-require('dotenv').config();
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_yourKeyHere',
@@ -190,6 +191,9 @@ function securityHeaders(req, res, next) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
   res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://apis.google.com https://*.noupe.com https://*.jotform.com https://*.jotform.pro https://*.jotform.io https://*.jotfor.ms https://accounts.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://*.cloudinary.com https://res.cloudinary.com https://*.pollinations.ai https://*.razorpay.com https://cdn-icons-png.flaticon.com https://lh3.googleusercontent.com https://*.noupe.com https://noupe.com https://*.jotform.com https://*.jotform.pro https://*.jotform.io https://*.jotfor.ms https://*.amazonaws.com; media-src 'self' data: https://*.cloudinary.com https://res.cloudinary.com https://*.amazonaws.com; connect-src 'self' https://cdn.jsdelivr.net https://*.cloudinary.com https://res.cloudinary.com https://api.razorpay.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.googleapis.com https://*.firebaseapp.com https://*.noupe.com https://noupe.com https://*.jotform.com https://*.jotform.pro https://*.jotform.io https://*.jotfor.ms https://www.google.com; frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://accounts.google.com https://*.firebaseapp.com https://*.noupe.com https://noupe.com https://*.jotform.com https://*.jotform.pro https://*.jotform.io https://*.jotfor.ms https://www.google.com;");
   next();
 }
@@ -224,7 +228,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
   extensions: ['html', 'htm']
 }));
 
-// Configure Multer for Image Uploads (memoryStorage - RAM only, no disk needed on Render)
+// Configure Multer for image uploads (memoryStorage - RAM only, no disk needed on Render)
 const upload = multer({ 
   storage: multer.memoryStorage(),
   fileFilter: (req, file, cb) => {
@@ -239,6 +243,28 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
+const PLACEHOLDER_IMAGE = '/images/products/placeholder.svg';
+
+// Allow product media uploads for both images and a single optional video.
+const uploadProductMedia = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    const allowedImage = ['.jpg', '.jpeg', '.png', '.webp', '.svg', '.gif'];
+    const allowedVideo = ['.mp4', '.webm', '.mov', '.m4v'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowedImage.includes(ext) || allowedVideo.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only images or videos are allowed for product media!'));
+    }
+  },
+  limits: {
+    fileSize: 25 * 1024 * 1024,
+    files: 6,
+    parts: 40
+  }
+});
+
 // Safe Multer Upload Middleware to consume stream and prevent ERR_HTTP2_PROTOCOL_ERROR
 function handleMulterUpload(req, res, next) {
   upload.array('images', 5)(req, res, (err) => {
@@ -250,11 +276,24 @@ function handleMulterUpload(req, res, next) {
   });
 }
 
+function handleProductMediaUpload(req, res, next) {
+  uploadProductMedia.fields([
+    { name: 'images', maxCount: 5 },
+    { name: 'video', maxCount: 1 }
+  ])(req, res, (err) => {
+    if (err) {
+      console.error('[Product Media Upload Error]:', err.message);
+      return res.status(400).json({ success: false, message: 'Product media upload error: ' + err.message });
+    }
+    next();
+  });
+}
+
 // Helper function to upload files/buffers/URLs to Cloudinary reliably
 async function uploadToCloudinary(input, folder = 'products') {
   try {
     if (!input) {
-      return 'https://res.cloudinary.com/wzknhexk/image/upload/v1721564126/placeholder.jpg';
+      return PLACEHOLDER_IMAGE;
     }
 
     // Extract buffer if passed a Multer file object or raw Buffer
@@ -270,11 +309,13 @@ async function uploadToCloudinary(input, folder = 'products') {
 
     if (buffer) {
       console.log(`[Cloudinary] Uploading buffer of ${buffer.length} bytes (mime: ${mime}) to folder: ${folder}`);
-      const b64 = buffer.toString('base64');
-      const dataUri = `data:${mime};base64,${b64}`;
-      const result = await cloudinary.uploader.upload(dataUri, {
-        folder: `little_to_large/${folder}`,
-        resource_type: 'auto'
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream({
+          folder: `little_to_large/${folder}`,
+          resource_type: 'auto',
+          timeout: 120000
+        }, (error, uploaded) => error ? reject(error) : resolve(uploaded));
+        stream.end(buffer);
       });
       console.log(`[Cloudinary] Buffer upload success: ${result.secure_url}`);
       return result.secure_url;
@@ -305,11 +346,11 @@ async function uploadToCloudinary(input, folder = 'products') {
     }
 
     console.warn(`[Cloudinary Warning] Unrecognized input type:`, typeof input);
-    return 'https://res.cloudinary.com/wzknhexk/image/upload/v1721564126/placeholder.jpg';
+    return PLACEHOLDER_IMAGE;
 
   } catch (err) {
     console.error('[Cloudinary Upload Error]:', err.message);
-    return 'https://res.cloudinary.com/wzknhexk/image/upload/v1721564126/placeholder.jpg';
+    return PLACEHOLDER_IMAGE;
   }
 }
 
@@ -2108,8 +2149,8 @@ app.post('/api/admin/orders/:id/manual-ship', adminIpFilter, authenticateAdmin, 
 });
 
 // Add New Product
-app.post('/api/products', handleMulterUpload, adminIpFilter, authenticateAdmin, async (req, res) => {
-  const { name, category, subcategory, price, discount_price, stock, description, size_variants, return_window_days } = req.body;
+app.post('/api/products', adminIpFilter, authenticateAdmin, handleProductMediaUpload, async (req, res) => {
+  const { name, category, subcategory, price, discount_price, stock, description, size_variants, return_window_days, video_url } = req.body;
  
   if (!name || !category || !price) {
     return res.status(400).json({ success: false, message: 'Name, Category, and Price are required' });
@@ -2117,8 +2158,8 @@ app.post('/api/products', handleMulterUpload, adminIpFilter, authenticateAdmin, 
  
   try {
     let images = [];
-    if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
+    if (req.files && req.files.images && req.files.images.length > 0) {
+      for (const file of req.files.images) {
         const cloudUrl = await uploadToCloudinary(file.buffer, 'products');
         images.push(cloudUrl);
       }
@@ -2131,7 +2172,18 @@ app.post('/api/products', handleMulterUpload, adminIpFilter, authenticateAdmin, 
       }
     } else {
       // Fallback placeholder image
-      images = ['https://res.cloudinary.com/wzknhexk/image/upload/v1721564126/placeholder.jpg'];
+      images = [PLACEHOLDER_IMAGE];
+    }
+
+    let productVideoUrl = null;
+    if (req.files && req.files.video && req.files.video[0]) {
+      productVideoUrl = await uploadToCloudinary(req.files.video[0], 'products');
+    } else if (video_url && video_url.trim() !== '') {
+      if (video_url.startsWith('http://') || video_url.startsWith('https://')) {
+        productVideoUrl = await uploadToCloudinary(video_url.trim(), 'products');
+      } else {
+        productVideoUrl = video_url.trim();
+      }
     }
 
     let p1 = parseFloat(price);
@@ -2149,9 +2201,9 @@ app.post('/api/products', handleMulterUpload, adminIpFilter, authenticateAdmin, 
     const returnDays = return_window_days !== undefined && return_window_days !== '' ? parseInt(return_window_days) : 7;
  
     const result = await db.run(`
-      INSERT INTO products (name, category, subcategory, price, discount_price, stock, description, size_variants, image_urls, return_window_days)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [name, category, subcategory || null, mrp, selling, parseInt(stock) || 0, description || '', size_variants || 'M', JSON.stringify(images), returnDays]);
+      INSERT INTO products (name, category, subcategory, price, discount_price, stock, description, size_variants, image_urls, video_url, return_window_days)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [name, category, subcategory || null, mrp, selling, parseInt(stock) || 0, description || '', size_variants || 'M', JSON.stringify(images), productVideoUrl, returnDays]);
  
     res.status(201).json({ success: true, message: 'Product added successfully', productId: result.insertId });
   } catch (err) {
@@ -2160,19 +2212,18 @@ app.post('/api/products', handleMulterUpload, adminIpFilter, authenticateAdmin, 
 });
 
 // Edit Product
-app.put('/api/products/:id', handleMulterUpload, adminIpFilter, authenticateAdmin, async (req, res) => {
-  const { name, category, subcategory, price, discount_price, stock, description, size_variants, return_window_days } = req.body;
+app.put('/api/products/:id', adminIpFilter, authenticateAdmin, handleProductMediaUpload, async (req, res) => {
+  const { name, category, subcategory, price, discount_price, stock, description, size_variants, return_window_days, video_url } = req.body;
   
   try {
-    const existing = await db.get('SELECT image_urls FROM products WHERE id = ?', [req.params.id]);
+    const existing = await db.get('SELECT image_urls, video_url FROM products WHERE id = ?', [req.params.id]);
     if (!existing) return res.status(404).json({ success: false, message: 'Product not found' });
 
     let images = JSON.parse(existing.image_urls || '[]');
-    if (req.files && req.files.length > 0) {
-      // Replace old images so new upload becomes the main image (images[0])
+    if (req.files && req.files.images && req.files.images.length > 0) {
       const newImages = [];
-      for (const file of req.files) {
-        const cloudUrl = await uploadToCloudinary(file, 'products');
+      for (const file of req.files.images) {
+        const cloudUrl = await uploadToCloudinary(file.buffer, 'products');
         if (cloudUrl) newImages.push(cloudUrl);
       }
       if (newImages.length > 0) {
@@ -2185,6 +2236,17 @@ app.put('/api/products/:id', handleMulterUpload, adminIpFilter, authenticateAdmi
       } else {
         images = [req.body.image_url];
       }
+    }
+
+    let productVideoUrl = existing.video_url || null;
+    if (req.files && req.files.video && req.files.video[0]) {
+      productVideoUrl = await uploadToCloudinary(req.files.video[0], 'products');
+    } else if (video_url && video_url.trim() !== '') {
+      productVideoUrl = (video_url.startsWith('http://') || video_url.startsWith('https://'))
+        ? await uploadToCloudinary(video_url.trim(), 'products')
+        : video_url.trim();
+    } else if (video_url === '') {
+      productVideoUrl = null;
     }
 
     let p1 = parseFloat(price);
@@ -2203,9 +2265,9 @@ app.put('/api/products/:id', handleMulterUpload, adminIpFilter, authenticateAdmi
 
     await db.run(`
       UPDATE products 
-      SET name = ?, category = ?, subcategory = ?, price = ?, discount_price = ?, stock = ?, description = ?, size_variants = ?, image_urls = ?, return_window_days = ?
+      SET name = ?, category = ?, subcategory = ?, price = ?, discount_price = ?, stock = ?, description = ?, size_variants = ?, image_urls = ?, video_url = ?, return_window_days = ?
       WHERE id = ?
-    `, [name, category, subcategory || null, mrp, selling, parseInt(stock) || 0, description || '', size_variants || 'M', JSON.stringify(images), returnDays, req.params.id]);
+    `, [name, category, subcategory || null, mrp, selling, parseInt(stock) || 0, description || '', size_variants || 'M', JSON.stringify(images), productVideoUrl, returnDays, req.params.id]);
 
     res.json({ success: true, message: 'Product updated successfully' });
   } catch (err) {
