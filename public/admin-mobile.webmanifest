@@ -1,0 +1,9 @@
+{
+  "name": "Little to Large Admin",
+  "short_name": "L2L Admin",
+  "start_url": "/admin-mobile",
+  "display": "standalone",
+  "background_color": "#f5f2eb",
+  "theme_color": "#16213e",
+  "icons": []
+}
