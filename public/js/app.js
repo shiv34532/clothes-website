@@ -3,6 +3,12 @@
    ========================================================================== */
 
 const API_URL = ''; // Relative path for unified host
+const SOCIAL_LINKS = {
+  facebook: 'https://www.facebook.com/profile.php?id=61592053585440&mibextid=ZbWKwL',
+  instagram: '#',
+  youtube: 'https://youtube.com/@littletolargee?si=4FiBUAoQKHB8d5Zy',
+  twitter: '#'
+};
 
 // Global Fetch Interceptor to handle JWT token expiration and redirect to login page
 const originalFetch = window.fetch;
@@ -479,10 +485,10 @@ function renderHeaderFooter() {
           <p>India's premium family clothing store. We bring comfortable, beautiful ethnic and western outfits from infants to adults. Designed to grow and scale with Indian family values.</p>
           <p style="font-size:0.8rem; margin-top:0.6rem; color:rgba(255,255,255,0.7); font-weight:600">GSTIN: 24DDFPG6913P1Z8</p>
           <div class="social-links">
-            <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
-            <a href="#" class="social-icon"><i class="fab fa-youtube"></i></a>
-            <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+            <a href="${SOCIAL_LINKS.facebook}" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="Visit our Facebook page"><i class="fab fa-facebook-f"></i></a>
+            <a href="${SOCIAL_LINKS.instagram}" class="social-icon"><i class="fab fa-instagram"></i></a>
+            <a href="${SOCIAL_LINKS.youtube}" class="social-icon"><i class="fab fa-youtube"></i></a>
+            <a href="${SOCIAL_LINKS.twitter}" class="social-icon"><i class="fab fa-twitter"></i></a>
           </div>
         </div>
         <div class="footer-col">
