@@ -273,7 +273,7 @@
     document.getElementById('traditionalLoginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const email = document.getElementById('loginEmail').value.trim();
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
       const password = document.getElementById('loginPassword').value.trim();
 
       try {
@@ -294,7 +294,7 @@
             if (data.success) {
               saveToken(data.token, data.user);
               showToast(`Welcome back Admin!`, 'success');
-              setTimeout(() => { window.location.href = 'admin.html'; }, 1000);
+              window.location.replace('/admin');
               return;
             }
           }
@@ -314,10 +314,10 @@
           showToast(`Welcome back, ${data.user.name}!`, 'success');
           
           setTimeout(() => {
-            if (data.user.email === 'admin@littlelarge.in') {
-              window.location.href = 'admin.html';
+            if (data.user.email.toLowerCase() === 'admin@littlelarge.in') {
+              window.location.replace('/admin');
             } else {
-              window.location.href = 'index.html';
+              window.location.replace('/');
             }
           }, 1200);
         } else {

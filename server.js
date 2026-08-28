@@ -244,6 +244,15 @@ const upload = multer({
 });
 
 const PLACEHOLDER_IMAGE = '/images/products/placeholder.svg';
+const CLOUDINARY_UPLOAD_TIMEOUT_MS = 90000;
+
+function withUploadTimeout(promise, label) {
+  let timeoutId;
+  const timeout = new Promise((resolve, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`${label} timed out. Check Cloudinary configuration and try again.`)), CLOUDINARY_UPLOAD_TIMEOUT_MS);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+}
 
 // Allow product media uploads for both images and a single optional video.
 const uploadProductMedia = multer({
@@ -309,7 +318,7 @@ async function uploadToCloudinary(input, folder = 'products') {
 
     if (buffer) {
       console.log(`[Cloudinary] Uploading buffer of ${buffer.length} bytes (mime: ${mime}) to folder: ${folder}`);
-      const result = await new Promise((resolve, reject) => {
+      const uploadPromise = new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream({
           folder: `little_to_large/${folder}`,
           resource_type: 'auto',
@@ -317,6 +326,7 @@ async function uploadToCloudinary(input, folder = 'products') {
         }, (error, uploaded) => error ? reject(error) : resolve(uploaded));
         stream.end(buffer);
       });
+      const result = await withUploadTimeout(uploadPromise, 'Media upload');
       console.log(`[Cloudinary] Buffer upload success: ${result.secure_url}`);
       return result.secure_url;
     }
@@ -324,10 +334,10 @@ async function uploadToCloudinary(input, folder = 'products') {
     // Case 2: String - Remote HTTP/HTTPS URL
     if (typeof input === 'string' && (input.startsWith('http://') || input.startsWith('https://'))) {
       console.log(`[Cloudinary] Uploading from URL: ${input.substring(0, 80)}...`);
-      const result = await cloudinary.uploader.upload(input.trim(), {
+      const result = await withUploadTimeout(cloudinary.uploader.upload(input.trim(), {
         folder: `little_to_large/${folder}`,
         resource_type: 'auto'
-      });
+      }), 'Media URL upload');
       console.log(`[Cloudinary] URL upload success: ${result.secure_url}`);
       return result.secure_url;
     }
@@ -336,10 +346,10 @@ async function uploadToCloudinary(input, folder = 'products') {
     const filePath = typeof input === 'string' ? input : (input && input.path ? input.path : null);
     if (filePath && fs.existsSync(filePath)) {
       console.log(`[Cloudinary] Uploading from local file: ${filePath}`);
-      const result = await cloudinary.uploader.upload(filePath, {
+      const result = await withUploadTimeout(cloudinary.uploader.upload(filePath, {
         folder: `little_to_large/${folder}`,
         resource_type: 'auto'
-      });
+      }), 'Media file upload');
       try { fs.unlinkSync(filePath); } catch (e) {}
       console.log(`[Cloudinary] File upload success: ${result.secure_url}`);
       return result.secure_url;

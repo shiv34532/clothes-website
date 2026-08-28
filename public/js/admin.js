@@ -17,7 +17,7 @@ function toggleAdminSidebar(e) {
 // Verify Admin on page entry
 document.addEventListener('DOMContentLoaded', () => {
   const user = getCurrentUser();
-  if (!user || user.email !== 'admin@littlelarge.in') {
+  if (!user || !user.email || user.email.toLowerCase() !== 'admin@littlelarge.in') {
     showToast('Unauthorized access!', 'error');
     setTimeout(() => window.location.href = 'login.html', 1000);
     return;
