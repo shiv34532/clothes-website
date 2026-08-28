@@ -504,7 +504,7 @@ async function loadAdminProducts() {
       tbody.innerHTML = '';
 
       data.products.forEach(p => {
-        const image = JSON.parse(p.image_urls || '[]')[0] || '/images/products/placeholder.jpg';
+        const image = formatLocalPath(JSON.parse(p.image_urls || '[]')[0] || '/images/products/placeholder.jpg');
         tbody.innerHTML += `
           <tr>
             <td><img src="${image}" style="width:40px; height:50px; object-fit:cover; border-radius:4px"></td>
@@ -555,7 +555,7 @@ function openEditProductModal(id) {
   document.getElementById('prodReturnWindow').value = product.return_window_days !== undefined ? product.return_window_days : '7';
   document.getElementById('prodDesc').value = product.description;
   
-  const urls = JSON.parse(product.image_urls || '[]');
+  const urls = JSON.parse(product.image_urls || '[]').map(formatLocalPath);
   document.getElementById('prodImageUrl').value = urls.length > 0 ? urls[0] : '';
   document.getElementById('prodVideoUrl').value = product.video_url || '';
   document.getElementById('prodVideoFile').value = '';

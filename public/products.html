@@ -410,7 +410,7 @@
 
           data.products.forEach(p => {
             const images = JSON.parse(p.image_urls || '[]');
-            const mainImg = images[0] || 'images/products/placeholder.jpg';
+            const mainImg = formatLocalPath(images[0] || 'images/products/placeholder.jpg');
             const oldPriceHtml = p.discount_price ? `<span class="old-price">₹${p.price}</span>` : '';
             const discountPercentHtml = p.discount_price ? `<span class="discount-pct">${Math.round(((p.price - p.discount_price) / p.price) * 100)}% OFF</span>` : '';
             const priceVal = p.discount_price || p.price;
@@ -436,7 +436,7 @@
                 ${p.discount_price ? `<span class="badge-tag">Sale</span>` : ''}
                 <div class="product-img-wrapper" onclick="handleProductCardClick(event, ${p.id}, this)" style="cursor:pointer; position:relative">
                   <img class="lazy-image" src="/images/products/placeholder.svg" data-src="${mainImg}" alt="${p.name}" onerror="this.src='/images/products/placeholder.jpg'">
-                  ${p.video_url ? `<video class="product-video-overlay" src="${p.video_url}" muted loop playsinline></video>` : ''}
+                  ${p.video_url ? `<video class="product-video-overlay" src="${formatLocalPath(p.video_url)}" muted loop playsinline></video>` : ''}
                 </div>
                 <button class="wishlist-btn ${isInWishlist ? 'active' : ''}" onclick="event.stopPropagation(); handleWishlistToggle(${p.id}, this)">
                   <i class="fas fa-heart"></i>
@@ -672,7 +672,7 @@
 
       products.forEach(p => {
         const images = JSON.parse(p.image_urls || '[]');
-        const mainImg = images[0] || 'images/products/placeholder.jpg';
+        const mainImg = formatLocalPath(images[0] || 'images/products/placeholder.jpg');
         const oldPriceHtml = p.discount_price ? `<span class="old-price">₹${p.price}</span>` : '';
         const discountPercentHtml = p.discount_price ? `<span class="discount-pct">${Math.round(((p.price - p.discount_price) / p.price) * 100)}% OFF</span>` : '';
         const priceVal = p.discount_price || p.price;
@@ -690,7 +690,7 @@
             ${p.discount_price ? `<span class="badge-tag">Sale</span>` : ''}
             <div class="product-img-wrapper" onclick="handleProductCardClick(event, ${p.id}, this)" style="cursor:pointer; position:relative">
               <img src="${mainImg}" alt="${p.name}" onerror="this.src='/images/products/placeholder.jpg'">
-              ${p.video_url ? `<video class="product-video-overlay" src="${p.video_url}" muted loop playsinline></video>` : ''}
+              ${p.video_url ? `<video class="product-video-overlay" src="${formatLocalPath(p.video_url)}" muted loop playsinline></video>` : ''}
             </div>
             <div class="product-details">
               <span class="product-cat">${p.category} | ${p.subcategory}</span>

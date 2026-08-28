@@ -322,7 +322,7 @@
         img360.style.transform = `perspective(1000px) rotateY(${angle}deg) scale(0.95)`;
         if (images.length > 0) {
           const index = Math.floor((angle / 360) * images.length) % images.length;
-          img360.src = images[index];
+          img360.src = formatLocalPath(images[index]);
         }
       }
 

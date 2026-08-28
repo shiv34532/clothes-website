@@ -355,12 +355,11 @@ async function uploadToCloudinary(input, folder = 'products') {
       return result.secure_url;
     }
 
-    console.warn(`[Cloudinary Warning] Unrecognized input type:`, typeof input);
-    return PLACEHOLDER_IMAGE;
+    throw new Error('Unsupported media input. Provide an uploaded file or a valid public URL.');
 
   } catch (err) {
     console.error('[Cloudinary Upload Error]:', err.message);
-    return PLACEHOLDER_IMAGE;
+    throw err;
   }
 }
 

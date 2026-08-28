@@ -93,7 +93,10 @@ async function loadSystemSettings() {
 // Helper function to format relative local image paths and remote Cloudinary URLs
 function formatLocalPath(pathStr) {
   if (!pathStr) return '/images/products/placeholder.jpg';
-  if (pathStr.includes('res.cloudinary.com') && pathStr.includes('/upload/') && !pathStr.includes('f_auto')) {
+  if (pathStr.includes('res.cloudinary.com') && /\/placeholder(?:\.[a-z0-9]+)?(?:\?.*)?$/i.test(pathStr)) {
+    return '/images/products/placeholder.jpg';
+  }
+  if (pathStr.includes('res.cloudinary.com') && pathStr.includes('/image/upload/') && !pathStr.includes('f_auto')) {
     pathStr = pathStr.replace('/upload/', '/upload/f_auto,q_auto,w_800/');
   }
   if (pathStr.startsWith('http://') || pathStr.startsWith('https://') || pathStr.startsWith('data:')) {
