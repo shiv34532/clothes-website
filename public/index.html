@@ -6,6 +6,37 @@
   <title>Little to Large | India's Premium Family Clothing E-Store</title>
   <meta name="description" content="Shop premium clothing for your entire family online in India. Ethnic wear, western outfits, kids apparel, and handcrafted accessories from Little to Large.">
   <meta name="google-site-verification" content="VFQnkN8VAEipEoSPzYF063I84_fhuKVxRY-QsdM8tvs" />
+  <link rel="canonical" href="https://littletolargee.com/">
+  <meta property="og:title" content="Little to Large | India's Premium Family Clothing E-Store">
+  <meta property="og:description" content="Shop premium clothing for your entire family online in India. Ethnic wear, western outfits, kids apparel, and handcrafted accessories from Little to Large.">
+  <meta property="og:url" content="https://littletolargee.com/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://littletolargee.com/images/favicon.png">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ClothingStore",
+    "name": "Little to Large",
+    "url": "https://littletolargee.com/",
+    "logo": "https://littletolargee.com/images/favicon.png",
+    "description": "India's premium family clothing store. Ethnic wear, western outfits, kids apparel, and handcrafted accessories.",
+    "telephone": "+91 7383874045",
+    "email": "indiancloths980@gmail.com",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Sector 4",
+      "addressLocality": "Gandhidham",
+      "addressRegion": "Gujarat",
+      "postalCode": "370201",
+      "addressCountry": "IN"
+    },
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://littletolargee.com/products?search={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/ux-premium.css">
   <link rel="icon" type="image/png" href="/favicon.png?v=4">
@@ -24,7 +55,7 @@
         <div class="slide-content">
           <h1>Ethnic Elegance for Every Generation</h1>
           <p>Handcrafted ethnic wear and modern western styles matching your family lifestyle.</p>
-          <a href="products.html" class="btn">Explore Store</a>
+          <a href="/products" class="btn">Explore Store</a>
         </div>
         <div class="slide-image-frame">
           <img src="images/hero_ethnic.png" alt="Ethnic Family Fashion" class="hero-slide-img">
@@ -43,28 +74,28 @@
       <p>Thoughtfully categorized wardrobe collections for every family member</p>
     </div>
     <div class="categories-grid">
-      <div class="category-card" onclick="window.location.href='products.html?category=Women'">
+      <div class="category-card" onclick="window.location.href='/products?category=Women'">
         <img src="images/cat_women.png" alt="Women Clothing">
         <div class="category-card-overlay">
           <span>Elegant Collections</span>
           <h3>Women</h3>
         </div>
       </div>
-      <div class="category-card" onclick="window.location.href='products.html?category=Men'">
+      <div class="category-card" onclick="window.location.href='/products?category=Men'">
         <img src="images/cat_men.png" alt="Men Clothing">
         <div class="category-card-overlay">
           <span>Royal & Casuals</span>
           <h3>Men</h3>
         </div>
       </div>
-      <div class="category-card" onclick="window.location.href='products.html?category=Kids'">
+      <div class="category-card" onclick="window.location.href='/products?category=Kids'">
         <img src="images/cat_kids.png" alt="Kids Clothing">
         <div class="category-card-overlay">
           <span>Organic & Soft</span>
           <h3>Kids</h3>
         </div>
       </div>
-      <div class="category-card" onclick="window.location.href='products.html?category=Accessories'">
+      <div class="category-card" onclick="window.location.href='/products?category=Accessories'">
         <img src="images/cat_accessories.png" alt="Accessories">
         <div class="category-card-overlay">
           <span>Handcrafted Trusts</span>
@@ -111,7 +142,7 @@
     </div>
     
     <div style="text-align: center; margin-top: 2rem;">
-      <a href="products.html" class="btn btn-primary">Browse Entire Wardrobe</a>
+      <a href="/products" class="btn btn-primary">Browse Entire Wardrobe</a>
     </div>
   </section>
 
@@ -196,7 +227,7 @@
               <span style="background-color: var(--marigold); color: var(--primary); padding: 0.4rem 1rem; border-radius: 50px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase;">Mega Combo Sale</span>
               <h2 style="font-size: 2.2rem; font-weight: 800; line-height: 1.2; margin: 1rem 0;">Get Flat ₹500 OFF on Family Twins Collection</h2>
               <p style="font-size: 1rem; margin-bottom: 1.5rem; color: rgba(255,255,255,0.9)">Twin in matching saffron kurtas or floral dresses with your little ones.</p>
-              <a href="products.html" class="btn">Shop Twinning Outfits</a>
+              <a href="/products" class="btn">Shop Twinning Outfits</a>
             </div>
           </div>
         `;
@@ -204,7 +235,7 @@
       }
 
       strip.innerHTML = promotions.map((p) => `
-        <a href="${p.link_url || 'products.html'}" style="display:block; background: ${p.bg_color || 'linear-gradient(135deg, hsl(243, 75%, 19%) 0%, hsl(16, 96%, 53%) 100%)'}; border-radius: var(--radius-lg); padding: 2rem 2.5rem; color: #fff; position: relative; overflow: hidden; box-shadow: var(--shadow-lg); transition: transform 0.3s ease;">
+        <a href="${p.link_url || '/products'}" style="display:block; background: ${p.bg_color || 'linear-gradient(135deg, hsl(243, 75%, 19%) 0%, hsl(16, 96%, 53%) 100%)'}; border-radius: var(--radius-lg); padding: 2rem 2.5rem; color: #fff; position: relative; overflow: hidden; box-shadow: var(--shadow-lg); transition: transform 0.3s ease;">
           <div style="position: absolute; right: -60px; top: -60px; width: 240px; height: 240px; border-radius: 50%; background: rgba(255,255,255,0.08);"></div>
           <div style="position: relative; z-index: 2; max-width: 650px;">
             <span style="background-color: var(--marigold); color: var(--primary); padding: 0.35rem 0.9rem; border-radius: 50px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase;">${p.title}</span>
@@ -240,7 +271,7 @@
                   <div class="slide-content">
                     <h1>${s.hero_title}</h1>
                     <p>${s.hero_subtitle}</p>
-                    <a href="products.html" class="btn">Explore Collections</a>
+                    <a href="/products" class="btn">Explore Collections</a>
                   </div>
                 </div>
               </div>
@@ -253,7 +284,7 @@
                   <div class="slide-content">
                     <h1>${s.hero_title}</h1>
                     <p>${s.hero_subtitle}</p>
-                    <a href="products.html" class="btn">Explore Collections</a>
+                    <a href="/products" class="btn">Explore Collections</a>
                   </div>
                   <div class="slide-image-frame">
                     <img src="${formatLocalPath(s.media_url)}" alt="${s.hero_title}" class="hero-slide-img">
@@ -270,7 +301,7 @@
                 <div class="slide-content">
                   <h1>Ethnic Elegance for Every Generation</h1>
                   <p>Handcrafted ethnic wear and modern western styles matching your family lifestyle.</p>
-                  <a href="products.html" class="btn">Explore Store</a>
+                  <a href="/products" class="btn">Explore Store</a>
                 </div>
                 <div class="slide-image-frame">
                   <img src="images/hero_ethnic.png" alt="Ethnic Family Fashion" class="hero-slide-img">
@@ -298,7 +329,7 @@
                   <div class="slide-content">
                     <h1>${p.title}</h1>
                     <p>${p.subtitle}</p>
-                    <a href="${p.link_url || 'products.html'}" class="btn">View Deal</a>
+                    <a href="${p.link_url || '/products'}" class="btn">View Deal</a>
                   </div>
                   <div class="slide-image-frame">
                     <img src="${formatLocalPath(p.media_url || 'images/hero_ethnic.png')}" alt="${p.title}" class="hero-slide-img">
@@ -363,7 +394,7 @@
                 </button>
                 <div class="product-details">
                   <span class="product-cat">${p.category} | ${p.subcategory}</span>
-                  <a href="product-detail.html?id=${p.id}" class="product-name">${p.name}</a>
+                  <a href="/product-detail?id=${p.id}" class="product-name">${p.name}</a>
                   <div class="product-rating">
                     ${stars}
                     <span class="rating-num">(${p.rating || '5.0'})</span>
@@ -422,7 +453,7 @@
                   </button>
                   <div class="product-details">
                     <span class="product-cat">${p.category} | ${p.subcategory}</span>
-                    <a href="product-detail.html?id=${p.id}" class="product-name">${p.name}</a>
+                    <a href="/product-detail?id=${p.id}" class="product-name">${p.name}</a>
                     <div class="product-rating">
                       ${stars}
                       <span class="rating-num">(${p.rating || '5.0'})</span>
@@ -474,7 +505,7 @@
       try {
         toggleCardVideo(event, productId, wrapper);
       } catch (e) {
-        window.location.href = `product-detail.html?id=${productId}`;
+        window.location.href = `/product-detail?id=${productId}`;
       }
     }
 

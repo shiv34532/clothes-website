@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Shop Collections | Little to Large Clothing</title>
   <meta name="description" content="Browse our wide selection of Indian family clothing. Filters by Men, Women, Kids, Accessories, sizes, and prices. Direct global shipping.">
+  <link rel="canonical" href="https://littletolargee.com/products">
+  <meta property="og:title" content="Shop Collections | Little to Large Clothing">
+  <meta property="og:description" content="Browse our wide selection of Indian family clothing. Filters by Men, Women, Kids, Accessories, sizes, and prices.">
+  <meta property="og:url" content="https://littletolargee.com/products">
+  <meta property="og:type" content="website">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/ux-premium.css">
   <link rel="icon" type="image/png" href="/favicon.png?v=4">
@@ -435,7 +440,7 @@
               <div class="product-card tilt-hover">
                 ${p.discount_price ? `<span class="badge-tag">Sale</span>` : ''}
                 <div class="product-img-wrapper" onclick="handleProductCardClick(event, ${p.id}, this)" style="cursor:pointer; position:relative">
-                  <img class="lazy-image" src="/images/products/placeholder.svg" data-src="${mainImg}" alt="${p.name}" onerror="this.src='/images/products/placeholder.jpg'">
+                  <img class="lazy-image" src="${mainImg}" loading="lazy" alt="${p.name}" onerror="this.src='/images/products/placeholder.jpg'">
                   ${p.video_url ? `<video class="product-video-overlay" src="${formatLocalPath(p.video_url)}" muted loop playsinline></video>` : ''}
                 </div>
                 <button class="wishlist-btn ${isInWishlist ? 'active' : ''}" onclick="event.stopPropagation(); handleWishlistToggle(${p.id}, this)">
@@ -443,7 +448,7 @@
                 </button>
                 <div class="product-details">
                   <span class="product-cat">${p.category} | ${p.subcategory}</span>
-                  <a href="product-detail.html?id=${p.id}" class="product-name">${p.name}</a>
+                  <a href="/product-detail?id=${p.id}" class="product-name">${p.name}</a>
                   <div class="product-rating">
                     ${stars}
                     <span class="rating-num">(${p.rating || '5.0'})</span>
@@ -535,12 +540,10 @@
 
     // Voice & Image AI Searches & Bottom Sheets
     function handleProductCardClick(event, productId, wrapper) {
-      // Delegate to shared helper which unmutes and plays video on user gesture
       try {
         toggleCardVideo(event, productId, wrapper);
       } catch (e) {
-        // Fallback: navigate to details
-        window.location.href = `product-detail.html?id=${productId}`;
+        window.location.href = `/product-detail?id=${productId}`;
       }
     }
 
@@ -694,7 +697,7 @@
             </div>
             <div class="product-details">
               <span class="product-cat">${p.category} | ${p.subcategory}</span>
-              <a href="product-detail.html?id=${p.id}" class="product-name">${p.name}</a>
+              <a href="/product-detail?id=${p.id}" class="product-name">${p.name}</a>
               <div class="product-rating">
                 ${stars}
                 <span class="rating-num">(${p.rating || '5.0'})</span>

@@ -1724,19 +1724,7 @@ footer {
 }
 
 .product-video-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-  z-index: 1;
-}
-.product-img-wrapper:hover .product-video-overlay {
-  opacity: 1;
+  display: none;
 }
 
 /* Viewport Media Queries */

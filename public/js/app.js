@@ -346,19 +346,19 @@ function renderHeaderFooter() {
       <div class="container navbar" style="max-width: 1400px; width: 95%;">
         <button class="hamburger-btn" onclick="toggleNavDrawer()"><i class="fas fa-bars"></i></button>
         
-        <a href="index.html" class="logo" style="display: inline-flex; align-items: center; gap: 8px;">
+        <a href="/" class="logo" style="display: inline-flex; align-items: center; gap: 8px;">
           <img src="images/favicon.png" alt="Little to Large Logo" style="height: 32px; width: 32px; border-radius: 4px; object-fit: cover;">
           <span>Little <span class="logo-accent">to</span> Large</span>
         </a>
         
         <nav class="nav-links">
-          <a href="index.html">Home</a>
-          <a href="products.html">Shop</a>
-          <a href="lookbook.html">Lookbook</a>
-          <a href="products.html?category=Men">Men</a>
-          <a href="products.html?category=Women">Women</a>
-          <a href="products.html?category=Kids">Kids</a>
-          <a href="products.html?style=Ethnic">Festival Wear</a>
+          <a href="/">Home</a>
+          <a href="/products">Shop</a>
+          <a href="/lookbook">Lookbook</a>
+          <a href="/products?category=Men">Men</a>
+          <a href="/products?category=Women">Women</a>
+          <a href="/products?category=Kids">Kids</a>
+          <a href="/products?style=Ethnic">Festival Wear</a>
         </nav>
         
         <div class="nav-actions">
@@ -497,9 +497,9 @@ function renderHeaderFooter() {
         <div class="footer-col">
           <h3>Quick Links</h3>
           <ul>
-            <li><a href="products.html">Collections</a></li>
-            <li><a href="about.html">Our Brand Story</a></li>
-            <li><a href="about.html#contact">Contact Support</a></li>
+            <li><a href="/products">Collections</a></li>
+            <li><a href="/about">Our Brand Story</a></li>
+            <li><a href="/about#contact">Contact Support</a></li>
             <li><a href="#" onclick="alert('Replacement Policy: Order replacement is allowed within 7 days of delivery. No cash refunds.')">Replacement Policy</a></li>
             <li><a href="#" onclick="alert('Terms of Service: By placing an order, you agree to our terms of shipping, replacement policy, and local regulations.')">Terms & Conditions</a></li>
           </ul>
@@ -507,10 +507,10 @@ function renderHeaderFooter() {
         <div class="footer-col">
           <h3>Family Wardrobe</h3>
           <ul>
-            <li><a href="products.html?category=Men">Men's Apparel</a></li>
-            <li><a href="products.html?category=Women">Women's Sarees & Dresses</a></li>
-            <li><a href="products.html?category=Kids">Kids' Ethnic & Toddler Sets</a></li>
-            <li><a href="products.html?category=Accessories">Premium Accessories</a></li>
+            <li><a href="/products?category=Men">Men's Apparel</a></li>
+            <li><a href="/products?category=Women">Women's Sarees & Dresses</a></li>
+            <li><a href="/products?category=Kids">Kids' Ethnic & Toddler Sets</a></li>
+            <li><a href="/products?category=Accessories">Premium Accessories</a></li>
           </ul>
         </div>
         <div class="footer-col">
@@ -545,37 +545,12 @@ function renderHeaderFooter() {
   updateCartBadge();
 }
 
-// Play/unmute product card video on user gesture (shared helper)
+/// Navigate to product detail page on card click
 function toggleCardVideo(event, productId, wrapper) {
-  const video = wrapper ? wrapper.querySelector('video') : null;
-  if (video) {
+  if (event && event.stopPropagation) {
     event.stopPropagation();
-
-    // Pause and mute all other videos first
-    document.querySelectorAll('video').forEach(v => {
-      if (v !== video) {
-        try { v.pause(); v.muted = true; v.style.opacity = '0'; } catch(e){}
-      }
-    });
-
-    // If paused, unmute and play (user gesture allows sound)
-    if (video.paused) {
-      try {
-        video.muted = false;
-        video.volume = 1;
-        const playPromise = video.play();
-        if (playPromise && playPromise.catch) playPromise.catch(() => {});
-        video.style.opacity = '1';
-      } catch (e) {}
-    } else {
-      // On second tap, navigate to product detail
-      try { video.pause(); video.muted = true; video.style.opacity = '0'; } catch(e){}
-      window.location.href = `product-detail.html?id=${productId}`;
-    }
-  } else {
-    // No video - navigate normally
-    window.location.href = `product-detail.html?id=${productId}`;
   }
+  window.location.href = `/product-detail?id=${productId}`;
 }
 
 // Unmute/play an inline video inside a wrapper without navigating

@@ -161,11 +161,12 @@ if (!fs.existsSync(uploadsDir)) {
 
 // Custom Rate Limiter to protect endpoints from DOS/brute-force
 const ipRequestCounts = {};
-setInterval(() => {
+const rateLimiterInterval = setInterval(() => {
   for (const ip in ipRequestCounts) {
     delete ipRequestCounts[ip];
   }
 }, 15 * 60 * 1000); // Reset count every 15 minutes
+if (rateLimiterInterval.unref) rateLimiterInterval.unref();
 
 function rateLimiter(req, res, next) {
   // Bypass rate limiting for authenticated admin sessions
@@ -222,6 +223,63 @@ app.use((req, res, next) => {
 // Protect admin.html and /admin from unauthorized client access before serving static files
 app.get(['/admin.html', '/admin'], adminIpFilter, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// Server-side enhanced handler for /product-detail to eliminate "Soft 404" and inject SEO tags & structured data
+app.get(['/product-detail', '/product-detail.html'], async (req, res, next) => {
+  const prodId = req.query.id;
+  if (!prodId) {
+    return res.status(404).send(`<!DOCTYPE html><html><head><title>Product Not Found | Little to Large</title><meta name="robots" content="noindex"></head><body style="font-family:sans-serif;text-align:center;padding:50px"><h2>Product Not Found</h2><p>Please browse our <a href="/products">catalog</a> to discover our latest collections.</p></body></html>`);
+  }
+
+  try {
+    const product = await db.get('SELECT * FROM products WHERE id = ?', [prodId]);
+    if (!product) {
+      // Return genuine HTTP 404 so Google Search Console marks it as 404 instead of Soft 404
+      return res.status(404).send(`<!DOCTYPE html><html><head><title>Product Not Found | Little to Large</title><meta name="robots" content="noindex"></head><body style="font-family:sans-serif;text-align:center;padding:50px"><h2>Product Not Found</h2><p>This product is no longer available. Please explore our <a href="/products">catalog</a>.</p></body></html>`);
+    }
+
+    const templatePath = path.join(__dirname, 'public', 'product-detail.html');
+    let html = fs.readFileSync(templatePath, 'utf8');
+
+    const canonicalUrl = `https://littletolargee.com/product-detail?id=${product.id}`;
+    let images = [];
+    try { images = JSON.parse(product.image_urls || '[]'); } catch (e) { images = []; }
+    const primaryImg = images[0] ? (images[0].startsWith('http') ? images[0] : `https://littletolargee.com${images[0]}`) : 'https://littletolargee.com/images/products/placeholder.jpg';
+    const prodTitle = `${product.name} | Little to Large`;
+    const prodDesc = (product.description || `Buy ${product.name} online at Little to Large. Premium family fashion in India.`).replace(/"/g, '&quot;');
+    const priceVal = product.discount_price || product.price;
+
+    const seoTags = `<title>${prodTitle}</title>
+  <meta name="description" content="${prodDesc}">
+  <link rel="canonical" href="${canonicalUrl}">
+  <meta property="og:title" content="${prodTitle}">
+  <meta property="og:description" content="${prodDesc}">
+  <meta property="og:image" content="${primaryImg}">
+  <meta property="og:url" content="${canonicalUrl}">
+  <meta property="og:type" content="product">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": ${JSON.stringify(product.name)},
+    "image": ${JSON.stringify(images.map(img => img.startsWith('http') ? img : `https://littletolargee.com${img}`))},
+    "description": ${JSON.stringify(product.description || product.name)},
+    "offers": {
+      "@type": "Offer",
+      "url": ${JSON.stringify(canonicalUrl)},
+      "priceCurrency": "INR",
+      "price": ${JSON.stringify(priceVal)},
+      "availability": "${product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'}"
+    }
+  }
+  </script>`;
+
+    html = html.replace(/<title>.*?<\/title>/i, seoTags);
+    res.send(html);
+  } catch (err) {
+    next(err);
+  }
 });
 
 app.use(express.static(path.join(__dirname, 'public'), {
@@ -2238,24 +2296,47 @@ app.put('/api/products/:id', adminIpFilter, authenticateAdmin, handleProductMedi
       if (newImages.length > 0) {
         images = newImages;
       }
-    } else if (req.body.image_url) {
-      if (req.body.image_url.startsWith('http://') || req.body.image_url.startsWith('https://')) {
-        const cloudUrl = await uploadToCloudinary(req.body.image_url.trim(), 'products');
-        images = [cloudUrl];
-      } else {
-        images = [req.body.image_url];
+    } else if (req.body.image_urls) {
+      try {
+        const parsed = typeof req.body.image_urls === 'string' ? JSON.parse(req.body.image_urls) : req.body.image_urls;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          images = parsed;
+        }
+      } catch (e) {
+        // preserve existing
       }
+    } else if (req.body.image_url && req.body.image_url.trim() !== '') {
+      const singleUrl = req.body.image_url.trim();
+      const firstExisting = images.length > 0 ? images[0] : '';
+      if (singleUrl !== firstExisting) {
+        if (singleUrl.includes('cloudinary.com')) {
+          images = [singleUrl];
+        } else if (singleUrl.startsWith('http://') || singleUrl.startsWith('https://')) {
+          const cloudUrl = await uploadToCloudinary(singleUrl, 'products');
+          images = [cloudUrl];
+        } else {
+          images = [singleUrl];
+        }
+      }
+      // If singleUrl matches firstExisting, keep the complete images array intact!
     }
 
     let productVideoUrl = existing.video_url || null;
     if (req.files && req.files.video && req.files.video[0]) {
       productVideoUrl = await uploadToCloudinary(req.files.video[0], 'products');
-    } else if (video_url && video_url.trim() !== '') {
-      productVideoUrl = (video_url.startsWith('http://') || video_url.startsWith('https://'))
-        ? await uploadToCloudinary(video_url.trim(), 'products')
-        : video_url.trim();
-    } else if (video_url === '') {
-      productVideoUrl = null;
+    } else if (video_url !== undefined) {
+      const trimmedVideo = (typeof video_url === 'string') ? video_url.trim() : '';
+      if (trimmedVideo === '') {
+        productVideoUrl = null;
+      } else if (trimmedVideo !== (existing.video_url || '')) {
+        if (trimmedVideo.includes('cloudinary.com')) {
+          productVideoUrl = trimmedVideo;
+        } else if (trimmedVideo.startsWith('http://') || trimmedVideo.startsWith('https://')) {
+          productVideoUrl = await uploadToCloudinary(trimmedVideo, 'products');
+        } else {
+          productVideoUrl = trimmedVideo;
+        }
+      }
     }
 
     let p1 = parseFloat(price);
@@ -2802,37 +2883,65 @@ app.post('/api/admin/lookbook/reorder', adminIpFilter, authenticateAdmin, async 
 });
 
 // Dynamic XML Sitemap Generator
-// Auto compile sitemap.xml and robots.txt for Google Search Console indexing
+// Auto compile sitemap.xml and robots.txt for Google Search Console indexing with Google Images & Videos support
 async function autoGenerateSitemap() {
   try {
-    const products = await db.query('SELECT id FROM products');
-    let sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+    const products = await db.query('SELECT id, name, description, image_urls, video_url FROM products');
+    let sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">\n`;
     
     // Clean, extensionless URLs
     const pages = [
-      { file: 'index.html', route: '' },
-      { file: 'products.html', route: 'products' },
-      { file: 'cart.html', route: 'cart' },
-      { file: 'login.html', route: 'login' },
-      { file: 'account.html', route: 'account' },
-      { file: 'offers.html', route: 'offers' },
-      { file: 'about.html', route: 'about' },
-      { file: 'orders.html', route: 'orders' }
+      { file: 'index.html', route: '', priority: '1.0' },
+      { file: 'products.html', route: 'products', priority: '0.9' },
+      { file: 'offers.html', route: 'offers', priority: '0.8' },
+      { file: 'lookbook.html', route: 'lookbook', priority: '0.8' },
+      { file: 'about.html', route: 'about', priority: '0.7' },
+      { file: 'cart.html', route: 'cart', priority: '0.5' },
+      { file: 'login.html', route: 'login', priority: '0.5' },
+      { file: 'account.html', route: 'account', priority: '0.5' },
+      { file: 'orders.html', route: 'orders', priority: '0.5' }
     ];
 
     pages.forEach(p => {
-      sitemap += `  <url>\n    <loc>https://littletolargee.com/${p.route}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+      sitemap += `  <url>\n    <loc>https://littletolargee.com/${p.route}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>${p.priority}</priority>\n  </url>\n`;
     });
 
     products.forEach(p => {
-      sitemap += `  <url>\n    <loc>https://littletolargee.com/product-detail?id=${p.id}</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
+      let images = [];
+      try {
+        images = JSON.parse(p.image_urls || '[]');
+      } catch (e) {
+        images = [];
+      }
+
+      const escapedName = (p.name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const escapedDesc = (p.description || p.name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').substring(0, 200);
+
+      sitemap += `  <url>\n    <loc>https://littletolargee.com/product-detail?id=${p.id}</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.8</priority>\n`;
+
+      // Google Image Sitemap tags
+      images.forEach(img => {
+        if (img && !img.includes('placeholder')) {
+          const imgUrl = img.startsWith('http') ? img : `https://littletolargee.com${img}`;
+          sitemap += `    <image:image>\n      <image:loc>${imgUrl}</image:loc>\n      <image:title>${escapedName}</image:title>\n    </image:image>\n`;
+        }
+      });
+
+      // Google Video Sitemap tags (for valid product videos)
+      if (p.video_url && !p.video_url.includes('mov_bbb')) {
+        const vidUrl = p.video_url.startsWith('http') ? p.video_url : `https://littletolargee.com${p.video_url}`;
+        const primaryImg = images[0] ? (images[0].startsWith('http') ? images[0] : `https://littletolargee.com${images[0]}`) : 'https://littletolargee.com/images/products/placeholder.jpg';
+        sitemap += `    <video:video>\n      <video:content_loc>${vidUrl}</video:content_loc>\n      <video:player_loc>https://littletolargee.com/product-detail?id=${p.id}</video:player_loc>\n      <video:thumbnail_loc>${primaryImg}</video:thumbnail_loc>\n      <video:title>${escapedName} Video</video:title>\n      <video:description>${escapedDesc}</video:description>\n    </video:video>\n`;
+      }
+
+      sitemap += `  </url>\n`;
     });
 
     sitemap += `</urlset>\n`;
 
     fs.writeFileSync(path.join(__dirname, 'public', 'sitemap.xml'), sitemap, 'utf8');
     fs.writeFileSync(path.join(__dirname, 'public', 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: https://littletolargee.com/sitemap.xml\n`, 'utf8');
-    console.log('✔ Automatically compiled fresh sitemap.xml and robots.txt for Search Console');
+    console.log('✔ Automatically compiled fresh media sitemap.xml and robots.txt for Search Console');
   } catch (err) {
     console.error('Failed to auto-generate sitemap:', err.message);
   }

@@ -527,11 +527,16 @@ async function loadAdminProducts() {
 
 function openAddProductModal() {
   editingProductId = null;
+  const form = document.getElementById('productForm');
+  if (form) form.reset();
+  const fileInput = document.getElementById('prodImages');
+  if (fileInput) fileInput.value = '';
+  const vidInput = document.getElementById('prodVideoFile');
+  if (vidInput) vidInput.value = '';
   document.getElementById('productModalTitle').textContent = 'Add New Clothing Product';
-  document.getElementById('productForm').reset();
   document.getElementById('prodReturnWindow').value = '7';
+  document.getElementById('prodImageUrl').value = '';
   document.getElementById('prodVideoUrl').value = '';
-  document.getElementById('prodVideoFile').value = '';
   document.getElementById('productAiPreviewArea').style.display = 'none';
   document.getElementById('productAiPrompt').value = '';
   document.getElementById('productModal').style.display = 'flex';
@@ -542,6 +547,13 @@ function openEditProductModal(id) {
   if (!product) return;
   
   editingProductId = product.id;
+  const form = document.getElementById('productForm');
+  if (form) form.reset();
+  const fileInput = document.getElementById('prodImages');
+  if (fileInput) fileInput.value = '';
+  const vidInput = document.getElementById('prodVideoFile');
+  if (vidInput) vidInput.value = '';
+
   document.getElementById('productModalTitle').textContent = 'Edit Clothing Product';
   
   // Prefill form
@@ -558,7 +570,6 @@ function openEditProductModal(id) {
   const urls = JSON.parse(product.image_urls || '[]').map(formatLocalPath);
   document.getElementById('prodImageUrl').value = urls.length > 0 ? urls[0] : '';
   document.getElementById('prodVideoUrl').value = product.video_url || '';
-  document.getElementById('prodVideoFile').value = '';
   document.getElementById('productAiPreviewArea').style.display = 'none';
   document.getElementById('productAiPrompt').value = '';
 
@@ -566,6 +577,13 @@ function openEditProductModal(id) {
 }
 
 function closeProductModal() {
+  editingProductId = null;
+  const form = document.getElementById('productForm');
+  if (form) form.reset();
+  const fileInput = document.getElementById('prodImages');
+  if (fileInput) fileInput.value = '';
+  const vidInput = document.getElementById('prodVideoFile');
+  if (vidInput) vidInput.value = '';
   document.getElementById('productModal').style.display = 'none';
 }
 

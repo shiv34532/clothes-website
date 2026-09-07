@@ -557,13 +557,13 @@ async function seedDatabase() {
     ]);
   }
   
-  // Backfill products details if null
+  // Backfill products details if null (preserve original video_url)
   try {
-    await run(`UPDATE products SET fabric = 'Cotton', color = 'Saffron', style = 'Ethnic', gender = 'Men', video_url = 'https://www.w3schools.com/html/mov_bbb.mp4' WHERE name LIKE '%kurta%'`);
-    await run(`UPDATE products SET fabric = 'Cotton', color = 'Indigo', style = 'Western', gender = 'Men', video_url = 'https://www.w3schools.com/html/mov_bbb.mp4' WHERE name LIKE '%denim%'`);
-    await run(`UPDATE products SET fabric = 'Silk', color = 'Emerald', style = 'Ethnic', gender = 'Women', video_url = 'https://www.w3schools.com/html/mov_bbb.mp4' WHERE name LIKE '%saree%'`);
-    await run(`UPDATE products SET fabric = 'Cotton', color = 'Blue', style = 'Western', gender = 'Kids', video_url = 'https://www.w3schools.com/html/mov_bbb.mp4' WHERE name LIKE '%shorts%'`);
-    await run(`UPDATE products SET fabric = 'Cotton', color = 'Red', style = 'Ethnic', gender = 'Women', video_url = 'https://www.w3schools.com/html/mov_bbb.mp4' WHERE fabric IS NULL`);
+    await run(`UPDATE products SET fabric = 'Cotton', color = 'Saffron', style = 'Ethnic', gender = 'Men' WHERE name LIKE '%kurta%' AND fabric IS NULL`);
+    await run(`UPDATE products SET fabric = 'Cotton', color = 'Indigo', style = 'Western', gender = 'Men' WHERE name LIKE '%denim%' AND fabric IS NULL`);
+    await run(`UPDATE products SET fabric = 'Silk', color = 'Emerald', style = 'Ethnic', gender = 'Women' WHERE name LIKE '%saree%' AND fabric IS NULL`);
+    await run(`UPDATE products SET fabric = 'Cotton', color = 'Blue', style = 'Western', gender = 'Kids' WHERE name LIKE '%shorts%' AND fabric IS NULL`);
+    await run(`UPDATE products SET fabric = 'Cotton', color = 'Red', style = 'Ethnic', gender = 'Women' WHERE fabric IS NULL`);
   } catch (e) {
     console.error('Failed to backfill product values:', e.message);
   }
