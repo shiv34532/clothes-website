@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Customer Login & Sign Up | Little to Large</title>
   <meta name="description" content="Sign in to your Little to Large account or create a new profile to track orders, manage addresses, and access exclusive family offers.">
+  <link rel="canonical" href="https://littletolargee.com/login">
+  <meta property="og:title" content="Customer Login & Sign Up | Little to Large">
+  <meta property="og:description" content="Sign in to your Little to Large account or create a new profile to track orders.">
+  <meta property="og:url" content="https://littletolargee.com/login">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" type="image/png" href="/favicon.png?v=4">
   <link rel="shortcut icon" href="/favicon.ico?v=4">
@@ -446,7 +452,7 @@
           saveToken(data.token, data.user);
           showToast('Registration successful! Welcome to the family.', 'success');
           setTimeout(() => {
-            window.location.href = 'index.html';
+            window.location.href = '/';
           }, 1200);
         } else {
           // If backend sync fails, delete the user from Firebase so they can try again
@@ -480,7 +486,7 @@
           saveToken(data.token, data.user);
           showToast('Google Sign-In Successful!', 'success');
           setTimeout(() => {
-            window.location.href = 'account.html';
+            window.location.href = '/account';
           }, 1000);
         } else {
           showToast(data.message || 'Google Login Sync failed', 'error');

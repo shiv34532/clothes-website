@@ -3,13 +3,19 @@
 <head>
   <script>
     if (!localStorage.getItem('l2l_token')) {
-      window.location.replace('login.html');
+      window.location.replace('/login');
     }
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Account Profile & Security | Little to Large</title>
   <meta name="description" content="Manage your personal details, profile avatar, shipping addresses, account security, and active orders on Little to Large.">
+  <link rel="canonical" href="https://littletolargee.com/account">
+  <meta property="og:title" content="My Account Profile & Security | Little to Large">
+  <meta property="og:description" content="Manage your personal details, profile avatar, shipping addresses, account security, and active orders on Little to Large.">
+  <meta property="og:url" content="https://littletolargee.com/account">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="css/style.css?v=15">
   <link rel="icon" type="image/png" href="/favicon.png?v=4">
   <link rel="shortcut icon" href="/favicon.ico?v=4">
@@ -397,7 +403,7 @@
           const u = data.user;
           if (!u) {
             logout();
-            window.location.replace('login.html');
+            window.location.replace('/login');
             return;
           }
           // Sidebar displayName
@@ -847,7 +853,7 @@
               <div style="display:flex; gap:15px; margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:8px">
                 <img src="${image}" style="width:50px; height:60px; object-fit:cover; border-radius:4px">
                 <div style="flex:1">
-                  <a href="product-detail.html?id=${it.product_id}" style="font-weight:700; color:var(--primary); font-size:0.9rem">${it.name}</a><br>
+                  <a href="/product-detail?id=${it.product_id}" style="font-weight:700; color:var(--primary); font-size:0.9rem">${it.name}</a><br>
                   <span style="font-size:0.8rem; color:var(--text-light)">Size: <strong>${it.size}</strong> | Qty: <strong>${it.quantity}</strong></span>
                 </div>
                 <div style="font-weight:700; font-size:0.9rem">₹${(it.price * it.quantity).toFixed(2)}</div>
@@ -918,7 +924,7 @@
 
             grid.innerHTML += `
               <div class="product-card">
-                <div class="product-img-wrapper" onclick="window.location.href='product-detail.html?id=${p.id}'" style="cursor:pointer">
+                <div class="product-img-wrapper" onclick="window.location.href='/product-detail?id=${p.id}'" style="cursor:pointer">
                   <img src="${mainImg}" alt="${p.name}" onerror="this.src='/images/products/placeholder.jpg'">
                 </div>
                 <button class="wishlist-btn active" onclick="removeWishItem(${p.id})">
@@ -926,7 +932,7 @@
                 </button>
                 <div class="product-details">
                   <span class="product-cat">${p.category} | ${p.subcategory}</span>
-                  <a href="product-detail.html?id=${p.id}" class="product-name">${p.name}</a>
+                  <a href="/product-detail?id=${p.id}" class="product-name">${p.name}</a>
                   <div class="product-pricing" style="margin-top:auto; margin-bottom:1rem">
                     <span class="price">₹${priceVal}</span>
                     ${p.discount_price ? `<span class="old-price">₹${p.price}</span>` : ''}

@@ -261,10 +261,18 @@ const uploadProductMedia = multer({
     const allowedImage = ['.jpg', '.jpeg', '.png', '.webp', '.svg', '.gif'];
     const allowedVideo = ['.mp4', '.webm', '.mov', '.m4v'];
     const ext = path.extname(file.originalname).toLowerCase();
-    if (allowedImage.includes(ext) || allowedVideo.includes(ext)) {
-      cb(null, true);
+    if (file.fieldname === 'video') {
+      if (allowedVideo.includes(ext)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only video files (.mp4, .webm, .mov, .m4v) are allowed for product video!'));
+      }
     } else {
-      cb(new Error('Only images or videos are allowed for product media!'));
+      if (allowedImage.includes(ext)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only images (.jpg, .jpeg, .png, .webp, .svg, .gif) are allowed for product images!'));
+      }
     }
   },
   limits: {
@@ -333,6 +341,10 @@ async function uploadToCloudinary(input, folder = 'products') {
 
     // Case 2: String - Remote HTTP/HTTPS URL
     if (typeof input === 'string' && (input.startsWith('http://') || input.startsWith('https://'))) {
+      if (input.includes('res.cloudinary.com')) {
+        console.log(`[Cloudinary] URL is already hosted on Cloudinary: ${input.substring(0, 80)}`);
+        return input.trim();
+      }
       console.log(`[Cloudinary] Uploading from URL: ${input.substring(0, 80)}...`);
       const result = await withUploadTimeout(cloudinary.uploader.upload(input.trim(), {
         folder: `little_to_large/${folder}`,
@@ -2238,24 +2250,35 @@ app.put('/api/products/:id', adminIpFilter, authenticateAdmin, handleProductMedi
       if (newImages.length > 0) {
         images = newImages;
       }
-    } else if (req.body.image_url) {
-      if (req.body.image_url.startsWith('http://') || req.body.image_url.startsWith('https://')) {
-        const cloudUrl = await uploadToCloudinary(req.body.image_url.trim(), 'products');
-        images = [cloudUrl];
-      } else {
-        images = [req.body.image_url];
+    } else if (req.body.image_url && req.body.image_url.trim() !== '') {
+      const trimmedUrl = req.body.image_url.trim();
+      const alreadyHasImage = images.some(img => img === trimmedUrl || (img && trimmedUrl && (trimmedUrl.includes(img) || img.includes(trimmedUrl))));
+      if (!alreadyHasImage) {
+        if (trimmedUrl.includes('res.cloudinary.com')) {
+          images = [trimmedUrl];
+        } else if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+          const cloudUrl = await uploadToCloudinary(trimmedUrl, 'products');
+          images = [cloudUrl];
+        } else {
+          images = [trimmedUrl];
+        }
       }
     }
 
     let productVideoUrl = existing.video_url || null;
     if (req.files && req.files.video && req.files.video[0]) {
       productVideoUrl = await uploadToCloudinary(req.files.video[0], 'products');
-    } else if (video_url && video_url.trim() !== '') {
-      productVideoUrl = (video_url.startsWith('http://') || video_url.startsWith('https://'))
-        ? await uploadToCloudinary(video_url.trim(), 'products')
-        : video_url.trim();
-    } else if (video_url === '') {
-      productVideoUrl = null;
+    } else if (video_url !== undefined) {
+      const trimmedVid = (video_url || '').trim();
+      if (trimmedVid === '') {
+        productVideoUrl = null;
+      } else if (trimmedVid === existing.video_url || trimmedVid.includes('res.cloudinary.com')) {
+        productVideoUrl = trimmedVid;
+      } else if (trimmedVid.startsWith('http://') || trimmedVid.startsWith('https://')) {
+        productVideoUrl = await uploadToCloudinary(trimmedVid, 'products');
+      } else {
+        productVideoUrl = trimmedVid;
+      }
     }
 
     let p1 = parseFloat(price);
@@ -2812,6 +2835,7 @@ async function autoGenerateSitemap() {
     const pages = [
       { file: 'index.html', route: '' },
       { file: 'products.html', route: 'products' },
+      { file: 'lookbook.html', route: 'lookbook' },
       { file: 'cart.html', route: 'cart' },
       { file: 'login.html', route: 'login' },
       { file: 'account.html', route: 'account' },

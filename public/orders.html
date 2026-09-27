@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Orders & Shipment Tracking | Little to Large</title>
   <meta name="description" content="Track live order statuses, view items purchased, download GST invoice PDFs, and manage return requests on Little to Large.">
+  <link rel="canonical" href="https://littletolargee.com/orders">
+  <meta property="og:title" content="My Orders & Shipment Tracking | Little to Large">
+  <meta property="og:description" content="Track live order statuses, view items purchased, and manage return requests on Little to Large.">
+  <meta property="og:url" content="https://littletolargee.com/orders">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/ux-premium.css">
   <link rel="icon" type="image/png" href="/favicon.png?v=4">
@@ -166,7 +172,7 @@
       // Redirect if not logged in
       if (!getToken()) {
         showToast('Please login to view your orders', 'error');
-        setTimeout(() => window.location.href = 'login.html', 1500);
+        setTimeout(() => window.location.href = '/login', 1500);
         return;
       }
       loadOrdersHistory();
@@ -187,7 +193,7 @@
                 <i class="fas fa-shopping-basket" style="font-size:4rem; color:var(--text-light); margin-bottom:1.5rem"></i>
                 <h3 style="font-size:1.4rem; color:var(--primary); font-weight:800; margin-bottom:0.5rem">No Orders Placed Yet</h3>
                 <p style="color:var(--text-light); margin-bottom:2rem">You haven't added coordinate outfits to your family wardrobe box yet.</p>
-                <a href="products.html" class="btn btn-primary" style="display:inline-block; padding: 0.8rem 2rem;">Start Shopping</a>
+                <a href="/products" class="btn btn-primary" style="display:inline-block; padding: 0.8rem 2rem;">Start Shopping</a>
               </div>
             `;
             return;

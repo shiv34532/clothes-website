@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Exclusive Offers & Discount Coupons | Little to Large</title>
   <meta name="description" content="Save big with active coupon codes, clearance deals, flash sales, and seasonal discounts on clothing at Little to Large. Free shipping available on family orders.">
+  <link rel="canonical" href="https://littletolargee.com/offers">
+  <meta property="og:title" content="Exclusive Offers & Discount Coupons | Little to Large">
+  <meta property="og:description" content="Save big with active coupon codes, clearance deals, flash sales, and seasonal discounts on clothing at Little to Large.">
+  <meta property="og:url" content="https://littletolargee.com/offers">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/ux-premium.css">
   <link rel="icon" type="image/png" href="/favicon.png?v=4">
@@ -170,7 +176,7 @@
             grid.innerHTML += `
               <div class="product-card">
                 <span class="badge-tag" style="background-color:var(--success)">OFFER</span>
-                <div class="product-img-wrapper" onclick="window.location.href='product-detail.html?id=${p.id}'" style="cursor:pointer">
+                <div class="product-img-wrapper" onclick="window.location.href='/product-detail?id=${p.id}'" style="cursor:pointer">
                   <img src="${mainImg}" alt="${p.name}" onerror="this.src='/images/products/placeholder.jpg'">
                 </div>
                 <button class="wishlist-btn ${isInWish ? 'active' : ''}" onclick="event.stopPropagation(); handleWishlistToggle(${p.id}, this)">
@@ -178,7 +184,7 @@
                 </button>
                 <div class="product-details">
                   <span class="product-cat">${p.category} | ${p.subcategory}</span>
-                  <a href="product-detail.html?id=${p.id}" class="product-name">${p.name}</a>
+                  <a href="/product-detail?id=${p.id}" class="product-name">${p.name}</a>
                   <div class="product-rating">
                     ${stars}
                     <span class="rating-num">(${p.rating || '5.0'})</span>

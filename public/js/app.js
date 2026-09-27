@@ -26,10 +26,10 @@ window.fetch = async function(...args) {
           document.cookie = "l2l_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax";
           
           const pathname = window.location.pathname;
-          if (!pathname.includes('login.html') && !pathname.includes('index.html')) {
+          if (!pathname.includes('login') && pathname !== '/' && !pathname.includes('index')) {
             showToast('Session expired. Please log in again.', 'error');
             setTimeout(() => {
-              window.location.href = 'login.html';
+              window.location.href = '/login';
             }, 1500);
           }
         }
@@ -177,7 +177,7 @@ function logout() {
   document.cookie = "l2l_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax";
   showToast('Logged out successfully', 'info');
   setTimeout(() => {
-    window.location.href = 'index.html';
+    window.location.href = '/';
   }, 1000);
 }
 
@@ -201,7 +201,7 @@ function addToCart(product, size = 'M', qty = 1, color = 'Default') {
   if (!getToken()) {
     showToast('Please login or register to add outfits to your family box!', 'error');
     setTimeout(() => {
-      window.location.href = 'login.html';
+      window.location.href = '/login';
     }, 1200);
     return;
   }
@@ -346,19 +346,19 @@ function renderHeaderFooter() {
       <div class="container navbar" style="max-width: 1400px; width: 95%;">
         <button class="hamburger-btn" onclick="toggleNavDrawer()"><i class="fas fa-bars"></i></button>
         
-        <a href="index.html" class="logo" style="display: inline-flex; align-items: center; gap: 8px;">
+        <a href="/" class="logo" style="display: inline-flex; align-items: center; gap: 8px;">
           <img src="images/favicon.png" alt="Little to Large Logo" style="height: 32px; width: 32px; border-radius: 4px; object-fit: cover;">
           <span>Little <span class="logo-accent">to</span> Large</span>
         </a>
         
         <nav class="nav-links">
-          <a href="index.html">Home</a>
-          <a href="products.html">Shop</a>
-          <a href="lookbook.html">Lookbook</a>
-          <a href="products.html?category=Men">Men</a>
-          <a href="products.html?category=Women">Women</a>
-          <a href="products.html?category=Kids">Kids</a>
-          <a href="products.html?style=Ethnic">Festival Wear</a>
+          <a href="/">Home</a>
+          <a href="/products">Shop</a>
+          <a href="/lookbook">Lookbook</a>
+          <a href="/products?category=Men">Men</a>
+          <a href="/products?category=Women">Women</a>
+          <a href="/products?category=Kids">Kids</a>
+          <a href="/products?style=Ethnic">Festival Wear</a>
         </nav>
         
         <div class="nav-actions">
@@ -389,7 +389,7 @@ function renderHeaderFooter() {
       
       <!-- Mobile Search Container -->
       <div class="mobile-search-container" id="mobileSearchContainer">
-        <form style="display:flex; width:100%; gap:10px" action="products.html" method="GET">
+        <form style="display:flex; width:100%; gap:10px" action="/products" method="GET">
           <input type="text" name="search" placeholder="Search clothes..." style="flex:1; padding:0.5rem 1rem; border:1px solid var(--border-color); border-radius:50px" required>
           <button type="submit" class="btn btn-primary" style="padding:0.5rem 1.2rem; border-radius:50px"><i class="fas fa-search"></i></button>
         </form>
@@ -467,7 +467,7 @@ function renderHeaderFooter() {
 
           <!-- Section 4: Admin & Logout -->
           ${isAdmin ? `
-            <a href="admin.html" class="drawer-link" onclick="toggleNavDrawer()" style="background:#e0f2fe; color:#0369a1; font-weight:700;"><i class="fas fa-user-shield"></i> Admin Control Panel</a>
+            <a href="/admin" class="drawer-link" onclick="toggleNavDrawer()" style="background:#e0f2fe; color:#0369a1; font-weight:700;"><i class="fas fa-user-shield"></i> Admin Control Panel</a>
           ` : ''}
           ${user ? `
             <a href="#" class="drawer-link logout-link" onclick="toggleNavDrawer(); logout();"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -497,9 +497,9 @@ function renderHeaderFooter() {
         <div class="footer-col">
           <h3>Quick Links</h3>
           <ul>
-            <li><a href="products.html">Collections</a></li>
-            <li><a href="about.html">Our Brand Story</a></li>
-            <li><a href="about.html#contact">Contact Support</a></li>
+            <li><a href="/products">Collections</a></li>
+            <li><a href="/about">Our Brand Story</a></li>
+            <li><a href="/about#contact">Contact Support</a></li>
             <li><a href="#" onclick="alert('Replacement Policy: Order replacement is allowed within 7 days of delivery. No cash refunds.')">Replacement Policy</a></li>
             <li><a href="#" onclick="alert('Terms of Service: By placing an order, you agree to our terms of shipping, replacement policy, and local regulations.')">Terms & Conditions</a></li>
           </ul>
@@ -507,10 +507,10 @@ function renderHeaderFooter() {
         <div class="footer-col">
           <h3>Family Wardrobe</h3>
           <ul>
-            <li><a href="products.html?category=Men">Men's Apparel</a></li>
-            <li><a href="products.html?category=Women">Women's Sarees & Dresses</a></li>
-            <li><a href="products.html?category=Kids">Kids' Ethnic & Toddler Sets</a></li>
-            <li><a href="products.html?category=Accessories">Premium Accessories</a></li>
+            <li><a href="/products?category=Men">Men's Apparel</a></li>
+            <li><a href="/products?category=Women">Women's Sarees & Dresses</a></li>
+            <li><a href="/products?category=Kids">Kids' Ethnic & Toddler Sets</a></li>
+            <li><a href="/products?category=Accessories">Premium Accessories</a></li>
           </ul>
         </div>
         <div class="footer-col">
@@ -545,37 +545,12 @@ function renderHeaderFooter() {
   updateCartBadge();
 }
 
-// Play/unmute product card video on user gesture (shared helper)
+// Navigate directly to product detail on card video click (avoids media switching conflicts)
 function toggleCardVideo(event, productId, wrapper) {
-  const video = wrapper ? wrapper.querySelector('video') : null;
-  if (video) {
+  if (event) {
     event.stopPropagation();
-
-    // Pause and mute all other videos first
-    document.querySelectorAll('video').forEach(v => {
-      if (v !== video) {
-        try { v.pause(); v.muted = true; v.style.opacity = '0'; } catch(e){}
-      }
-    });
-
-    // If paused, unmute and play (user gesture allows sound)
-    if (video.paused) {
-      try {
-        video.muted = false;
-        video.volume = 1;
-        const playPromise = video.play();
-        if (playPromise && playPromise.catch) playPromise.catch(() => {});
-        video.style.opacity = '1';
-      } catch (e) {}
-    } else {
-      // On second tap, navigate to product detail
-      try { video.pause(); video.muted = true; video.style.opacity = '0'; } catch(e){}
-      window.location.href = `product-detail.html?id=${productId}`;
-    }
-  } else {
-    // No video - navigate normally
-    window.location.href = `product-detail.html?id=${productId}`;
   }
+  window.location.href = `/product-detail?id=${productId}`;
 }
 
 // Unmute/play an inline video inside a wrapper without navigating
@@ -657,17 +632,5 @@ function toggleMobileSearch() {
   }
 }
 
-// Global Single URL Hiding Handler (keeps address bar as littletolargee.com)
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    const path = window.location.pathname;
-    // Keep admin paths intact so that settings navigation doesn't get confused
-    if (path !== '/' && path !== '/index.html' && !path.includes('admin')) {
-      try {
-        history.replaceState(null, '', '/');
-      } catch (e) {
-        console.warn('URL cleanup failed:', e.message);
-      }
-    }
-  }, 400); // 400ms delay ensures local page scripts successfully read query params
-});
+// Clean URL preservation for Google SEO indexing and direct user navigation
+// Note: URLs remain intact (e.g. /products, /product-detail?id=123) for proper canonical indexing.
