@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PFG6463T9G"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-PFG6463T9G');
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Little to Large | India's Premium Family Clothing E-Store</title>
@@ -16,14 +25,35 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "Little to Large",
-    "url": "https://littletolargee.com/",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": "https://littletolargee.com/products?search={search_term_string}",
-      "query-input": "required name=search_term_string"
-    }
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "name": "Little to Large",
+        "url": "https://littletolargee.com/",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://littletolargee.com/products?search={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "ClothingStore",
+        "name": "Little to Large",
+        "url": "https://littletolargee.com/",
+        "logo": "https://littletolargee.com/images/favicon.png",
+        "description": "India's premium family clothing store. Ethnic wear, western outfits, kids apparel, and handcrafted accessories.",
+        "telephone": "+91 7383874045",
+        "email": "indiancloths980@gmail.com",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Sector 4",
+          "addressLocality": "Gandhidham",
+          "addressRegion": "Gujarat",
+          "postalCode": "370201",
+          "addressCountry": "IN"
+        }
+      }
+    ]
   }
   </script>
   <link rel="stylesheet" href="css/style.css">
@@ -505,7 +535,7 @@
       try {
         toggleCardVideo(event, productId, wrapper);
       } catch (e) {
-        window.location.href = `product-detail.html?id=${productId}`;
+        window.location.href = `/product-detail?id=${productId}`;
       }
     }
 

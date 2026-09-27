@@ -547,7 +547,7 @@ function renderHeaderFooter() {
 
 // Navigate directly to product detail on card video click (avoids media switching conflicts)
 function toggleCardVideo(event, productId, wrapper) {
-  if (event) {
+  if (event && event.stopPropagation) {
     event.stopPropagation();
   }
   window.location.href = `/product-detail?id=${productId}`;

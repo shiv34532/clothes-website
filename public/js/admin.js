@@ -527,15 +527,16 @@ async function loadAdminProducts() {
 
 function openAddProductModal() {
   editingProductId = null;
-  document.getElementById('productModalTitle').textContent = 'Add New Clothing Product';
-  document.getElementById('productForm').reset();
-  const imgInput = document.getElementById('prodImages');
-  if (imgInput) imgInput.value = '';
-  document.getElementById('prodImageUrl').value = '';
-  document.getElementById('prodReturnWindow').value = '7';
-  document.getElementById('prodVideoUrl').value = '';
+  const form = document.getElementById('productForm');
+  if (form) form.reset();
+  const fileInput = document.getElementById('prodImages');
+  if (fileInput) fileInput.value = '';
   const vidInput = document.getElementById('prodVideoFile');
   if (vidInput) vidInput.value = '';
+  document.getElementById('productModalTitle').textContent = 'Add New Clothing Product';
+  document.getElementById('prodReturnWindow').value = '7';
+  document.getElementById('prodImageUrl').value = '';
+  document.getElementById('prodVideoUrl').value = '';
   document.getElementById('productAiPreviewArea').style.display = 'none';
   document.getElementById('productAiPrompt').value = '';
   document.getElementById('productModal').style.display = 'flex';
@@ -546,14 +547,14 @@ function openEditProductModal(id) {
   if (!product) return;
   
   editingProductId = product.id;
-  document.getElementById('productModalTitle').textContent = 'Edit Clothing Product';
-  
-  // Reset form and file inputs to prevent file state leaking across products
-  document.getElementById('productForm').reset();
-  const imgInput = document.getElementById('prodImages');
-  if (imgInput) imgInput.value = '';
+  const form = document.getElementById('productForm');
+  if (form) form.reset();
+  const fileInput = document.getElementById('prodImages');
+  if (fileInput) fileInput.value = '';
   const vidInput = document.getElementById('prodVideoFile');
   if (vidInput) vidInput.value = '';
+
+  document.getElementById('productModalTitle').textContent = 'Edit Clothing Product';
 
   // Prefill form with specific product's data
   document.getElementById('prodName').value = product.name;
@@ -580,8 +581,8 @@ function closeProductModal() {
   editingProductId = null;
   const form = document.getElementById('productForm');
   if (form) form.reset();
-  const imgInput = document.getElementById('prodImages');
-  if (imgInput) imgInput.value = '';
+  const fileInput = document.getElementById('prodImages');
+  if (fileInput) fileInput.value = '';
   const vidInput = document.getElementById('prodVideoFile');
   if (vidInput) vidInput.value = '';
   document.getElementById('prodImageUrl').value = '';
