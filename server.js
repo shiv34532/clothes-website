@@ -9,6 +9,7 @@ const fs = require('fs');
 const xlsx = require('xlsx');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const db = require('./db');
+const emailService = require('./emailService');
 const adminIpFilter = require('./middleware/ipFilter');
 const crypto = require('crypto');
 const Razorpay = require('razorpay');
@@ -486,6 +487,7 @@ app.get('/api/debug-files', (req, res) => {
 
 // Store temporary OTPs in memory for demo verification
 const tempOtps = {};
+const tempEmailOtps = {};
 
 /* ==========================================================================
    AUTHENTICATION ENDPOINTS
@@ -700,6 +702,8 @@ app.post('/api/auth/register', async (req, res) => {
     `, [name, email, phone, hash, address || null, city || null, state || null, pincode || null]);
 
     const token = jwt.sign({ id: result.insertId, email, name }, JWT_SECRET, { expiresIn: '24h' });
+    // Asynchronously dispatch personalized welcome email
+    emailService.sendWelcomeEmail(email, name, db).catch(e => console.error('[Welcome Email Background Error]:', e.message));
     res.status(201).json({ success: true, token, user: { id: result.insertId, name, email, phone } });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -767,6 +771,8 @@ app.post('/api/auth/google-login', async (req, res) => {
       
       // Get the newly created user
       user = await db.get('SELECT * FROM customers WHERE email = ?', [email]);
+      // Asynchronously dispatch personalized welcome email for new Google user
+      emailService.sendWelcomeEmail(email, name, db).catch(e => console.error('[Google Welcome Email Error]:', e.message));
     } else {
       // If user exists, check if we should update their avatar if they don't have one
       if (!user.avatar_url && picture) {
@@ -853,6 +859,90 @@ app.post('/api/auth/otp-verify', async (req, res) => {
     const token = jwt.sign({ id: record.userId, email: record.email, name: record.name }, JWT_SECRET, { expiresIn: '24h' });
     delete tempOtps[phone];
     res.json({ success: true, token, user: { id: record.userId, name: record.name, email: record.email, phone } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+
+// Send Email OTP for Customer Login / Auto-Registration
+app.post('/api/auth/email-otp-send', async (req, res) => {
+  const { email } = req.body;
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ success: false, message: 'Valid email address is required' });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  try {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    tempEmailOtps[cleanEmail] = {
+      otp,
+      expires: Date.now() + 600000 // 10 minutes
+    };
+
+    const result = await emailService.sendEmailOtp(cleanEmail, otp, db);
+    res.json({
+      success: true,
+      message: 'Verification code sent to your email!',
+      simulated: !!result.simulated
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to send verification email: ' + err.message });
+  }
+});
+
+// Verify Email OTP and Sign In or Auto-Register Customer
+app.post('/api/auth/email-otp-verify', async (req, res) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) {
+    return res.status(400).json({ success: false, message: 'Email and verification code are required' });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const record = tempEmailOtps[cleanEmail];
+
+  if (!record || record.expires < Date.now()) {
+    return res.status(400).json({ success: false, message: 'Verification code expired or not found. Please request a new code.' });
+  }
+
+  if (record.otp !== otp.trim()) {
+    return res.status(400).json({ success: false, message: 'Incorrect verification code. Please check your email and try again.' });
+  }
+
+  try {
+    let isNewUser = false;
+    let user = await db.get('SELECT * FROM customers WHERE email = ?', [cleanEmail]);
+
+    if (!user) {
+      isNewUser = true;
+      const dummyPassword = Math.random().toString(36).substring(2, 15);
+      const passwordHash = await bcrypt.hash(dummyPassword, 10);
+      const defaultName = cleanEmail.split('@')[0];
+      const defaultPhone = 'E' + Math.floor(Math.random() * 90000000000 + 10000000000);
+
+      const result = await db.run(
+        'INSERT INTO customers (name, email, password_hash, phone) VALUES (?, ?, ?, ?)',
+        [defaultName, cleanEmail, passwordHash, defaultPhone]
+      );
+      user = await db.get('SELECT * FROM customers WHERE id = ?', [result.insertId]);
+
+      emailService.sendWelcomeEmail(cleanEmail, defaultName, db).catch(e => console.error('[OTP Welcome Email Error]:', e.message));
+    }
+
+    const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: '24h' });
+    delete tempEmailOtps[cleanEmail];
+
+    res.json({
+      success: true,
+      token,
+      isNewUser,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone
+      }
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -1211,6 +1301,43 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
       INSERT INTO payments (order_id, transaction_id, amount, method, status)
       VALUES (?, ?, ?, ?, ?)
     `, [orderId, finalTxId, total_amount, payment_method, payStatus]);
+
+    // Asynchronously dispatch Order Confirmation & Thank You email
+    (async () => {
+      try {
+        const customer = await db.get('SELECT name, email FROM customers WHERE id = ?', [req.user.id]);
+        if (customer && customer.email && !customer.email.includes('guest_')) {
+          const enrichedItems = [];
+          for (const it of items) {
+            let pName = it.product_name || it.name;
+            if (!pName && it.product_id) {
+              const p = await db.get('SELECT name FROM products WHERE id = ?', [it.product_id]);
+              if (p) pName = p.name;
+            }
+            enrichedItems.push({
+              product_id: it.product_id,
+              product_name: pName || ('Product #' + it.product_id),
+              size: it.size,
+              color: it.color,
+              quantity: it.quantity,
+              price: it.price
+            });
+          }
+
+          emailService.sendOrderConfirmationEmail({
+            order_id: orderId,
+            customer_name: customer.name || 'Valued Customer',
+            customer_email: customer.email,
+            items: enrichedItems,
+            total_amount: total_amount,
+            payment_method: payment_method,
+            shipping_address: shipping_address
+          }, db).catch(e => console.error('[Order Confirmation Email Error]:', e.message));
+        }
+      } catch (e) {
+        console.error('[Async Order Email Prep Error]:', e.message);
+      }
+    })();
 
     res.status(201).json({ success: true, message: 'Order placed successfully', orderId, transactionId: finalTxId });
   } catch (err) {
@@ -1949,7 +2076,7 @@ app.get('/api/settings', async (req, res) => {
     const rows = await db.query('SELECT * FROM settings');
     const settings = {};
     rows.forEach(r => {
-      if (!r.key.startsWith('shiprocket_')) {
+      if (!r.key.startsWith('shiprocket_') && !r.key.startsWith('smtp_')) {
         settings[r.key] = r.value;
       }
     });
@@ -1972,6 +2099,92 @@ app.post('/api/admin/settings', adminIpFilter, authenticateAdmin, async (req, re
       await db.run("INSERT INTO settings (key, value) VALUES ('free_shipping_threshold', ?)", [free_shipping_threshold.toString()]);
     }
     res.json({ success: true, message: 'Settings updated successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+
+// GET Email Settings (Admin Only)
+app.get('/api/admin/email-settings', adminIpFilter, authenticateAdmin, async (req, res) => {
+  try {
+    const emailRow = await db.get("SELECT value FROM settings WHERE key = 'smtp_email'");
+    const passRow = await db.get("SELECT value FROM settings WHERE key = 'smtp_password'");
+    const activeEmail = (emailRow && emailRow.value) || process.env.GMAIL_USER || 'indiancloths980@gmail.com';
+    const isConfigured = Boolean((passRow && passRow.value) || process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS);
+
+    res.json({
+      success: true,
+      smtp_email: activeEmail,
+      is_configured: isConfigured
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Save Email Settings (Admin Only)
+app.post('/api/admin/email-settings', adminIpFilter, authenticateAdmin, async (req, res) => {
+  const { smtp_email, smtp_password } = req.body;
+  try {
+    if (smtp_email) {
+      await db.run("DELETE FROM settings WHERE key = 'smtp_email'");
+      await db.run("INSERT INTO settings (key, value) VALUES ('smtp_email', ?)", [smtp_email.trim()]);
+    }
+    if (smtp_password) {
+      await db.run("DELETE FROM settings WHERE key = 'smtp_password'");
+      await db.run("INSERT INTO settings (key, value) VALUES ('smtp_password', ?)", [smtp_password.trim()]);
+    }
+    res.json({ success: true, message: 'Google Email settings saved successfully!' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Test Email Settings (Admin Only)
+app.post('/api/admin/email-test', adminIpFilter, authenticateAdmin, async (req, res) => {
+  const { test_email } = req.body;
+  const targetEmail = test_email || 'indiancloths980@gmail.com';
+  try {
+    const result = await emailService.sendWelcomeEmail(targetEmail, 'Little to Large Admin Test', db);
+    res.json({
+      success: true,
+      message: 'Test email successfully dispatched to ' + targetEmail,
+      details: result
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Broadcast 3-Day / Weekly Promotional Campaign to Registered Customers
+app.post('/api/admin/broadcast-promotions', adminIpFilter, authenticateAdmin, async (req, res) => {
+  const { title, subtitle, coupon_code, discount_text } = req.body;
+  try {
+    const customers = await db.query(
+      "SELECT DISTINCT name, email FROM customers WHERE email LIKE '%@%' AND email NOT LIKE '%@littlelarge.in' AND email NOT LIKE 'guest_%'"
+    );
+
+    if (!customers || customers.length === 0) {
+      return res.json({ success: true, count: 0, message: 'No registered customer emails found' });
+    }
+
+    let sent = 0;
+    for (const cust of customers) {
+      emailService.sendPromotionalOffersEmail(cust.email, cust.name, {
+        title,
+        subtitle,
+        coupon_code,
+        discount_text
+      }, db).catch(e => console.error('[Broadcast Email Error]:', e.message));
+      sent++;
+    }
+
+    res.json({
+      success: true,
+      count: sent,
+      message: 'Promotional campaign queued for ' + sent + ' customer(s).'
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

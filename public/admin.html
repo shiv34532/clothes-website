@@ -641,6 +641,69 @@
           </form>
         </div>
 
+        <!-- Google Gmail & Automated Email Notifications Configurator -->
+        <div style="background-color:#fff; padding:2.5rem; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); max-width:650px; margin: 2rem auto 0 auto;">
+          <h2 style="font-size:1.5rem; color:var(--primary); font-weight:800; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:1.5rem; display:flex; align-items:center; gap:10px">
+            📧 Google Gmail & Customer Email Automation
+          </h2>
+          <p style="font-size:0.85rem; color:var(--text-light); margin-bottom:1.5rem; line-height:1.6">
+            Powered by <strong>100% Free Google Gmail SMTP</strong>. Sends automated Welcome Emails, Instant Order Confirmation & Thank-You Receipts, Secure Email OTPs, and 3-Day/Weekly Family Offers to your customers from <strong>indiancloths980@gmail.com</strong>.
+          </p>
+
+          <form id="emailSettingsForm" onsubmit="saveEmailSettings(event)" style="display:flex; flex-direction:column; gap:1.5rem">
+            <div class="form-group">
+              <label style="font-size:0.85rem; font-weight:800; color:var(--primary); display:block; margin-bottom:0.4rem">Store Sender Gmail Address</label>
+              <input type="email" id="settingSmtpEmail" class="form-input" required placeholder="indiancloths980@gmail.com" style="width:100%; box-sizing:border-box" value="indiancloths980@gmail.com">
+              <small style="color:var(--text-light); font-size:0.75rem; display:block; margin-top:4px">This Gmail address will be visible as the sender in customer inboxes.</small>
+            </div>
+
+            <div class="form-group">
+              <label style="font-size:0.85rem; font-weight:800; color:var(--primary); display:block; margin-bottom:0.4rem">Google Account App Password (16 Letters)</label>
+              <input type="password" id="settingSmtpPassword" class="form-input" placeholder="e.g. abcd efgh ijkl mnop (Leave blank to keep current)" style="width:100%; box-sizing:border-box">
+              <div id="smtpPassStatusBadge" style="margin-top:6px; font-size:0.8rem; font-weight:700; color:var(--text-light);">
+                Status: Checking...
+              </div>
+              <div style="background:#f8fafc; border-left:4px solid var(--primary); padding:10px 12px; border-radius:4px; margin-top:8px; font-size:0.75rem; color:#475569; line-height:1.5">
+                <strong>💡 How to get your free 16-character App Password:</strong><br>
+                1. Open Google Account (<a href="https://myaccount.google.com/security" target="_blank" style="color:var(--primary); text-decoration:underline;">myaccount.google.com/security</a>) for <code>indiancloths980@gmail.com</code>.<br>
+                2. Ensure <strong>2-Step Verification</strong> is ON.<br>
+                3. Search for <strong>App Passwords</strong> (or visit <code>myaccount.google.com/apppasswords</code>).<br>
+                4. Create an App name (e.g. <em>Little To Large Store</em>) and paste the generated 16-letter code here.
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="padding:0.8rem 2rem; font-size:0.9rem; font-weight:700; width:100%; cursor:pointer">
+              💾 Save Email Credentials
+            </button>
+          </form>
+
+          <!-- Quick Test Email Box -->
+          <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px dashed var(--border-color);">
+            <h4 style="font-size:0.95rem; font-weight:800; color:var(--primary); margin-bottom:0.6rem;">🧪 Send Quick Test Email</h4>
+            <p style="font-size:0.8rem; color:var(--text-light); margin-bottom:1rem;">Verify your Gmail connection by sending a live test email.</p>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <input type="email" id="testEmailRecipient" class="form-input" placeholder="Enter recipient email (e.g. your personal email)" style="flex:1; min-width:220px; box-sizing:border-box;">
+              <button type="button" onclick="sendTestEmail()" class="btn btn-accent" style="padding:0.75rem 1.5rem; font-size:0.85rem; font-weight:700; cursor:pointer; white-space:nowrap;">
+                🚀 Send Test Email
+              </button>
+            </div>
+          </div>
+
+          <!-- Promotional Email Broadcast Box -->
+          <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px dashed var(--border-color);">
+            <h4 style="font-size:0.95rem; font-weight:800; color:var(--primary); margin-bottom:0.6rem;">📢 3-Day & Weekly Offers Email Broadcast</h4>
+            <p style="font-size:0.8rem; color:var(--text-light); margin-bottom:1rem;">Send branded promotional discount emails to all registered shoppers in 1 click.</p>
+            <div style="display:flex; flex-direction:column; gap:0.8rem;">
+              <input type="text" id="promoOfferTitle" class="form-input" placeholder="Offer Title (e.g. Special Family Weekend: Flat 20% OFF!)" value="Special Family Weekend: Flat 20% OFF!" style="width:100%; box-sizing:border-box;">
+              <input type="text" id="promoDiscountCode" class="form-input" placeholder="Coupon Code (e.g. FAMILY20)" value="FAMILY20" style="width:100%; box-sizing:border-box;">
+              <input type="text" id="promoBannerMsg" class="form-input" placeholder="Highlight Message (e.g. Exclusive collection for Kids, Women & Men)" value="Exclusive new arrivals with extra discount for our royal family members" style="width:100%; box-sizing:border-box;">
+              <button type="button" onclick="broadcastPromotions()" class="btn btn-primary" style="padding:0.75rem 1.5rem; font-size:0.85rem; font-weight:700; cursor:pointer;">
+                ✉️ Broadcast Weekly Offer to All Shoppers
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div style="background-color:#fff; padding:2.5rem; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); max-width:650px; margin: 2rem auto 0 auto;">
           <h2 style="font-size:1.5rem; color:var(--primary); font-weight:800; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:1.5rem; display:flex; align-items:center; gap:10px">
             🔒 Change Admin Password

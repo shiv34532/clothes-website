@@ -134,9 +134,41 @@
           <div style="text-align: center; margin: 1.2rem 0; color: var(--text-light); font-size: 0.85rem; font-weight: 600;">
             — OR —
           </div>
-          <button type="button" class="auth-btn" style="background-color: var(--accent);" onclick="toggleOtpForm(true)">
+          <button type="button" class="auth-btn" style="background-color: var(--primary-light, #312e81); margin-top: 0;" onclick="toggleEmailOtpForm(true)">
+            ✉️ Sign In with Email OTP
+          </button>
+          <button type="button" class="auth-btn" style="background-color: var(--accent); margin-top: 0.6rem;" onclick="toggleOtpForm(true)">
             📲 Sign In with Mobile OTP
           </button>
+        </form>
+
+        <!-- Email OTP-Based Login Form (Hidden initially) -->
+        <form id="emailOtpLoginForm" style="display: none;">
+          <h3 style="font-size: 1.4rem; color: var(--primary); font-weight: 800; margin-bottom: 0.4rem;">Email OTP Sign In</h3>
+          <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.2rem;">We will send a 6-digit verification code directly to your email address.</p>
+          
+          <div id="emailOtpSendGroup">
+            <div class="form-group">
+              <label>Your Email Address</label>
+              <input type="email" id="loginOtpEmail" class="form-input" placeholder="e.g. yourname@gmail.com">
+            </div>
+            <button type="button" class="auth-btn" id="sendEmailOtpBtn" onclick="sendCustomerEmailOtp()">Get Verification Code</button>
+          </div>
+
+          <div id="emailOtpVerifyGroup" style="display: none; margin-top: 1rem;">
+            <div class="form-group">
+              <label>Enter 6-Digit Verification Code</label>
+              <input type="text" id="loginEmailOtpCode" class="form-input" style="text-align:center; font-size:1.5rem; letter-spacing:8px; font-weight:800" placeholder="123456" maxlength="6">
+            </div>
+            <button type="submit" class="auth-btn" id="verifyEmailOtpBtn">Verify & Sign In</button>
+            <div style="text-align: center; margin-top: 0.8rem;">
+              <button type="button" onclick="sendCustomerEmailOtp()" style="background: none; border: none; color: var(--primary); font-weight: 700; font-size: 0.85rem; cursor: pointer; text-decoration: underline;">Resend Code</button>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin-top: 1.5rem;">
+            <a href="#" onclick="toggleEmailOtpForm(false)" style="color: var(--primary); font-weight: 700; font-size: 0.85rem;"><i class="fas fa-arrow-left"></i> Back to Password Sign In</a>
+          </div>
         </form>
 
         <!-- OTP-Based Login Form (Hidden initially) -->
@@ -268,6 +300,8 @@
       if (tab === 'login') {
         document.querySelector('.auth-tab:nth-child(1)').classList.add('active');
         document.getElementById('loginPanel').classList.add('active');
+        toggleEmailOtpForm(false);
+        toggleOtpForm(false);
       } else {
         document.querySelector('.auth-tab:nth-child(2)').classList.add('active');
         document.getElementById('registerPanel').classList.add('active');
@@ -275,14 +309,154 @@
     }
 
     function toggleOtpForm(useOtp) {
+      const trad = document.getElementById('traditionalLoginForm');
+      const otp = document.getElementById('otpLoginForm');
+      const emailOtp = document.getElementById('emailOtpLoginForm');
       if (useOtp) {
-        document.getElementById('traditionalLoginForm').style.display = 'none';
-        document.getElementById('otpLoginForm').style.display = 'block';
+        if (trad) trad.style.display = 'none';
+        if (emailOtp) emailOtp.style.display = 'none';
+        if (otp) otp.style.display = 'block';
       } else {
-        document.getElementById('traditionalLoginForm').style.display = 'block';
-        document.getElementById('otpLoginForm').style.display = 'none';
+        if (trad) trad.style.display = 'block';
+        if (otp) otp.style.display = 'none';
+        if (emailOtp) emailOtp.style.display = 'none';
       }
     }
+
+    function toggleEmailOtpForm(useEmailOtp) {
+      const trad = document.getElementById('traditionalLoginForm');
+      const otp = document.getElementById('otpLoginForm');
+      const emailOtp = document.getElementById('emailOtpLoginForm');
+      if (useEmailOtp) {
+        if (trad) trad.style.display = 'none';
+        if (otp) otp.style.display = 'none';
+        if (emailOtp) {
+          emailOtp.style.display = 'block';
+          // Pre-fill email from traditional input if present
+          const tradEmail = document.getElementById('loginEmail');
+          const otpEmail = document.getElementById('loginOtpEmail');
+          if (tradEmail && otpEmail && tradEmail.value && !otpEmail.value) {
+            otpEmail.value = tradEmail.value;
+          }
+        }
+      } else {
+        if (trad) trad.style.display = 'block';
+        if (otp) otp.style.display = 'none';
+        if (emailOtp) emailOtp.style.display = 'none';
+      }
+    }
+
+    async function sendCustomerEmailOtp() {
+      const emailInput = document.getElementById('loginOtpEmail');
+      const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+      if (!email || !email.includes('@')) {
+        showToast('Please enter a valid email address!', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('sendEmailOtpBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending code...';
+      }
+      if (typeof startGlobalProgressBar === 'function') startGlobalProgressBar();
+
+      try {
+        const res = await fetch('/api/auth/email-otp-send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        if (typeof completeGlobalProgressBar === 'function') completeGlobalProgressBar();
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = 'Get Verification Code';
+        }
+
+        if (data.success) {
+          showToast(data.message || 'Verification code sent to your email!', 'success');
+          document.getElementById('emailOtpSendGroup').style.display = 'none';
+          document.getElementById('emailOtpVerifyGroup').style.display = 'block';
+          const codeInput = document.getElementById('loginEmailOtpCode');
+          if (codeInput) codeInput.focus();
+        } else {
+          showToast(data.message || 'Failed to send verification code', 'error');
+        }
+      } catch (err) {
+        if (typeof completeGlobalProgressBar === 'function') completeGlobalProgressBar();
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = 'Get Verification Code';
+        }
+        showToast('Network error sending verification code', 'error');
+      }
+    }
+
+    // Submit Email OTP Verification
+    document.addEventListener('DOMContentLoaded', () => {
+      const emailOtpForm = document.getElementById('emailOtpLoginForm');
+      if (emailOtpForm) {
+        emailOtpForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const emailInput = document.getElementById('loginOtpEmail');
+          const codeInput = document.getElementById('loginEmailOtpCode');
+          const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+          const otp = codeInput ? codeInput.value.trim() : '';
+
+          if (!email || !email.includes('@')) {
+            showToast('Please enter a valid email address', 'error');
+            return;
+          }
+          if (otp.length < 6) {
+            showToast('Please enter the full 6-digit verification code', 'error');
+            return;
+          }
+
+          const btn = document.getElementById('verifyEmailOtpBtn');
+          if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+          }
+          if (typeof startGlobalProgressBar === 'function') startGlobalProgressBar();
+
+          try {
+            const res = await fetch('/api/auth/email-otp-verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, otp })
+            });
+            const data = await res.json();
+            if (typeof completeGlobalProgressBar === 'function') completeGlobalProgressBar();
+            if (btn) {
+              btn.disabled = false;
+              btn.innerHTML = 'Verify & Sign In';
+            }
+
+            if (data.success) {
+              saveToken(data.token, data.user);
+              showToast(`OTP Verified! Welcome, ${data.user.name}!`, 'success');
+              setTimeout(() => {
+                if (data.user.email && data.user.email.toLowerCase() === 'admin@littlelarge.in') {
+                  window.location.replace('/admin');
+                } else {
+                  window.location.replace('/');
+                }
+              }, 1000);
+            } else {
+              showToast(data.message || 'Invalid or expired verification code', 'error');
+            }
+          } catch (err) {
+            if (typeof completeGlobalProgressBar === 'function') completeGlobalProgressBar();
+            if (btn) {
+              btn.disabled = false;
+              btn.innerHTML = 'Verify & Sign In';
+            }
+            showToast('Verification failed: network connection issue', 'error');
+          }
+        });
+      }
+    });
 
     // Submit Traditional Login
     document.getElementById('traditionalLoginForm').addEventListener('submit', async (e) => {

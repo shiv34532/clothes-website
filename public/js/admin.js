@@ -1233,6 +1233,9 @@ async function loadAdminShippingSettings() {
   } catch (err) {
     console.error('Failed to load Shiprocket settings:', err);
   }
+
+  // Also load Email Automation configurations
+  loadEmailSettings();
 }
 
 async function saveShippingSettings(e) {
@@ -1291,6 +1294,128 @@ async function saveShiprocketSettings(e) {
     }
   } catch (err) {
     showToast('Error saving Shiprocket settings', 'error');
+  }
+}
+
+/* ==========================================================================
+   10. EMAIL AUTOMATION & GMAIL NOTIFICATIONS
+   ========================================================================== */
+async function loadEmailSettings() {
+  try {
+    const res = await fetch('/api/admin/email-settings', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      const emailInput = document.getElementById('settingSmtpEmail');
+      const badge = document.getElementById('smtpPassStatusBadge');
+      const activeEmail = data.smtp_email || (data.emailSettings && data.emailSettings.smtp_email);
+      const isConfigured = data.is_configured || (data.emailSettings && data.emailSettings.hasPassword);
+      if (emailInput && activeEmail) {
+        emailInput.value = activeEmail;
+      }
+      if (badge) {
+        if (isConfigured) {
+          badge.innerHTML = '🟢 <span style="color:#16a34a; font-weight:700">Google App Password is configured & active.</span>';
+        } else {
+          badge.innerHTML = '🟡 <span style="color:#d97706; font-weight:700">Google App Password not configured yet. System running in safe simulated mode.</span>';
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load email settings:', err);
+  }
+}
+
+async function saveEmailSettings(e) {
+  e.preventDefault();
+  const smtp_email = document.getElementById('settingSmtpEmail').value.trim();
+  const smtp_password = document.getElementById('settingSmtpPassword').value.trim();
+
+  try {
+    showToast('Saving email credentials...', 'info');
+    const res = await fetch('/api/admin/email-settings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ smtp_email, smtp_password })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('🎉 Email settings saved successfully!', 'success');
+      document.getElementById('settingSmtpPassword').value = '';
+      loadEmailSettings();
+    } else {
+      showToast(data.message || 'Failed to save email settings', 'error');
+    }
+  } catch (err) {
+    showToast('Error saving email settings', 'error');
+  }
+}
+
+async function sendTestEmail() {
+  const recipientInput = document.getElementById('testEmailRecipient');
+  const test_email = recipientInput ? recipientInput.value.trim() : '';
+  if (!test_email || !test_email.includes('@')) {
+    showToast('Please enter a valid recipient email address!', 'error');
+    return;
+  }
+
+  showToast('Sending test email...', 'info');
+  try {
+    const res = await fetch('/api/admin/email-test', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ test_email })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || 'Test email sent successfully!', 'success');
+    } else {
+      showToast(data.message || 'Failed to send test email', 'error');
+    }
+  } catch (err) {
+    showToast('Network error sending test email', 'error');
+  }
+}
+
+async function broadcastPromotions() {
+  const offer_title = document.getElementById('promoOfferTitle').value.trim();
+  const discount_code = document.getElementById('promoDiscountCode').value.trim();
+  const banner_message = document.getElementById('promoBannerMsg').value.trim();
+
+  if (!confirm(`Are you sure you want to broadcast "${offer_title}" with coupon "${discount_code}" to all customer inboxes?`)) {
+    return;
+  }
+
+  showToast('Broadcasting promotional offers to shoppers...', 'info');
+  try {
+    const res = await fetch('/api/admin/broadcast-promotions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        title: offer_title,
+        subtitle: banner_message,
+        coupon_code: discount_code,
+        discount_text: banner_message
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`🎉 ${data.message}`, 'success');
+    } else {
+      showToast(data.message || 'Broadcast failed', 'error');
+    }
+  } catch (err) {
+    showToast('Error broadcasting promotional campaign', 'error');
   }
 }
 
