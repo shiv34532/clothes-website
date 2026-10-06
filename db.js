@@ -396,6 +396,22 @@ async function createTables() {
     )
   `);
 
+  // Family Profiles Table
+  await run(`
+    CREATE TABLE IF NOT EXISTS family_profiles (
+      id ${idType},
+      customer_id INTEGER NOT NULL,
+      name VARCHAR(100) NOT NULL,
+      relationship VARCHAR(50) NOT NULL,
+      age INTEGER,
+      gender VARCHAR(50),
+      top_size VARCHAR(20),
+      bottom_size VARCHAR(20),
+      shoe_size VARCHAR(20),
+      created_at ${datetimeType} DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // Alter tables to add new columns for user settings and dynamic product details
   const alterQueries = [
     `ALTER TABLE customers ADD COLUMN phone_alt VARCHAR(15)`,

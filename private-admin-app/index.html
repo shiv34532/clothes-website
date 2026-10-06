@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#122b27">
+  <meta name="description" content="Little to Large private admin publishing app">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+  <title>L2L Studio</title>
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <section id="loginView" class="login-view">
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true"><span>L</span><span>2</span><span>L</span></div>
+        <div><p class="eyebrow">PRIVATE ADMIN STUDIO</p><h1>Little to Large</h1><p class="muted">Publish your next look from anywhere.</p></div>
+      </div>
+      <form id="loginForm" class="panel login-panel">
+        <div><p class="eyebrow">ADMIN ACCESS</p><h2>Welcome back</h2><p class="muted">Sign in with the store administrator account.</p></div>
+        <label>Email<input id="loginEmail" type="email" autocomplete="username" placeholder="admin@littlelarge.in" required></label>
+        <label>Password<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Your password" required></label>
+        <button class="button button-primary" type="submit"><span>Enter Studio</span><span class="button-arrow">&#8594;</span></button>
+        <p id="loginStatus" class="status" role="alert"></p>
+      </form>
+      <p class="login-footnote"><span class="secure-dot"></span> Admin-only publishing space</p>
+    </section>
+
+    <section id="studioView" class="studio-view" hidden>
+      <header class="topbar">
+        <div class="brand-mini"><div class="brand-mark small" aria-hidden="true"><span>L</span><span>2</span><span>L</span></div><div><strong>L2L Studio</strong><small>Private publishing desk</small></div></div>
+        <button id="logoutButton" class="icon-button" type="button" aria-label="Sign out" title="Sign out">&#8599;</button>
+      </header>
+      <main>
+        <section class="welcome-row"><div><p class="eyebrow">GOOD TO SEE YOU</p><h1>Make it live.</h1><p class="muted">Add a product or refresh the storefront in a few taps.</p></div><div id="connectionPill" class="connection-pill"><span></span> Connected</div></section>
+        <div id="toast" class="toast" role="status"></div>
+        <nav class="tabbar" aria-label="Studio sections"><button class="tab active" data-tab="productTab" type="button">Product</button><button class="tab" data-tab="bannerTab" type="button">Banner</button><button class="tab" data-tab="catalogTab" type="button">Live catalog</button></nav>
+
+        <section id="productTab" class="tab-panel active-panel">
+          <form id="productForm" class="panel form-panel">
+            <div class="section-heading"><div class="section-icon">+</div><div><p class="eyebrow">CATALOG PUBLISHER</p><h2>New clothing product</h2></div></div>
+            <label>Product name<input name="name" type="text" placeholder="e.g. Sandstone Linen Co-ord" required></label>
+            <div class="field-grid"><label>Category<select name="category" required><option>Men</option><option>Women</option><option>Kids</option><option>Accessories</option></select></label><label>Style / subcategory<input name="subcategory" type="text" placeholder="Ethnic, Western..."></label></div>
+            <div class="field-grid"><label>MRP (INR)<input name="price" type="number" min="1" step="0.01" placeholder="2499" required></label><label>Sale price<input name="discount_price" type="number" min="0" step="0.01" placeholder="1499"></label></div>
+            <div class="field-grid"><label>Stock<input name="stock" type="number" min="0" placeholder="25" required></label><label>Sizes<input name="size_variants" type="text" value="S,M,L,XL" required></label></div>
+            <label>Description<textarea name="description" rows="4" placeholder="Fabric, fit, care and styling details" required></textarea></label>
+            <div class="upload-box"><div class="upload-copy"><span class="upload-icon">&#9633;</span><div><strong>Product photos</strong><small>Up to 5 images, up to 10 MB each</small></div></div><input name="images" type="file" accept="image/*" multiple></div>
+            <div class="upload-box"><div class="upload-copy"><span class="upload-icon">&#9654;</span><div><strong>Product video</strong><small>Optional demo video from your phone</small></div></div><input name="video" type="file" accept="video/*"></div>
+            <label>Or use a hosted image URL<input name="image_url" type="url" placeholder="https://..."></label>
+            <label>Or use a hosted video URL <span class="optional">optional</span><input name="video_url" type="url" placeholder="https://...mp4"></label>
+            <div class="inline-field"><label>Return window (days)<input name="return_window_days" type="number" min="0" value="7"></label><button class="button button-primary submit-button" type="submit">Publish product <span class="button-arrow">&#8594;</span></button></div>
+          </form>
+        </section>
+
+        <section id="bannerTab" class="tab-panel" hidden>
+          <form id="bannerForm" class="panel form-panel">
+            <div class="section-heading"><div class="section-icon sun">&#9733;</div><div><p class="eyebrow">STOREFRONT CAMPAIGN</p><h2>Homepage banner</h2></div></div>
+            <p class="helper">Publish an image campaign that appears on the website homepage immediately.</p>
+            <label>Campaign title<input name="title" type="text" placeholder="The new season edit" required></label>
+            <label>Supporting line<input name="subtitle" type="text" placeholder="Fresh layers for every little moment"></label>
+            <div class="field-grid"><label>Start date<input name="start_date" type="date" required></label><label>End date<input name="end_date" type="date" required></label></div>
+            <div class="field-grid"><label>Priority<input name="priority" type="number" value="10" min="0"></label><label>Background color<input name="bg_color" type="text" value="#122b27" placeholder="#122b27"></label></div>
+            <label>Button link <span class="optional">optional</span><input name="link_url" type="text" placeholder="/products.html?category=Women"></label>
+            <div class="upload-box"><div class="upload-copy"><span class="upload-icon">&#9633;</span><div><strong>Campaign image</strong><small>Wide JPG, PNG or WEBP works best</small></div></div><input name="image" type="file" accept="image/*"></div>
+            <label>Or use a hosted image URL<input name="media_url" type="url" placeholder="https://..."></label>
+            <button class="button button-primary submit-button" type="submit">Publish banner <span class="button-arrow">&#8594;</span></button>
+          </form>
+        </section>
+
+        <section id="catalogTab" class="tab-panel" hidden><div class="catalog-header"><div><p class="eyebrow">LIVE FROM WEBSITE</p><h2>Recent catalog</h2></div><button id="refreshCatalog" class="button button-light" type="button">Refresh</button></div><div id="catalogList" class="catalog-list"><div class="loading-state">Loading catalog...</div></div></section>
+      </main>
+      <footer class="studio-footer"><span>Little to Large</span><button id="settingsButton" type="button">API connection</button></footer>
+    </section>
+  </div>
+  <dialog id="settingsDialog"><form method="dialog" class="settings-card"><div class="section-heading"><div class="section-icon">&#9881;</div><div><p class="eyebrow">CONNECTION</p><h2>Website API</h2></div></div><label>Website URL<input id="apiBaseInput" type="url" placeholder="http://localhost:3000"></label><p class="helper">For a phone, enter your live HTTPS website URL. For VS Code preview, use the local backend URL.</p><div class="dialog-actions"><button class="button button-light" value="cancel">Cancel</button><button id="saveSettings" class="button button-primary" value="default">Save connection</button></div></form></dialog>
+  <script src="app.js"></script>
+</body>
+</html>

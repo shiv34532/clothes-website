@@ -1,0 +1,24 @@
+{
+  "name": "l2l-admin-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Private Little to Large admin publishing app for Android, iOS and web preview",
+  "scripts": {
+    "preview": "npx serve . --listen 4173",
+    "sync-web": "node sync-web-assets.js",
+    "sync": "npm run sync-web && npx cap sync",
+    "android": "npx cap open android",
+    "ios": "npx cap open ios",
+    "build:apk": "npm run sync && cd android && .\\gradlew.bat assembleDebug",
+    "build:ios": "npm run sync && npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/ios": "^7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3",
+    "serve": "^14.2.4"
+  }
+}

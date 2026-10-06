@@ -1,0 +1,8 @@
+{
+  "appId": "in.littlelarge.admin",
+  "appName": "L2L Studio",
+  "webDir": "www",
+  "server": {
+    "cleartext": true
+  }
+}

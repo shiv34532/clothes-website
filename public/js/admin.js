@@ -339,6 +339,25 @@ async function loadAdminOrders() {
           `;
         }
 
+        let itemsHtml = '';
+        if (o.items && o.items.length > 0) {
+          let totalQty = o.items.reduce((sum, item) => sum + item.quantity, 0);
+          itemsHtml = `<div style="margin-top:8px; font-size:0.75rem; background:#f9fafb; padding:8px; border-radius:4px; border:1px solid #e5e7eb;">
+            <strong style="color:var(--primary);">Order Items (Total Qty: ${totalQty}):</strong><br>
+            <ul style="list-style:none; padding-left:0; margin:4px 0 0 0;">
+              ${o.items.map(item => `<li style="margin-bottom:4px; border-bottom:1px dashed #ccc; padding-bottom:4px;">
+                ${item.quantity}x <strong>${item.product_name || 'Product'}</strong> 
+                (Size: ${item.size}, Color: ${item.color}) - ₹${item.price}
+              </li>`).join('')}
+            </ul>
+            <div style="margin-top:6px;">
+              <a href="/api/orders/${o.id}/invoice" target="_blank" style="color:var(--secondary); text-decoration:underline; font-weight:bold;">
+                <i class="fas fa-file-invoice"></i> View Invoice
+              </a>
+            </div>
+          </div>`;
+        }
+
         tbody.innerHTML += `
           <tr>
             <td><strong>#${o.id}</strong></td>
@@ -352,6 +371,7 @@ async function loadAdminOrders() {
                   <strong>Comments:</strong> ${o.return_comments || 'None'}
                 </div>
               ` : ''}
+              ${itemsHtml}
             </td>
             <td>${date}</td>
             <td><strong>₹${parseFloat(o.total_amount).toFixed(2)}</strong></td>
@@ -1410,5 +1430,35 @@ async function triggerCompleteStoreReset() {
     }
   } catch (err) {
     showToast('Failed to connect to reset API', 'error');
+  }
+}
+
+// Phase 4: AI Merchant Intelligence Logic
+async function loadIntelligenceReport() {
+  const container = document.getElementById('intelligenceReportContainer');
+  const btn = document.getElementById('btnRunIntelligence');
+  
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing Store Data...';
+  container.innerHTML = '<div style="text-align:center; padding:3rem 0; color:var(--text-light)"><i class="fas fa-spinner fa-spin" style="font-size:3rem; margin-bottom:1rem;"></i><h3>AI is analyzing sales, predicting trends, and formatting pricing insights...</h3></div>';
+
+  try {
+    const res = await fetch('/api/admin/intelligence', {
+      headers: { 'Authorization': `Bearer ${getToken()}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      container.innerHTML = data.report;
+      showToast('Intelligence Report Generated!');
+    } else {
+      container.innerHTML = `<div style="color:var(--danger); text-align:center;">Failed to generate report: ${data.message}</div>`;
+      showToast(data.message, 'error');
+    }
+  } catch (err) {
+    container.innerHTML = `<div style="color:var(--danger); text-align:center;">Error communicating with AI Merchant system.</div>`;
+    showToast('Error fetching report', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-bolt"></i> Run AI Analysis';
   }
 }

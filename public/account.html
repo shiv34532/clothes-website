@@ -129,6 +129,7 @@
       <ul>
         <li><a href="#" class="active" onclick="switchAccountTab(this, 'profileTab')"><i class="far fa-id-card"></i> Profile Details</a></li>
         <li><a href="#" onclick="switchAccountTab(this, 'ordersTab')"><i class="fas fa-box-open"></i> My Orders</a></li>
+        <li><a href="#" onclick="switchAccountTab(this, 'familyTab')"><i class="fas fa-users"></i> Family Profiles & Sizes</a></li>
         <li><a href="#" onclick="switchAccountTab(this, 'wishlistTab')"><i class="far fa-heart"></i> My Wishlist</a></li>
         <li><a href="#" onclick="logout()" style="color:var(--danger)"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li>
       </ul>
@@ -338,7 +339,20 @@
         </div>
       </div>
 
-      <!-- 3. MY WISHLIST TAB -->
+      <!-- 3. FAMILY PROFILES & SIZES TAB -->
+      <div class="account-card" id="familyTab" style="display: none;">
+        <h2 style="font-size: 1.5rem; color: var(--primary); font-weight: 800; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+          Family Profiles & Sizes
+        </h2>
+        <div style="margin-bottom: 1.5rem; text-align: right;">
+          <button onclick="openFamilyProfileModal()" class="btn btn-primary"><i class="fas fa-plus"></i> Add Family Member</button>
+        </div>
+        <div id="familyProfilesContainer">
+          <p style="color:var(--text-light)">Loading family profiles...</p>
+        </div>
+      </div>
+
+      <!-- 4. MY WISHLIST TAB -->
       <div class="account-card" id="wishlistTab" style="display: none;">
         <h2 style="font-size: 1.5rem; color: var(--primary); font-weight: 800; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
           Saved Outfits
@@ -376,22 +390,28 @@
       const activeTab = urlParams.get('tab');
       if (activeTab === 'wishlist') {
         switchAccountTab(document.querySelector('a[onclick*="wishlistTab"]'), 'wishlistTab');
+      } else if (activeTab === 'size' || activeTab === 'wardrobe') {
+        switchAccountTab(document.querySelector('a[onclick*="familyTab"]'), 'familyTab');
       }
 
       loadUserProfile();
     });
 
     function switchAccountTab(link, tabId) {
-      document.querySelectorAll('.account-sidebar-menu a').forEach(a => a.classList.remove('active'));
-      link.classList.add('active');
+      if(link) {
+        document.querySelectorAll('.account-sidebar-menu a').forEach(a => a.classList.remove('active'));
+        link.classList.add('active');
+      }
 
-      const tabs = ['profileTab', 'ordersTab', 'wishlistTab'];
+      const tabs = ['profileTab', 'ordersTab', 'familyTab', 'wishlistTab'];
       tabs.forEach(id => {
-        document.getElementById(id).style.display = id === tabId ? 'block' : 'none';
+        const el = document.getElementById(id);
+        if(el) el.style.display = id === tabId ? 'block' : 'none';
       });
 
       if (tabId === 'ordersTab') loadUserOrders();
       else if (tabId === 'wishlistTab') loadUserWishlist();
+      else if (tabId === 'familyTab') loadFamilyProfiles();
     }
 
     // Load Profile details
@@ -964,5 +984,175 @@
       addToCart(product, defaultSize, 1);
     }
   </script>
+    // --- Family Profiles Logic ---
+    async function loadFamilyProfiles() {
+      const container = document.getElementById('familyProfilesContainer');
+      try {
+        const res = await fetch('/api/family-profiles', {
+          headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (data.profiles.length === 0) {
+            container.innerHTML = '<p style="color:var(--text-light)">No family profiles added yet. Add family members to get smart size and outfit recommendations.</p>';
+            return;
+          }
+          container.innerHTML = data.profiles.map(p => `
+            <div style="border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h4 style="margin-bottom: 0.2rem; color: var(--primary);"><i class="fas ${p.gender === 'Female' ? 'fa-female' : (p.gender === 'Male' ? 'fa-male' : 'fa-user')}"></i> ${p.name} <span style="font-size:0.8rem; background: #e0e7ff; color: #4338ca; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${p.relationship}</span></h4>
+                <div style="font-size: 0.85rem; color: var(--text-light); margin-top: 8px;">
+                  <strong>Age:</strong> ${p.age || 'N/A'} | 
+                  <strong>Top Size:</strong> ${p.top_size || 'N/A'} | 
+                  <strong>Bottom Size:</strong> ${p.bottom_size || 'N/A'} | 
+                  <strong>Shoe Size:</strong> ${p.shoe_size || 'N/A'}
+                </div>
+              </div>
+              <div>
+                <button onclick="deleteFamilyProfile(${p.id})" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 8px;" title="Delete Profile"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        container.innerHTML = '<p style="color:var(--danger)">Failed to load family profiles.</p>';
+      }
+    }
+
+    function openFamilyProfileModal() {
+      document.getElementById('familyProfileModal').style.display = 'flex';
+    }
+
+    function closeFamilyProfileModal() {
+      document.getElementById('familyProfileModal').style.display = 'none';
+      document.getElementById('familyProfileForm').reset();
+    }
+
+    async function saveFamilyProfile(e) {
+      e.preventDefault();
+      const btn = document.getElementById('saveFamilyBtn');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      btn.disabled = true;
+
+      const body = {
+        name: document.getElementById('fpName').value,
+        relationship: document.getElementById('fpRelationship').value,
+        age: document.getElementById('fpAge').value,
+        gender: document.getElementById('fpGender').value,
+        top_size: document.getElementById('fpTop').value,
+        bottom_size: document.getElementById('fpBottom').value,
+        shoe_size: document.getElementById('fpShoe').value
+      };
+
+      try {
+        const res = await fetch('/api/family-profiles', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken()}`
+          },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Family Profile saved!');
+          closeFamilyProfileModal();
+          loadFamilyProfiles();
+        } else {
+          showToast(data.message, 'error');
+        }
+      } catch (err) {
+        showToast('Error saving profile', 'error');
+      } finally {
+        btn.innerHTML = 'Save Profile';
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteFamilyProfile(id) {
+      if(!confirm('Delete this family member profile?')) return;
+      try {
+        const res = await fetch('/api/family-profiles/' + id, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Profile deleted');
+          loadFamilyProfiles();
+        }
+      } catch (err) {
+        showToast('Error deleting profile', 'error');
+      }
+    }
+  </script>
+
+  <!-- Family Profile Modal -->
+  <div class="modal" id="familyProfileModal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Add Family Member</h2>
+        <button class="modal-close" onclick="closeFamilyProfileModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="familyProfileForm" onsubmit="saveFamilyProfile(event)">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="fpName" class="form-control" required>
+        </div>
+        <div class="profile-form-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 1rem;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Relationship</label>
+            <select id="fpRelationship" class="form-control" required>
+              <option value="Self">Self</option>
+              <option value="Spouse">Spouse</option>
+              <option value="Child">Child</option>
+              <option value="Parent">Parent</option>
+              <option value="Sibling">Sibling</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Gender</label>
+            <select id="fpGender" class="form-control">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Unisex">Unisex</option>
+            </select>
+          </div>
+        </div>
+        <div class="profile-form-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 1rem;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Age</label>
+            <input type="number" id="fpAge" class="form-control">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Shoe Size (UK/IN)</label>
+            <input type="text" id="fpShoe" class="form-control" placeholder="e.g. 7 or 8">
+          </div>
+        </div>
+        <div class="profile-form-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 1.5rem;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Top Size</label>
+            <select id="fpTop" class="form-control">
+              <option value="">Select...</option>
+              <option value="XS">XS</option>
+              <option value="S">S</option>
+              <option value="M">M</option>
+              <option value="L">L</option>
+              <option value="XL">XL</option>
+              <option value="XXL">XXL</option>
+              <option value="Kids-Small">Kids Small</option>
+              <option value="Kids-Med">Kids Med</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Bottom Size</label>
+            <input type="text" id="fpBottom" class="form-control" placeholder="e.g. 32, 34, M, L">
+          </div>
+        </div>
+        <button type="submit" id="saveFamilyBtn" class="btn btn-primary" style="width: 100%;">Save Profile</button>
+      </form>
+    </div>
+  </div>
 </body>
 </html>

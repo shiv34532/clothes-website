@@ -254,6 +254,16 @@
         document.getElementById('shopPageTitle').textContent = `Search results for "${searchParam}"`;
       }
 
+      const styleParam = urlParams.get('style');
+      if (styleParam) {
+        document.querySelectorAll('.style-filter').forEach(chk => {
+          if (chk.value === styleParam) chk.checked = true;
+        });
+        if (!catParam && !searchParam) {
+          document.getElementById('shopPageTitle').textContent = `${styleParam} Outfits`;
+        }
+      }
+
       // Add listeners to elements
       document.querySelectorAll('.cat-filter, .subcat-filter, .fabric-filter, .color-filter, .style-filter, .gender-filter').forEach(el => {
         el.addEventListener('change', syncFilterStates);
@@ -385,7 +395,12 @@
       if (checkedColors.length > 0) urlParams.set('color', checkedColors[0]);
 
       const checkedStyles = Array.from(document.querySelectorAll('.style-filter:checked')).map(c => c.value);
-      if (checkedStyles.length > 0) urlParams.set('style', checkedStyles[0]);
+      if (checkedStyles.length > 0) {
+        urlParams.set('style', checkedStyles[0]);
+      } else {
+        const pathParams = new URLSearchParams(window.location.search);
+        if (pathParams.get('style')) urlParams.set('style', pathParams.get('style'));
+      }
 
       const checkedGenders = Array.from(document.querySelectorAll('.gender-filter:checked')).map(c => c.value);
       if (checkedGenders.length > 0) urlParams.set('gender', checkedGenders[0]);
@@ -397,6 +412,12 @@
 
       const sort = document.getElementById('sortSelector').value;
       if (sort) urlParams.set('sort', sort);
+
+      const pathParams2 = new URLSearchParams(window.location.search);
+      if (pathParams2.get('visualSearch') === 'true' && pathParams2.get('ids')) {
+        urlParams.set('ids', pathParams2.get('ids'));
+        document.getElementById('shopPageTitle').textContent = `Visual Search Results`;
+      }
 
       try {
         const res = await fetch(`/api/products?${urlParams.toString()}`);

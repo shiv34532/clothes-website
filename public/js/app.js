@@ -351,23 +351,30 @@ function renderHeaderFooter() {
           <span>Little <span class="logo-accent">to</span> Large</span>
         </a>
         
-        <nav class="nav-links">
-          <a href="/">Home</a>
-          <a href="/products">Shop</a>
-          <a href="/lookbook">Lookbook</a>
-          <a href="/products?category=Men">Men</a>
-          <a href="/products?category=Women">Women</a>
-          <a href="/products?category=Kids">Kids</a>
-          <a href="/products?style=Ethnic">Festival Wear</a>
+        <nav class="nav-links" style="display:flex; flex-wrap:wrap; gap:12px; font-size:0.9rem;">
+          <a href="/products">👨‍👩‍👧 Family Shop</a>
+          <a href="/products?style=Occasion">🎉 Shop by Occasion</a>
+          <a href="/lookbook">✨ Family Style AI</a>
+          <a href="/products?category=Women">👗 Women's</a>
+          <a href="/products?category=Men">👔 Men's</a>
+          <a href="/products?category=Kids">🧒 Kids</a>
+          <a href="/products?category=Senior">👵 Family / Senior</a>
+          <a href="/lookbook?feature=complete-look">🧥 Complete the Look</a>
+          <a href="/account?tab=size">📏 My Size</a>
+          <a href="/account?tab=wardrobe">👕 My Wardrobe</a>
+          <a href="/products?category=Gifts">🎁 Gift Finder</a>
+          <a href="/account?tab=wishlist">❤️ My Family Wishlist</a>
         </nav>
         
         <div class="nav-actions">
           <button class="mobile-search-toggle" onclick="toggleMobileSearch()"><i class="fas fa-search"></i></button>
           
-          <form class="search-bar" action="/products" method="GET">
-            <input type="text" name="search" placeholder="Search clothes..." required>
+          <form class="search-bar" action="/products" method="GET" style="display:flex; align-items:center;">
+            <input type="text" name="search" placeholder="Search clothes..." required style="border-right: none;">
+            <button type="button" onclick="document.getElementById('visualSearchInput').click()" title="Visual Search" style="background: #fff; color: var(--primary); padding-right: 5px;"><i class="fas fa-camera"></i></button>
             <button type="submit"><i class="fas fa-search"></i></button>
           </form>
+          <input type="file" id="visualSearchInput" accept="image/*" style="display:none;" onchange="handleVisualSearch(this)">
           
           <a href="/account" class="action-icon" title="My Account" style="display:flex; align-items:center">
             ${user ? `<img src="${avatarImg}" class="header-avatar" alt="Avatar">` : `<i class="far fa-user"></i>`}
@@ -389,14 +396,47 @@ function renderHeaderFooter() {
       
       <!-- Mobile Search Container -->
       <div class="mobile-search-container" id="mobileSearchContainer">
-        <form style="display:flex; width:100%; gap:10px" action="products.html" method="GET">
-          <input type="text" name="search" placeholder="Search clothes..." style="flex:1; padding:0.5rem 1rem; border:1px solid var(--border-color); border-radius:50px" required>
-          <button type="submit" class="btn btn-primary" style="padding:0.5rem 1.2rem; border-radius:50px"><i class="fas fa-search"></i></button>
+        <form style="display:flex; width:100%; gap:5px" action="/products" method="GET">
+          <input type="text" name="search" placeholder="Search clothes..." style="flex:1; padding:0.5rem 1rem; border:1px solid var(--border-color); border-radius:50px 0 0 50px; border-right: none;" required>
+          <button type="button" onclick="document.getElementById('visualSearchInput').click()" style="background:#fff; border:1px solid var(--border-color); border-left:none; border-right:none; color:var(--primary); padding:0 10px;"><i class="fas fa-camera"></i></button>
+          <button type="submit" class="btn btn-primary" style="padding:0.5rem 1.2rem; border-radius:0 50px 50px 0"><i class="fas fa-search"></i></button>
         </form>
       </div>
-
     `;
   }
+
+  // --- Visual Search Logic ---
+  window.handleVisualSearch = async function(input) {
+    if (!input.files || input.files.length === 0) return;
+    
+    // Show a loading overlay
+    const overlay = document.createElement('div');
+    overlay.innerHTML = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.9);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center"><i class="fas fa-spinner fa-spin" style="font-size:3rem;color:var(--primary);margin-bottom:1rem"></i><h2 style="color:var(--primary)">AI is analyzing your style...</h2></div>';
+    document.body.appendChild(overlay);
+
+    const formData = new FormData();
+    formData.append('image', input.files[0]);
+
+    try {
+      const res = await fetch('/api/visual-search', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      
+      if (data.success && data.products && data.products.length > 0) {
+        // Redirect to products page with custom visualSearch query parameter and ids
+        const ids = data.products.map(p => p.id).join(',');
+        window.location.href = `/products?visualSearch=true&ids=${ids}`;
+      } else {
+        alert('Could not find matching clothes for this image. Try another photo!');
+        document.body.removeChild(overlay);
+      }
+    } catch (err) {
+      alert('Visual search failed.');
+      document.body.removeChild(overlay);
+    }
+  };
 
   // Inject mobile drawer to body if missing so it has global viewport stacking context
   if (!document.getElementById('navDrawer')) {
@@ -450,11 +490,18 @@ function renderHeaderFooter() {
           <!-- Section 2: Shop by Category -->
           <div class="drawer-section-title">Shop Categories</div>
           <div class="drawer-links-group">
-            <a href="/products?category=Men" class="drawer-link" onclick="toggleNavDrawer()"><i class="fas fa-male"></i> Men's Wear</a>
-            <a href="/products?category=Women" class="drawer-link" onclick="toggleNavDrawer()"><i class="fas fa-female"></i> Women's Wear</a>
-            <a href="/products?category=Kids" class="drawer-link" onclick="toggleNavDrawer()"><i class="fas fa-child"></i> Children's Wear</a>
-            <a href="/products?style=Ethnic" class="drawer-link" onclick="toggleNavDrawer()"><i class="fas fa-star"></i> Festival Wear</a>
-            <a href="/products?sort=newest" class="drawer-link" onclick="toggleNavDrawer()"><i class="fas fa-fire"></i> New Trends</a>
+            <a href="/products" class="drawer-link" onclick="toggleNavDrawer()">👨‍👩‍👧 Family Shop</a>
+            <a href="/products?style=Occasion" class="drawer-link" onclick="toggleNavDrawer()">🎉 Shop by Occasion</a>
+            <a href="/lookbook" class="drawer-link" onclick="toggleNavDrawer()">✨ Family Style AI</a>
+            <a href="/products?category=Women" class="drawer-link" onclick="toggleNavDrawer()">👗 Women's</a>
+            <a href="/products?category=Men" class="drawer-link" onclick="toggleNavDrawer()">👔 Men's</a>
+            <a href="/products?category=Kids" class="drawer-link" onclick="toggleNavDrawer()">🧒 Kids</a>
+            <a href="/products?category=Senior" class="drawer-link" onclick="toggleNavDrawer()">👵 Family / Senior</a>
+            <a href="/lookbook?feature=complete-look" class="drawer-link" onclick="toggleNavDrawer()">🧥 Complete the Look</a>
+            <a href="/account?tab=size" class="drawer-link" onclick="toggleNavDrawer()">📏 My Size</a>
+            <a href="/account?tab=wardrobe" class="drawer-link" onclick="toggleNavDrawer()">👕 My Wardrobe</a>
+            <a href="/products?category=Gifts" class="drawer-link" onclick="toggleNavDrawer()">🎁 Gift Finder</a>
+            <a href="/account?tab=wishlist" class="drawer-link" onclick="toggleNavDrawer()">❤️ My Family Wishlist</a>
           </div>
 
           <!-- Section 3: More Info -->

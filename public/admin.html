@@ -87,6 +87,7 @@
     </div>
     <ul class="admin-sidebar-menu">
       <li><a href="#" class="active" data-section="analyticsSection"><i class="fas fa-chart-line"></i> Analytics</a></li>
+      <li><a href="#" data-section="intelligenceSection"><i class="fas fa-brain"></i> Merchant Intelligence</a></li>
       <li><a href="#" data-section="productsSection"><i class="fas fa-tshirt"></i> Products Inventory</a></li>
       <li><a href="#" data-section="ordersSection"><i class="fas fa-shipping-fast"></i> Order Fulfillment</a></li>
       <li><a href="#" data-section="promotionsSection"><i class="fas fa-ad"></i> Promotions & Hero</a></li>
@@ -111,6 +112,21 @@
         </div>
         <button class="btn btn-accent" onclick="logout()" style="padding:0.5rem 1.2rem; font-size:0.85rem">Sign Out</button>
       </div>
+
+      <!-- AI Merchant Intelligence Section -->
+      <section id="intelligenceSection" style="display:none">
+        <div class="admin-header-flex">
+          <h2><i class="fas fa-brain" style="color:var(--marigold)"></i> Merchant Intelligence</h2>
+          <button onclick="loadIntelligenceReport()" class="btn btn-primary" id="btnRunIntelligence"><i class="fas fa-bolt"></i> Run AI Analysis</button>
+        </div>
+        <div id="intelligenceReportContainer" style="background:#fff; border-radius:12px; padding:2rem; box-shadow:var(--shadow-md); margin-top:1.5rem; min-height:200px; font-size: 0.95rem; line-height: 1.6;">
+          <div style="text-align:center; padding: 3rem 0; color:var(--text-light)">
+            <i class="fas fa-robot" style="font-size:3rem; margin-bottom:1rem; opacity:0.5"></i>
+            <h3>AI Merchant Assistant</h3>
+            <p>Click "Run AI Analysis" to predict fashion trends, pricing optimizations, and inventory restocking based on your store's latest sales data.</p>
+          </div>
+        </div>
+      </section>
 
       <!-- 1. ANALYTICS SECTION -->
       <section id="analyticsSection">
