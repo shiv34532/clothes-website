@@ -13,6 +13,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Product Details | Little to Large</title>
+  <meta name="description" content="Detailed specifications, 360 degree product view, fabric details, sizing options, and verified customer reviews on Little to Large.">
+  <link rel="canonical" id="canonicalTag" href="https://littletolargee.com/product-detail">
+  <meta property="og:title" id="ogTitle" content="Product Details | Little to Large">
+  <meta property="og:description" id="ogDesc" content="Explore handcrafted premium apparel tailored for the entire family.">
+  <meta property="og:type" content="product">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json" id="productSchema">
+  {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": "Clothing Product",
+    "description": "Little to Large Clothing Product"
+  }
+  </script>
   <link rel="stylesheet" href="css/style.css?v=15">
   <link rel="stylesheet" href="css/ux-premium.css">
   <link rel="icon" type="image/png" href="/favicon.png?v=4">
@@ -158,8 +172,8 @@
       <!-- Submit Review Form -->
       <div style="background-color:#fff; padding:2rem; border-radius:var(--radius-lg); border:1px solid var(--border-color); box-shadow:var(--shadow-sm); height:fit-content">
         <h3 style="font-size:1.3rem; color:var(--primary); font-weight:700; margin-bottom:1.5rem">Write a Review</h3>
-        <div id="reviewLoginPrompt" style="display:none; background:#fff; padding:1.5rem; border-radius:8px; border:1px dashed var(--border-color); text-align:center; margin-bottom:2rem;">
-          🔒 Please <a href="/login" style="color:var(--accent); font-weight:700">Login</a> to write a customer review.
+        <div id="reviewAuthMessage" style="display:none; color:var(--text-light); text-align:center; padding:1.5rem 0">
+          🔑 Please <a href="/login" style="color:var(--accent); font-weight:700">Login</a> to write a customer review.
         </div>
         <form id="reviewForm" style="display:flex; flex-direction:column; gap:1.2rem">
           <div>
@@ -259,6 +273,38 @@
     }
 
     function renderProductDetails(p) {
+      document.title = `${p.name} | Little to Large`;
+      const canonicalEl = document.getElementById('canonicalTag');
+      if (canonicalEl) canonicalEl.href = `https://littletolargee.com/product-detail?id=${p.id}`;
+      const ogTitleEl = document.getElementById('ogTitle');
+      if (ogTitleEl) ogTitleEl.content = `${p.name} | Little to Large`;
+      const ogDescEl = document.getElementById('ogDesc');
+      if (ogDescEl) ogDescEl.content = p.description || p.name;
+
+      const schemaEl = document.getElementById('productSchema');
+      if (schemaEl) {
+        const imagesList = JSON.parse(p.image_urls || '[]').map(formatLocalPath);
+        schemaEl.textContent = JSON.stringify({
+          "@context": "https://schema.org/",
+          "@type": "Product",
+          "name": p.name,
+          "image": imagesList,
+          "description": p.description || p.name,
+          "sku": `PROD-${p.id}`,
+          "brand": {
+            "@type": "Brand",
+            "name": "Little to Large"
+          },
+          "offers": {
+            "@type": "Offer",
+            "url": `https://littletolargee.com/product-detail?id=${p.id}`,
+            "priceCurrency": "INR",
+            "price": p.discount_price || p.price,
+            "availability": p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+          }
+        });
+      }
+
       document.getElementById('breadcrumbProdName').textContent = p.name;
       document.getElementById('detailTitle').textContent = p.name;
       document.getElementById('detailCategory').textContent = `${p.category} | ${p.subcategory}`;

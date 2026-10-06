@@ -10,7 +10,7 @@ function initCheckout() {
   const cart = getCart();
   if (cart.length === 0) {
     showToast('Your cart is empty!', 'error');
-    setTimeout(() => window.location.href = 'products.html', 1500);
+    setTimeout(() => window.location.href = '/products', 1500);
     return;
   }
 
@@ -282,7 +282,7 @@ async function processOrderSubmit(e) {
   const token = getToken();
   if (!token) {
     showToast('Please login to place your order!', 'error');
-    setTimeout(() => window.location.href = 'login.html', 1000);
+    setTimeout(() => window.location.href = '/login', 1000);
     return;
   }
 
@@ -355,7 +355,7 @@ async function processOrderSubmit(e) {
         sessionStorage.removeItem('l2l_discount');
         showToast('🎉 Order placed successfully!', 'success');
         setTimeout(() => {
-          window.location.href = `account.html?tab=orders&success_id=${data.orderId}`;
+          window.location.href = `/account?tab=orders&success_id=${data.orderId}`;
         }, 1500);
       } else {
         showToast(data.message || 'Order failed', 'error');
@@ -457,7 +457,7 @@ async function processOrderSubmit(e) {
               sessionStorage.removeItem('l2l_discount');
               showToast('🎉 Payment verified! Order placed.', 'success');
               setTimeout(() => {
-                window.location.href = `account.html?tab=orders&success_id=${dbOrderId}`;
+                window.location.href = `/account?tab=orders&success_id=${dbOrderId}`;
               }, 1500);
             } else {
               showToast(verifyData.message || 'Signature verification failed', 'error');

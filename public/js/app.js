@@ -26,10 +26,10 @@ window.fetch = async function(...args) {
           document.cookie = "l2l_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax";
           
           const pathname = window.location.pathname;
-          if (!pathname.includes('login.html') && !pathname.includes('index.html')) {
+          if (!pathname.includes('login') && pathname !== '/' && !pathname.includes('index')) {
             showToast('Session expired. Please log in again.', 'error');
             setTimeout(() => {
-              window.location.href = 'login.html';
+              window.location.href = '/login';
             }, 1500);
           }
         }
@@ -177,7 +177,7 @@ function logout() {
   document.cookie = "l2l_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax";
   showToast('Logged out successfully', 'info');
   setTimeout(() => {
-    window.location.href = 'index.html';
+    window.location.href = '/';
   }, 1000);
 }
 
@@ -201,7 +201,7 @@ function addToCart(product, size = 'M', qty = 1, color = 'Default') {
   if (!getToken()) {
     showToast('Please login or register to add outfits to your family box!', 'error');
     setTimeout(() => {
-      window.location.href = 'login.html';
+      window.location.href = '/login';
     }, 1200);
     return;
   }
@@ -514,7 +514,7 @@ function renderHeaderFooter() {
 
           <!-- Section 4: Admin & Logout -->
           ${isAdmin ? `
-            <a href="admin.html" class="drawer-link" onclick="toggleNavDrawer()" style="background:#e0f2fe; color:#0369a1; font-weight:700;"><i class="fas fa-user-shield"></i> Admin Control Panel</a>
+            <a href="/admin" class="drawer-link" onclick="toggleNavDrawer()" style="background:#e0f2fe; color:#0369a1; font-weight:700;"><i class="fas fa-user-shield"></i> Admin Control Panel</a>
           ` : ''}
           ${user ? `
             <a href="#" class="drawer-link logout-link" onclick="toggleNavDrawer(); logout();"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -592,7 +592,7 @@ function renderHeaderFooter() {
   updateCartBadge();
 }
 
-/// Navigate to product detail page on card click
+// Navigate directly to product detail on card video click (avoids media switching conflicts)
 function toggleCardVideo(event, productId, wrapper) {
   if (event && event.stopPropagation) {
     event.stopPropagation();
@@ -679,17 +679,5 @@ function toggleMobileSearch() {
   }
 }
 
-// Global Single URL Hiding Handler (keeps address bar as littletolargee.com)
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    const path = window.location.pathname;
-    // Keep admin paths intact so that settings navigation doesn't get confused
-    if (path !== '/' && path !== '/index.html' && !path.includes('admin')) {
-      try {
-        history.replaceState(null, '', '/');
-      } catch (e) {
-        console.warn('URL cleanup failed:', e.message);
-      }
-    }
-  }, 400); // 400ms delay ensures local page scripts successfully read query params
-});
+// Clean URL preservation for Google SEO indexing and direct user navigation
+// Note: URLs remain intact (e.g. /products, /product-detail?id=123) for proper canonical indexing.

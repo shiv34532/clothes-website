@@ -28,7 +28,7 @@
       stock: 8,
       color: 'pink,white',
       size_variants: '0-3,3-6,6-12',
-      video_url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4'
+      video_url: ''
     },
     {
       id: 1003,
@@ -53,7 +53,7 @@
       subtitle: 'Up to 30% off on family twinning outfits',
       media_url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
       bg_color: 'linear-gradient(135deg,#f97316 0%, #fb7185 100%)',
-      link_url: 'products.html?style=Ethnic'
+      link_url: '/products?style=Ethnic'
     },
     {
       id: 'demo-promo-2',
@@ -61,7 +61,7 @@
       subtitle: 'Comfort-first collections for every generation',
       media_url: 'images/hero_ethnic.png',
       bg_color: 'linear-gradient(135deg,#06b6d4 0%, #3b82f6 100%)',
-      link_url: 'products.html'
+      link_url: '/products'
     }
   ];
 
