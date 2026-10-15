@@ -247,6 +247,8 @@ function renderInventoryCharts(categoryData) {
   }
 }
 
+let allAdminOrders = [];
+
 async function exportOrdersToExcel() {
   try {
     const res = await fetch('/api/admin/orders', {
@@ -265,10 +267,17 @@ async function exportOrdersToExcel() {
         month: 'short',
         year: 'numeric'
       });
+
+      const itemsList = (o.items && o.items.length > 0)
+        ? o.items.map(it => `${it.product_name || 'Product #' + it.product_id} (Size: ${it.size || 'N/A'}${it.color && it.color !== 'Default' ? ', Color: ' + it.color : ''}, Qty: ${it.quantity}, Unit Price: ₹${parseFloat(it.price).toFixed(2)}, Subtotal: ₹${(parseFloat(it.price) * parseInt(it.quantity)).toFixed(2)})`).join('; ')
+        : 'No item details recorded';
+
       return {
         'Order ID': `#${o.id}`,
-        'Customer Name': o.customer_name,
-        'Customer Email': o.customer_email,
+        'Customer Name': o.customer_name || 'Guest',
+        'Customer Email': o.customer_email || 'N/A',
+        'Customer Phone': o.customer_phone || 'N/A',
+        'Products Ordered': itemsList,
         'Order Date': dateStr,
         'Total Amount (₹)': parseFloat(o.total_amount),
         'Payment Method': o.payment_method,
@@ -288,6 +297,8 @@ async function exportOrdersToExcel() {
       { wch: 10 }, // Order ID
       { wch: 20 }, // Customer Name
       { wch: 25 }, // Customer Email
+      { wch: 15 }, // Customer Phone
+      { wch: 45 }, // Products Ordered
       { wch: 15 }, // Order Date
       { wch: 18 }, // Total Amount
       { wch: 16 }, // Payment Method
@@ -314,10 +325,22 @@ async function loadAdminOrders() {
     });
     const data = await res.json();
     if (data.success) {
+      allAdminOrders = data.orders || [];
       const tbody = document.querySelector('#adminOrdersTable tbody');
       tbody.innerHTML = '';
 
-      data.orders.forEach(o => {
+      if (allAdminOrders.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align:center; padding:2rem; color:var(--text-light)">
+              No customer orders recorded in the system yet.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      allAdminOrders.forEach(o => {
         const date = new Date(o.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
         
         let shiprocketColHtml = '';
@@ -342,12 +365,73 @@ async function loadAdminOrders() {
           `;
         }
 
+        // Format ordered products list
+        let itemsHtml = '';
+        if (o.items && o.items.length > 0) {
+          const itemsListHtml = o.items.map(item => {
+            let imgUrl = '/images/products/placeholder.jpg';
+            try {
+              if (item.image_urls) {
+                const parsed = typeof item.image_urls === 'string' ? JSON.parse(item.image_urls) : item.image_urls;
+                if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]) {
+                  imgUrl = parsed[0];
+                }
+              }
+            } catch (e) {
+              imgUrl = '/images/products/placeholder.jpg';
+            }
+            if (!imgUrl.startsWith('http') && !imgUrl.startsWith('/')) {
+              imgUrl = '/' + imgUrl;
+            }
+
+            const itemQty = parseInt(item.quantity) || 1;
+            const itemPrice = parseFloat(item.price) || 0;
+            const itemSubtotal = itemQty * itemPrice;
+            const sizeBadge = item.size ? `<span style="background:#f1f5f9; padding:2px 6px; border-radius:3px; font-weight:600; font-size:0.72rem; color:#475569;">Size: ${item.size}</span>` : '';
+            const colorBadge = (item.color && item.color !== 'Default') ? `<span style="background:#f8fafc; padding:2px 6px; border-radius:3px; font-size:0.72rem; color:#64748b; margin-left:3px;">${item.color}</span>` : '';
+
+            return `
+              <div style="display:flex; gap:10px; align-items:center; padding:6px 0; border-bottom:1px solid #f1f5f9;">
+                <img src="${imgUrl}" alt="${item.product_name || 'Product'}" onerror="this.src='/images/favicon.png'" style="width:42px; height:48px; object-fit:cover; border-radius:4px; border:1px solid #e2e8f0; flex-shrink:0;">
+                <div style="flex:1; min-width:0; line-height:1.35;">
+                  <div style="font-weight:700; font-size:0.83rem; color:var(--text-dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${item.product_name || ('Product #' + item.product_id)}">
+                    ${item.product_name || ('Product #' + item.product_id)}
+                  </div>
+                  <div style="margin-top:2px;">
+                    ${sizeBadge}${colorBadge}
+                    <span style="font-size:0.74rem; font-weight:700; color:var(--primary); margin-left:4px;">Qty: ${itemQty}</span> × ₹${itemPrice.toFixed(2)}
+                  </div>
+                  <div style="font-size:0.75rem; color:#0f172a; font-weight:600; margin-top:1px;">
+                    Subtotal: ₹${itemSubtotal.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          itemsHtml = `
+            <div style="max-width:320px; min-width:240px;">
+              ${itemsListHtml}
+              <button onclick="openAdminOrderModal(${o.id})" class="btn" style="margin-top:6px; padding:3px 8px; font-size:0.74rem; background:#f8fafc; color:var(--primary); border:1px solid var(--border-color); border-radius:4px; cursor:pointer; font-weight:700; display:inline-flex; align-items:center; gap:5px;">
+                <i class="fas fa-eye"></i> View Full Details
+              </button>
+            </div>
+          `;
+        } else {
+          itemsHtml = `
+            <div style="padding:8px; background:#f8fafc; border-radius:4px; border:1px dashed #cbd5e1; font-size:0.76rem; color:#64748b; font-style:italic;">
+              <i class="fas fa-info-circle"></i> No product details recorded
+            </div>
+          `;
+        }
+
         tbody.innerHTML += `
           <tr>
             <td><strong>#${o.id}</strong></td>
             <td>
-              <strong>${o.customer_name}</strong><br>
-              <span style="font-size:0.78rem; color:var(--text-light)">${o.customer_email}</span>
+              <strong>${o.customer_name || 'Guest'}</strong><br>
+              <span style="font-size:0.78rem; color:var(--text-light)">${o.customer_email || 'No email'}</span>
+              ${o.customer_phone ? `<br><span style="font-size:0.75rem; color:var(--text-light)"><i class="fas fa-phone"></i> ${o.customer_phone}</span>` : ''}
               ${o.return_reason ? `
                 <div style="margin-top:6px; padding:4px 8px; background:#fff7ed; border-left:3px solid #ea580c; border-radius:3px; font-size:0.75rem; text-align:left; line-height:1.2">
                   <strong style="color:#ea580c">Return Request:</strong><br>
@@ -356,6 +440,7 @@ async function loadAdminOrders() {
                 </div>
               ` : ''}
             </td>
+            <td>${itemsHtml}</td>
             <td>${date}</td>
             <td><strong>₹${parseFloat(o.total_amount).toFixed(2)}</strong></td>
             <td>
@@ -384,6 +469,146 @@ async function loadAdminOrders() {
   } catch (err) {
     showToast('Failed to load orders', 'error');
   }
+}
+
+function openAdminOrderModal(orderId) {
+  const order = allAdminOrders.find(o => o.id === orderId);
+  if (!order) {
+    showToast('Order details not found', 'error');
+    return;
+  }
+
+  const modal = document.getElementById('adminOrderModal');
+  const modalTitle = document.getElementById('adminOrderModalTitle');
+  const modalBody = document.getElementById('adminOrderModalBody');
+
+  const orderDate = new Date(order.created_at).toLocaleString('en-IN', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  });
+
+  modalTitle.innerHTML = `Order #${order.id} Breakdown <span style="font-size:0.85rem; font-weight:normal; color:var(--text-light); margin-left:8px;">(${orderDate})</span>`;
+
+  let itemsRowsHtml = '';
+  if (order.items && order.items.length > 0) {
+    itemsRowsHtml = order.items.map(item => {
+      let imgUrl = '/images/products/placeholder.jpg';
+      try {
+        if (item.image_urls) {
+          const parsed = typeof item.image_urls === 'string' ? JSON.parse(item.image_urls) : item.image_urls;
+          if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]) {
+            imgUrl = parsed[0];
+          }
+        }
+      } catch (e) {
+        imgUrl = '/images/products/placeholder.jpg';
+      }
+      if (!imgUrl.startsWith('http') && !imgUrl.startsWith('/')) {
+        imgUrl = '/' + imgUrl;
+      }
+
+      const itemQty = parseInt(item.quantity) || 1;
+      const itemPrice = parseFloat(item.price) || 0;
+      const itemSubtotal = itemQty * itemPrice;
+
+      return `
+        <tr style="border-bottom:1px solid #e2e8f0;">
+          <td style="padding:10px 8px; text-align:center; width:60px;">
+            <img src="${imgUrl}" alt="${item.product_name || 'Product'}" onerror="this.src='/images/favicon.png'" style="width:48px; height:54px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1;">
+          </td>
+          <td style="padding:10px 8px;">
+            <strong style="color:var(--text-dark); font-size:0.92rem;">${item.product_name || ('Product #' + item.product_id)}</strong>
+            ${item.product_category ? `<br><span style="font-size:0.75rem; color:var(--text-light);">${item.product_category}${item.product_subcategory ? ' &rsaquo; ' + item.product_subcategory : ''}</span>` : ''}
+          </td>
+          <td style="padding:10px 8px; text-align:center;">
+            <span style="background:#f1f5f9; padding:3px 8px; border-radius:4px; font-weight:700; font-size:0.8rem; color:#334155;">${item.size || 'N/A'}</span>
+            ${(item.color && item.color !== 'Default') ? `<div style="font-size:0.75rem; color:#64748b; margin-top:3px;">${item.color}</div>` : ''}
+          </td>
+          <td style="padding:10px 8px; text-align:right; font-weight:600; font-size:0.88rem;">
+            ₹${itemPrice.toFixed(2)}
+          </td>
+          <td style="padding:10px 8px; text-align:center; font-weight:700; font-size:0.9rem; color:var(--primary);">
+            ${itemQty}
+          </td>
+          <td style="padding:10px 8px; text-align:right; font-weight:800; font-size:0.92rem; color:var(--text-dark);">
+            ₹${itemSubtotal.toFixed(2)}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } else {
+    itemsRowsHtml = `
+      <tr>
+        <td colspan="6" style="padding:2rem; text-align:center; color:#64748b; font-style:italic;">
+          <i class="fas fa-info-circle"></i> No historical product item details recorded for this order.
+        </td>
+      </tr>
+    `;
+  }
+
+  modalBody.innerHTML = `
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:1.5rem; background:#f8fafc; padding:1rem; border-radius:8px; border:1px solid var(--border-color); font-size:0.85rem;">
+      <div>
+        <span style="color:var(--text-light); display:block; font-size:0.78rem;">Customer:</span>
+        <strong style="color:var(--text-dark);">${order.customer_name || 'Guest'}</strong>
+        <div style="font-size:0.78rem; color:var(--text-light); margin-top:2px;">${order.customer_email || 'No email'}${order.customer_phone ? ' • ' + order.customer_phone : ''}</div>
+      </div>
+      <div>
+        <span style="color:var(--text-light); display:block; font-size:0.78rem;">Payment:</span>
+        <strong>${order.payment_method}</strong>
+        <span style="font-size:0.78rem; font-weight:700; color:${(order.payment_status === 'Success' || order.payment_status === 'Completed') ? '#16a34a' : '#dc2626'}; margin-left:4px;">(${order.payment_status || 'Pending'})</span>
+      </div>
+      <div>
+        <span style="color:var(--text-light); display:block; font-size:0.78rem;">Order Status:</span>
+        <strong style="color:var(--primary);">${order.status}</strong>
+      </div>
+      <div style="grid-column: 1 / -1;">
+        <span style="color:var(--text-light); display:block; font-size:0.78rem;">Shipping Destination:</span>
+        <div style="font-weight:600; color:var(--text-dark); line-height:1.4;">${order.shipping_address || 'None provided'}</div>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; margin-bottom:1.5rem;">
+        <thead>
+          <tr style="background:#f1f5f9; text-align:left; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.5px; color:#475569;">
+            <th style="padding:8px; text-align:center;">Product</th>
+            <th style="padding:8px;">Details</th>
+            <th style="padding:8px; text-align:center;">Size</th>
+            <th style="padding:8px; text-align:right;">Unit Price</th>
+            <th style="padding:8px; text-align:center;">Qty</th>
+            <th style="padding:8px; text-align:right;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsRowsHtml}
+        </tbody>
+        <tfoot>
+          <tr style="background:#f8fafc; border-top:2px solid var(--border-color);">
+            <td colspan="5" style="padding:12px 8px; text-align:right; font-weight:800; font-size:1rem; color:var(--primary);">
+              Grand Total:
+            </td>
+            <td style="padding:12px 8px; text-align:right; font-weight:800; font-size:1.15rem; color:var(--primary);">
+              ₹${parseFloat(order.total_amount).toFixed(2)}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div style="text-align:right; padding-top:10px; border-top:1px solid var(--border-color);">
+      <button onclick="closeAdminOrderModal()" class="btn" style="padding:0.5rem 1.5rem; background:#64748b; color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">
+        Close Details
+      </button>
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+}
+
+function closeAdminOrderModal() {
+  const modal = document.getElementById('adminOrderModal');
+  if (modal) modal.style.display = 'none';
 }
 
 async function adminCancelOrder(orderId) {
