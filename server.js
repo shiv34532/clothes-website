@@ -2129,62 +2129,13 @@ app.post('/api/admin/shiprocket-config', adminIpFilter, authenticateAdmin, async
 app.get('/api/admin/orders', adminIpFilter, authenticateAdmin, async (req, res) => {
   try {
     const orders = await db.query(`
-      SELECT o.*, c.name as customer_name, c.email as customer_email, c.phone as customer_phone, p.status as payment_status
+      SELECT o.*, c.name as customer_name, c.email as customer_email, p.status as payment_status
       FROM orders o
-      LEFT JOIN customers c ON o.customer_id = c.id
+      JOIN customers c ON o.customer_id = c.id
       LEFT JOIN payments p ON o.id = p.order_id
       ORDER BY o.created_at DESC
     `);
-
-    // Fetch all items with product details for these orders
-    // Use LEFT JOIN on products so that even if a product was deleted, historical order items are retained
-    const items = await db.query(`
-      SELECT oi.*, p.name as product_name, p.image_urls, p.category as product_category, p.subcategory as product_subcategory, p.price as current_product_price
-      FROM order_items oi
-      LEFT JOIN products p ON oi.product_id = p.id
-      ORDER BY oi.id ASC
-    `);
-
-    const itemsByOrderId = {};
-    for (const item of items) {
-      if (!itemsByOrderId[item.order_id]) {
-        itemsByOrderId[item.order_id] = [];
-      }
-      itemsByOrderId[item.order_id].push(item);
-    }
-
-    for (const order of orders) {
-      order.items = itemsByOrderId[order.id] || [];
-    }
-
     res.json({ success: true, orders });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// Get Single Order Details (Admin version)
-app.get('/api/admin/orders/:id', adminIpFilter, authenticateAdmin, async (req, res) => {
-  try {
-    const order = await db.get(`
-      SELECT o.*, c.name as customer_name, c.email as customer_email, c.phone as customer_phone, p.status as payment_status, p.transaction_id, p.method as payment_method
-      FROM orders o
-      LEFT JOIN customers c ON o.customer_id = c.id
-      LEFT JOIN payments p ON o.id = p.order_id
-      WHERE o.id = ?
-    `, [req.params.id]);
-
-    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
-
-    const items = await db.query(`
-      SELECT oi.*, p.name as product_name, p.image_urls, p.category as product_category, p.subcategory as product_subcategory, p.price as current_product_price
-      FROM order_items oi
-      LEFT JOIN products p ON oi.product_id = p.id
-      WHERE oi.order_id = ?
-      ORDER BY oi.id ASC
-    `, [req.params.id]);
-
-    res.json({ success: true, order, items });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
