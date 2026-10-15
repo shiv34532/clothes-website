@@ -901,12 +901,12 @@
         <div style="display:flex; gap:1rem; align-items:center;">
           <div class="form-group" style="flex:1">
             <label>Upload Images (Max 5)</label>
-            <input type="file" id="prodImages" name="images" multiple accept="image/*" class="form-input" style="padding:0.4rem">
+            <input type="file" id="prodImages" name="images" multiple accept="image/*" class="form-input" style="padding:0.4rem" onchange="updateProductVideoPhotoStatus()">
           </div>
           <div style="font-size:0.8rem; font-weight:700; color:var(--text-light); margin-top:1.2rem">OR</div>
           <div class="form-group" style="flex:1.2">
             <label>Paste Image URL</label>
-            <input type="text" id="prodImageUrl" name="image_url" class="form-input" placeholder="e.g. https://example.com/image.jpg">
+            <input type="text" id="prodImageUrl" name="image_url" class="form-input" placeholder="e.g. https://example.com/image.jpg" oninput="updateProductVideoPhotoStatus()">
           </div>
         </div>
 
@@ -951,6 +951,38 @@
           <div id="productAiPreviewArea" style="display:none; margin-top:10px; text-align:center;">
             <img id="productAiPreview" src="" alt="AI Preview" style="max-height:120px; border-radius:6px; border:1px solid #ddd; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
             <div style="font-size:0.75rem; color:var(--text-light); margin-top:4px;">AI Image applied to URL input field!</div>
+          </div>
+        </div>
+
+        <!-- AI Video Generator for Product (From Product Photo) -->
+        <div style="background: hsl(265, 85%, 98%); border: 1px dashed #7c3aed; padding: 14px; border-radius: 8px; margin-top: 10px; width: 100%;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="font-weight:700; font-size:0.85rem; color:#6d28d9; display:flex; align-items:center; gap:6px; margin:0;">
+              <i class="fas fa-video"></i> 🎥 Generate Video from Product Photo
+            </label>
+            <span id="productVideoPhotoStatus" style="font-size:0.72rem; color:#6d28d9; background:#ede9fe; padding:2px 8px; border-radius:12px; font-weight:600;">
+              <i class="fas fa-camera"></i> Uses Uploaded Photo
+            </span>
+          </div>
+          <p style="font-size:0.75rem; color:#64748b; margin-top:0; margin-bottom:8px;">
+            Automatically transforms your product photo into a smooth 4K-style animated showcase video with fabric zoom, lighting sweep, and branding.
+          </p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <select id="productVideoAiStyle" class="form-input" style="flex:1; min-width:180px; font-size:0.8rem; padding:0.45rem; cursor:pointer;">
+              <option value="zoom_pan">🎬 Cinematic Zoom & Pan (Fabric Detail)</option>
+              <option value="turntable_3d">🔄 3D Floating Perspective (Turntable)</option>
+              <option value="spotlight_sheen">✨ Studio Spotlight & Shimmer Sweep</option>
+              <option value="story_reel">📱 Mobile Fashion Story Reel</option>
+            </select>
+            <button type="button" id="btnGenerateProductVideo" onclick="generateProductVideo()" class="btn" style="background:#7c3aed; color:#fff; padding:0.45rem 1.2rem; font-size:0.8rem; white-space:nowrap; cursor:pointer; border:none; border-radius:6px; font-weight:600; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-magic"></i> Generate Video from Photo
+            </button>
+          </div>
+          <div id="productVideoAiPreviewArea" style="display:none; margin-top:12px; text-align:center;">
+            <video id="productVideoAiPreview" src="" controls playsinline loop style="max-height:180px; max-width:100%; border-radius:8px; border:1px solid #ddd6fe; box-shadow:0 3px 6px rgba(0,0,0,0.15); background:#000;"></video>
+            <div style="font-size:0.75rem; color:#059669; font-weight:700; margin-top:5px;">
+              <i class="fas fa-check-circle"></i> Video generated from your product photo and linked to Product Video URL!
+            </div>
           </div>
         </div>
 

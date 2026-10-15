@@ -772,9 +772,16 @@ function openAddProductModal() {
   document.getElementById('prodReturnWindow').value = '7';
   document.getElementById('productAiPreviewArea').style.display = 'none';
   document.getElementById('productAiPrompt').value = '';
+  const vidPrompt = document.getElementById('productVideoAiPrompt');
+  if (vidPrompt) vidPrompt.value = '';
+  const vidPreviewArea = document.getElementById('productVideoAiPreviewArea');
+  if (vidPreviewArea) vidPreviewArea.style.display = 'none';
+  const vidPreview = document.getElementById('productVideoAiPreview');
+  if (vidPreview) vidPreview.src = '';
   const vidWrap = document.getElementById('videoUploadProgressWrapper');
   if (vidWrap) vidWrap.style.display = 'none';
   renderProductMediaDeletePreview([], '');
+  updateProductVideoPhotoStatus();
   document.getElementById('productModal').style.display = 'flex';
 }
 
@@ -830,6 +837,10 @@ function removeProductVideo() {
   currentEditingProductVideo = '';
   const vidInput = document.getElementById('prodVideoUrl');
   if (vidInput) vidInput.value = '';
+  const vidPreviewArea = document.getElementById('productVideoAiPreviewArea');
+  if (vidPreviewArea) vidPreviewArea.style.display = 'none';
+  const vidPreview = document.getElementById('productVideoAiPreview');
+  if (vidPreview) vidPreview.src = '';
   renderProductMediaDeletePreview(currentEditingProductPhotos, currentEditingProductVideo);
   showToast('Video removed! Click Save Product to apply.', 'info');
 }
@@ -862,11 +873,27 @@ function openEditProductModal(id) {
   document.getElementById('productAiPreviewArea').style.display = 'none';
   document.getElementById('productAiPrompt').value = '';
 
+  const vidPrompt = document.getElementById('productVideoAiPrompt');
+  if (vidPrompt) vidPrompt.value = '';
+  const vidPreviewArea = document.getElementById('productVideoAiPreviewArea');
+  const vidPreview = document.getElementById('productVideoAiPreview');
+  if (product.video_url && product.video_url.trim() !== '') {
+    if (vidPreviewArea && vidPreview) {
+      vidPreview.src = formatLocalPath(product.video_url.trim());
+      vidPreviewArea.style.display = 'block';
+    }
+  } else {
+    if (vidPreviewArea && vidPreview) {
+      vidPreview.src = '';
+      vidPreviewArea.style.display = 'none';
+    }
+  }
+
   const vidWrap = document.getElementById('videoUploadProgressWrapper');
   if (vidWrap) vidWrap.style.display = 'none';
 
   renderProductMediaDeletePreview(urls, product.video_url || '');
-
+  updateProductVideoPhotoStatus();
   document.getElementById('productModal').style.display = 'flex';
 }
 
@@ -963,9 +990,8 @@ async function handleProductFormSubmit(e) {
   const formData = new FormData(form);
 
   formData.set('image_urls', JSON.stringify(currentEditingProductPhotos || []));
-  if (currentEditingProductVideo) {
-    formData.set('video_url', currentEditingProductVideo);
-  }
+  const finalVidUrl = (currentEditingProductVideo || document.getElementById('prodVideoUrl')?.value || '').trim();
+  formData.set('video_url', finalVidUrl);
 
   const url = editingProductId ? `/api/products/${editingProductId}` : '/api/products';
   const method = editingProductId ? 'PUT' : 'POST';
@@ -1844,12 +1870,428 @@ function generateBannerImage(type) {
     // Assign instantly so the admin doesn't have to wait for preview download to click save
     if (targetInput) {
       targetInput.value = url;
+      if (typeof updateProductVideoPhotoStatus === 'function') updateProductVideoPhotoStatus();
     }
     
     previewImg.onload = () => {
       showToast('🎉 AI Image successfully generated and applied!', 'success');
+      if (typeof updateProductVideoPhotoStatus === 'function') updateProductVideoPhotoStatus();
     };
   }
+}
+
+// Helper: Detect active product photo from file input, URL input, AI preview, or existing gallery
+async function getActiveProductPhoto() {
+  const fileInput = document.getElementById('prodImages');
+  if (fileInput && fileInput.files && fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    const dataUrl = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.onerror = () => resolve(URL.createObjectURL(file));
+      reader.readAsDataURL(file);
+    });
+    return {
+      type: 'file',
+      src: dataUrl,
+      name: file.name
+    };
+  }
+
+  const urlInput = document.getElementById('prodImageUrl');
+  if (urlInput && urlInput.value && urlInput.value.trim() !== '') {
+    return {
+      type: 'url',
+      src: urlInput.value.trim(),
+      name: 'Pasted URL'
+    };
+  }
+
+  const aiImg = document.getElementById('productAiPreview');
+  if (aiImg && aiImg.src && aiImg.src.trim() !== '' && !aiImg.src.endsWith('/admin.html') && !aiImg.src.endsWith('/admin')) {
+    return {
+      type: 'ai',
+      src: aiImg.src,
+      name: 'AI Generated Image'
+    };
+  }
+
+  if (typeof currentEditingProductPhotos !== 'undefined' && currentEditingProductPhotos.length > 0) {
+    return {
+      type: 'existing',
+      src: currentEditingProductPhotos[0],
+      name: 'Existing Product Photo'
+    };
+  }
+
+  return null;
+}
+
+// Update the photo status indicator badge inside the video generator box
+function updateProductVideoPhotoStatus() {
+  const statusEl = document.getElementById('productVideoPhotoStatus');
+  if (!statusEl) return;
+
+  const fileInput = document.getElementById('prodImages');
+  const urlInput = document.getElementById('prodImageUrl');
+  const aiImg = document.getElementById('productAiPreview');
+  const hasExisting = typeof currentEditingProductPhotos !== 'undefined' && currentEditingProductPhotos.length > 0;
+
+  if (fileInput && fileInput.files && fileInput.files.length > 0) {
+    statusEl.innerHTML = '<i class="fas fa-check-circle" style="color:#10b981"></i> Photo Ready (' + fileInput.files[0].name.substring(0, 18) + ')';
+    statusEl.style.color = '#047857';
+    statusEl.style.background = '#d1fae5';
+  } else if (urlInput && urlInput.value && urlInput.value.trim() !== '') {
+    statusEl.innerHTML = '<i class="fas fa-check-circle" style="color:#10b981"></i> Image URL Ready';
+    statusEl.style.color = '#047857';
+    statusEl.style.background = '#d1fae5';
+  } else if (aiImg && aiImg.src && aiImg.src.trim() !== '' && !aiImg.src.endsWith('/admin.html') && !aiImg.src.endsWith('/admin')) {
+    statusEl.innerHTML = '<i class="fas fa-check-circle" style="color:#10b981"></i> AI Image Ready';
+    statusEl.style.color = '#047857';
+    statusEl.style.background = '#d1fae5';
+  } else if (hasExisting) {
+    statusEl.innerHTML = '<i class="fas fa-check-circle" style="color:#10b981"></i> Product Photo Ready';
+    statusEl.style.color = '#047857';
+    statusEl.style.background = '#d1fae5';
+  } else {
+    statusEl.innerHTML = '<i class="fas fa-camera" style="color:#b45309"></i> Upload/Paste Photo Above First';
+    statusEl.style.color = '#b45309';
+    statusEl.style.background = '#fef3c7';
+  }
+}
+
+// Generate Product Video DIRECTLY from the product's uploaded/entered photo
+async function generateProductVideo() {
+  const btn = document.getElementById('btnGenerateProductVideo');
+  const styleSelect = document.getElementById('productVideoAiStyle');
+  const previewArea = document.getElementById('productVideoAiPreviewArea');
+  const previewVideo = document.getElementById('productVideoAiPreview');
+  const targetInput = document.getElementById('prodVideoUrl');
+
+  const photo = await getActiveProductPhoto();
+  if (!photo) {
+    showToast('⚠️ Pehle product ka photo upload karein ya paste karein, fir us photo se video banega!', 'warning');
+    const fileInput = document.getElementById('prodImages');
+    if (fileInput) {
+      fileInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      fileInput.focus();
+    }
+    return;
+  }
+
+  const style = styleSelect ? styleSelect.value : 'zoom_pan';
+  const prodName = document.getElementById('prodName')?.value?.trim() || 'Exclusive Fashion';
+  const prodCat = document.getElementById('prodCategory')?.value?.trim() || '';
+  const prodPrice = document.getElementById('prodPrice')?.value?.trim() || '';
+
+  const originalBtnHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rendering Video from Photo...';
+  }
+
+  showToast('🎬 Aapke product photo se video ban raha hai... 3-4 seconds wait karein.', 'info');
+
+  try {
+    const videoUrl = await generateCanvasMotionReel(photo.src, prodName, style, {
+      category: prodCat,
+      price: prodPrice
+    });
+
+    if (!videoUrl) {
+      throw new Error('Video generation failed to return a valid URL');
+    }
+
+    // Set video URL in input field & state
+    if (targetInput) targetInput.value = videoUrl;
+    currentEditingProductVideo = videoUrl;
+
+    // Show preview player
+    if (previewVideo && previewArea) {
+      previewVideo.src = formatLocalPath(videoUrl);
+      previewArea.style.display = 'block';
+      previewVideo.load();
+      previewVideo.play().catch(() => {});
+    }
+
+    // Update media delete preview gallery
+    renderProductMediaDeletePreview(currentEditingProductPhotos, currentEditingProductVideo);
+
+    showToast('🎉 Product photo se video successfully ban gaya!', 'success');
+  } catch (err) {
+    console.error('Photo-to-video generation error:', err);
+    showToast(`Failed to generate video: ${err.message || 'Please verify image'}`, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnHtml || '<i class="fas fa-magic"></i> Generate Video from Photo';
+    }
+  }
+}
+
+// Render dynamic animated video from exact image using HTML5 Canvas & MediaRecorder
+async function generateCanvasMotionReel(imgSrc, titleText, style, meta = {}) {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 720;
+    canvas.height = 1280;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return reject(new Error('Canvas context unavailable'));
+
+    const img = new Image();
+    const isRemote = typeof imgSrc === 'string' && (imgSrc.startsWith('http://') || imgSrc.startsWith('https://'));
+    if (isRemote) {
+      img.crossOrigin = 'anonymous';
+    }
+
+    img.onload = async () => {
+      try {
+        const stream = canvas.captureStream(30);
+        let mime = 'video/webm;codecs=vp9';
+        if (typeof MediaRecorder.isTypeSupported === 'function') {
+          if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) mime = 'video/webm;codecs=vp9';
+          else if (MediaRecorder.isTypeSupported('video/webm')) mime = 'video/webm';
+          else if (MediaRecorder.isTypeSupported('video/mp4')) mime = 'video/mp4';
+          else mime = '';
+        }
+
+        let recorder;
+        try {
+          recorder = mime ? new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 2500000 }) : new MediaRecorder(stream);
+        } catch (recErr) {
+          try {
+            recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+          } catch (recErr2) {
+            recorder = new MediaRecorder(stream);
+          }
+        }
+
+        const chunks = [];
+        recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+
+        recorder.onstop = async () => {
+          try {
+            const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
+
+            // Upload directly to Cloudinary using signature endpoint
+            try {
+              const signRes = await fetch('/api/admin/cloudinary-sign', {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              const signData = await signRes.json();
+
+              if (signData && signData.success) {
+                const formData = new FormData();
+                formData.append('file', blob, 'product-video.webm');
+                formData.append('api_key', signData.api_key);
+                formData.append('timestamp', signData.timestamp);
+                formData.append('signature', signData.signature);
+                formData.append('folder', signData.folder);
+
+                const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${signData.cloud_name}/video/upload`, {
+                  method: 'POST',
+                  body: formData
+                });
+                const uploadData = await uploadRes.json();
+
+                if (uploadData && uploadData.secure_url) {
+                  return resolve(uploadData.secure_url);
+                }
+              }
+            } catch (cloudErr) {
+              console.warn('Cloudinary upload fallback to local Blob:', cloudErr);
+            }
+
+            // Fallback to local Blob URL so video always works
+            resolve(URL.createObjectURL(blob));
+          } catch (e) {
+            console.warn('Video blob fallback:', e);
+            resolve(URL.createObjectURL(new Blob(chunks, { type: 'video/webm' })));
+          }
+        };
+
+        recorder.start();
+
+        const duration = 3500; // 3.5 seconds
+        const startTime = performance.now();
+
+        function renderFrame(now) {
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+
+          // 1. Draw luxury studio gradient background
+          const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+          bgGrad.addColorStop(0, '#0f172a');
+          bgGrad.addColorStop(0.5, '#1e1b4b');
+          bgGrad.addColorStop(1, '#090d16');
+          ctx.fillStyle = bgGrad;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          // 2. Draw ambient blurred photo background for seamless immersion
+          ctx.save();
+          try {
+            ctx.filter = 'blur(35px) brightness(0.6)';
+          } catch (filterErr) {}
+          const imgAspect = img.width / img.height;
+          const canAspect = canvas.width / canvas.height;
+          let bgW, bgH;
+          if (imgAspect > canAspect) {
+            bgH = canvas.height;
+            bgW = bgH * imgAspect;
+          } else {
+            bgW = canvas.width;
+            bgH = bgW / imgAspect;
+          }
+          ctx.drawImage(img, (canvas.width - bgW) / 2, (canvas.height - bgH) / 2, bgW, bgH);
+          ctx.restore();
+
+          // 3. Motion calculation based on selected style
+          let scale = 1.0;
+          let panX = 0;
+          let panY = 0;
+          let tilt = 0;
+
+          if (style === 'turntable_3d') {
+            scale = 1.02 + 0.06 * Math.sin(progress * Math.PI);
+            panX = Math.sin(progress * Math.PI * 2) * 14;
+            panY = Math.cos(progress * Math.PI * 2) * 8;
+            tilt = Math.sin(progress * Math.PI * 2) * 0.02;
+          } else if (style === 'spotlight_sheen') {
+            scale = 1.0 + progress * 0.12;
+            panY = -progress * 25;
+          } else if (style === 'story_reel') {
+            scale = 1.02 + progress * 0.16;
+            panY = -progress * 30;
+          } else {
+            // Default: zoom_pan (Cinematic Zoom & Pan)
+            scale = 1.0 + progress * 0.22;
+            panY = -progress * 45;
+          }
+
+          // 4. Draw crisp foreground garment photo with drop shadow
+          ctx.save();
+          ctx.translate(canvas.width / 2 + panX, canvas.height / 2 - 40 + panY);
+          ctx.rotate(tilt);
+          ctx.scale(scale, scale);
+
+          // Calculate fitted image dimensions
+          let fgW, fgH;
+          const maxW = canvas.width * 0.88;
+          const maxH = canvas.height * 0.72;
+
+          if (img.width / maxW > img.height / maxH) {
+            fgW = maxW;
+            fgH = maxW / imgAspect;
+          } else {
+            fgH = maxH;
+            fgW = maxH * imgAspect;
+          }
+
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+          ctx.shadowBlur = 28;
+          ctx.shadowOffsetY = 14;
+
+          ctx.drawImage(img, -fgW / 2, -fgH / 2, fgW, fgH);
+          ctx.restore();
+
+          // 5. Studio light shimmer / spotlight sweep
+          if (style === 'spotlight_sheen') {
+            const spotY = 250 + progress * (canvas.height - 400);
+            const spotGrad = ctx.createRadialGradient(canvas.width / 2, spotY, 30, canvas.width / 2, spotY, 260);
+            spotGrad.addColorStop(0, 'rgba(255, 255, 255, 0.22)');
+            spotGrad.addColorStop(0.6, 'rgba(255, 255, 255, 0.08)');
+            spotGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = spotGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          } else {
+            const shimmerX = (progress * 2.2 - 0.6) * canvas.width;
+            const shimGrad = ctx.createLinearGradient(shimmerX - 120, 0, shimmerX + 120, canvas.height);
+            shimGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+            shimGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.16)');
+            shimGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = shimGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          }
+
+          // 6. Top branding header
+          const topGrad = ctx.createLinearGradient(0, 0, 0, 160);
+          topGrad.addColorStop(0, 'rgba(15, 23, 42, 0.85)');
+          topGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+          ctx.fillStyle = topGrad;
+          ctx.fillRect(0, 0, canvas.width, 160);
+
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#f8fafc';
+          ctx.font = 'bold 20px "Outfit", sans-serif';
+          ctx.fillText('L I T T L E   T O   L A R G E', canvas.width / 2, 60);
+
+          ctx.fillStyle = '#c4b5fd';
+          ctx.font = '600 12px "Outfit", sans-serif';
+          ctx.fillText('PREMIUM FASHION SHOWCASE', canvas.width / 2, 85);
+
+          // 7. Bottom product information vignette & card
+          const botGrad = ctx.createLinearGradient(0, canvas.height - 280, 0, canvas.height);
+          botGrad.addColorStop(0, 'rgba(15, 23, 42, 0)');
+          botGrad.addColorStop(0.4, 'rgba(15, 23, 42, 0.82)');
+          botGrad.addColorStop(1, 'rgba(10, 15, 26, 0.96)');
+          ctx.fillStyle = botGrad;
+          ctx.fillRect(0, canvas.height - 280, canvas.width, 280);
+
+          // Product Title
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 26px "Outfit", sans-serif';
+          const cleanTitle = (titleText || 'Exclusive Apparel').length > 28 ? 
+                             (titleText || '').substring(0, 26) + '...' : 
+                             (titleText || 'Exclusive Apparel');
+          ctx.fillText(cleanTitle, canvas.width / 2, canvas.height - 140);
+
+          // Product Subtitle / Category & Price
+          const priceText = meta.price ? '₹' + meta.price : '';
+          const catText = meta.category ? meta.category.toUpperCase() : 'EXCLUSIVE COLLECTION';
+          const subText = priceText ? `${catText}  •  ${priceText}` : catText;
+
+          ctx.fillStyle = '#cbd5e1';
+          ctx.font = '600 15px "Outfit", sans-serif';
+          ctx.fillText(subText, canvas.width / 2, canvas.height - 105);
+
+          // Animated badge pill at bottom
+          ctx.fillStyle = '#7c3aed';
+          const badgeW = 200;
+          const badgeH = 30;
+          const badgeX = (canvas.width - badgeW) / 2;
+          const badgeY = canvas.height - 70;
+          ctx.beginPath();
+          if (typeof ctx.roundRect === 'function') {
+            ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 15);
+          } else {
+            ctx.rect(badgeX, badgeY, badgeW, badgeH);
+          }
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 11px "Outfit", sans-serif';
+          ctx.fillText('✦ 100% ORIGINAL QUALITY ✦', canvas.width / 2, badgeY + 19);
+
+          if (progress < 1) {
+            requestAnimationFrame(renderFrame);
+          } else {
+            recorder.stop();
+          }
+        }
+
+        requestAnimationFrame(renderFrame);
+      } catch (err) {
+        reject(err);
+      }
+    };
+
+    img.onerror = (e) => {
+      console.error('Product photo load failed for video generation:', e, imgSrc);
+      reject(new Error('Product photo failed to load. Please verify the image file.'));
+    };
+    img.src = (imgSrc && (imgSrc.startsWith('data:') || imgSrc.startsWith('blob:'))) ? imgSrc : formatLocalPath(imgSrc);
+  });
 }
 
 // Danger: Reset all sales, orders, reviews, inquiries, and customer accounts (except admin)

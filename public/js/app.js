@@ -172,7 +172,7 @@ function formatLocalPath(pathStr) {
   if (!isVideo && pathStr.includes('res.cloudinary.com') && pathStr.includes('/upload/') && !pathStr.includes('f_auto')) {
     pathStr = pathStr.replace('/upload/', '/upload/f_auto,q_auto,w_800/');
   }
-  if (pathStr.startsWith('http://') || pathStr.startsWith('https://') || pathStr.startsWith('data:')) {
+  if (pathStr.startsWith('http://') || pathStr.startsWith('https://') || pathStr.startsWith('data:') || pathStr.startsWith('blob:')) {
     return pathStr;
   }
   if (!pathStr.startsWith('/')) {
