@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Policies & Store Information | Little to Large</title>
+  <meta name="description" content="Official store policies for Little to Large family clothing store: 7-day doorstep replacement policy, terms and conditions, shipping timelines, privacy policy, and grievance details.">
+  <link rel="canonical" href="https://littletolargee.com/policies">
+  <link rel="stylesheet" href="css/style.css?v=15">
+  <link rel="stylesheet" href="css/ux-premium.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/png" href="/favicon.png?v=4">
+  <style>
+    .policies-wrapper {
+      padding: 3rem 0 5rem 0;
+      background: #fafaf9;
+      min-height: 80vh;
+    }
+    .policies-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .policies-header h1 {
+      font-size: 2.2rem;
+      color: var(--primary);
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      font-family: 'Playfair Display', Georgia, serif;
+    }
+    .policies-header p {
+      color: var(--text-light);
+      font-size: 1rem;
+      max-width: 650px;
+      margin: 0 auto;
+    }
+    .policies-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 2rem;
+      align-items: flex-start;
+    }
+    .policy-nav-card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      position: sticky;
+      top: 100px;
+    }
+    .policy-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 1rem 1.25rem;
+      color: var(--text-color);
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      border-left: 4px solid transparent;
+      border-bottom: 1px solid #f1f1f0;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .policy-nav-item:last-child {
+      border-bottom: none;
+    }
+    .policy-nav-item i {
+      font-size: 1.1rem;
+      color: var(--marigold-dark);
+      width: 22px;
+      text-align: center;
+    }
+    .policy-nav-item:hover {
+      background: #fff8f5;
+      color: var(--primary);
+    }
+    .policy-nav-item.active {
+      background: #fff5f2;
+      color: var(--primary);
+      border-left-color: var(--primary);
+      font-weight: 800;
+    }
+    .policy-content-card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      padding: 2.5rem;
+      line-height: 1.7;
+    }
+    .policy-content-card h2 {
+      font-size: 1.7rem;
+      color: var(--primary);
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .policy-updated {
+      font-size: 0.85rem;
+      color: var(--text-light);
+      margin-bottom: 1.8rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.8rem;
+    }
+    .policy-body {
+      font-size: 0.98rem;
+      color: #3f3f46;
+    }
+    .policy-body h3 {
+      font-size: 1.2rem;
+      color: var(--primary);
+      margin: 1.5rem 0 0.6rem 0;
+      font-weight: 700;
+    }
+    .policy-body p {
+      margin-bottom: 1rem;
+    }
+    .policy-body ul {
+      margin: 0 0 1.2rem 1.5rem;
+      list-style-type: disc;
+    }
+    .policy-body li {
+      margin-bottom: 0.4rem;
+    }
+    .policy-highlight-box {
+      background: #fefce8;
+      border-left: 4px solid #eab308;
+      padding: 1.2rem 1.5rem;
+      border-radius: 0 8px 8px 0;
+      margin: 1.5rem 0;
+      font-size: 0.95rem;
+      color: #713f12;
+    }
+    .grievance-contact-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .grievance-card {
+      background: #fdfaf7;
+      border: 1px solid #fed7aa;
+      border-radius: 8px;
+      padding: 1rem;
+      font-size: 0.88rem;
+    }
+    @media (max-width: 850px) {
+      .policies-layout {
+        grid-template-columns: 1fr;
+      }
+      .policy-nav-card {
+        position: static;
+        display: flex;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+      .policy-nav-item {
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        padding: 0.8rem 1rem;
+      }
+      .policy-nav-item.active {
+        border-left-color: transparent;
+        border-bottom-color: var(--primary);
+      }
+      .policy-content-card {
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Injected Header -->
+  <header></header>
+
+  <main class="policies-wrapper">
+    <div class="container">
+      
+      <div class="policies-header">
+        <h1>Store Policies & Customer Care</h1>
+        <p>Transparency, trust, and family satisfaction. Everything you need to know about order replacements, delivery, and terms of shopping with Little to Large.</p>
+      </div>
+
+      <div class="policies-layout">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="policy-nav-card" aria-label="Policy Selection">
+          <div class="policy-nav-item active" data-tab="replacement" onclick="switchPolicyTab('replacement')">
+            <i class="fas fa-sync-alt"></i>
+            <span>Replacement Policy</span>
+          </div>
+          <div class="policy-nav-item" data-tab="terms" onclick="switchPolicyTab('terms')">
+            <i class="fas fa-file-contract"></i>
+            <span>Terms & Conditions</span>
+          </div>
+          <div class="policy-nav-item" data-tab="shipping" onclick="switchPolicyTab('shipping')">
+            <i class="fas fa-truck-fast"></i>
+            <span>Shipping & Delivery</span>
+          </div>
+          <div class="policy-nav-item" data-tab="privacy" onclick="switchPolicyTab('privacy')">
+            <i class="fas fa-shield-halved"></i>
+            <span>Privacy & Cookies</span>
+          </div>
+          <div class="policy-nav-item" data-tab="size-guide" onclick="switchPolicyTab('size-guide')">
+            <i class="fas fa-ruler-combined"></i>
+            <span>Size Guide & Care</span>
+          </div>
+        </aside>
+
+        <!-- Policy Content Container -->
+        <article class="policy-content-card">
+          <div id="policyLoading" style="display:none; text-align:center; padding: 2rem;">
+            <i class="fas fa-spinner fa-spin" style="font-size:2rem; color:var(--primary)"></i>
+            <p style="margin-top:0.8rem; color:var(--text-light)">Loading policy details...</p>
+          </div>
+          
+          <div id="policyDisplay">
+            <h2 id="policyTitle">
+              <i class="fas fa-sync-alt"></i> 7-Day Doorstep Replacement Policy
+            </h2>
+            <div class="policy-updated" id="policyUpdated">
+              Last updated: October 2026 | Little to Large Customer Care
+            </div>
+            <div class="policy-body" id="policyBody">
+              <!-- Content rendered dynamically from /api/policies or fallback -->
+            </div>
+          </div>
+        </article>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Injected Footer -->
+  <footer></footer>
+
+  <!-- Scripts -->
+  <script src="js/app.js"></script>
+  <script src="js/chatbot.js"></script>
+
+  <script>
+    // Fallback static store policies if database is unreachable
+    const FALLBACK_POLICIES = {
+      replacement: {
+        title: "7-Day Doorstep Replacement Policy",
+        icon: "fas fa-sync-alt",
+        content: `
+          <div class="policy-highlight-box">
+            <strong>Key Highlights:</strong> At Little to Large, we are committed to dressing your family in outfits you love. We offer a hassle-free <strong>7-Day Doorstep Replacement Policy</strong> from the date of package delivery. We do not provide cash/bank refunds, but we guarantee an exact replacement or instant exchange.
+          </div>
+          <h3>1. Eligible Conditions for Replacement</h3>
+          <p>You can request an exchange or replacement for any of the following reasons within 7 calendar days of receipt:</p>
+          <ul>
+            <li><strong>Size & Fit Issues:</strong> If the kurti, lehenga, shirt, or kids set does not fit comfortably, we will exchange it for your preferred size at no extra shipping cost.</li>
+            <li><strong>Color or Variant Discrepancy:</strong> If you received a different color variant than ordered.</li>
+            <li><strong>Transit Damage or Manufacturing Defect:</strong> If the garment has stitching flaws, zipper issues, or fabric tear upon arrival.</li>
+          </ul>
+          <h3>2. Condition of Garments</h3>
+          <p>To qualify for a replacement, items must be in their original condition: unworn, unwashed, unaltered, and with original brand tags and polybag intact. Please do not remove security tags until you are satisfied with the fit.</p>
+          <h3>3. How to Initiate a Replacement</h3>
+          <p>You can raise a replacement request directly in your account dashboard under <a href="/account?tab=orders" style="color:var(--primary); font-weight:700">My Orders</a> or reach our customer care team at <strong>+91 7383874045</strong> or email <strong>indiancloths980@gmail.com</strong> with your Order ID and photo of the item.</p>
+          <h3>4. Reverse Pickup & Timeline</h3>
+          <p>Our courier partner will arrange a doorstep reverse pickup within 24 to 48 hours. Once verified, the replacement outfit is dispatched with express priority.</p>
+        `
+      },
+      terms: {
+        title: "Terms and Conditions of Use",
+        icon: "fas fa-file-contract",
+        content: `
+          <div class="policy-highlight-box">
+            <strong>Welcome to Little to Large:</strong> By browsing, accessing, or placing orders on littletolargee.com, you agree to comply with and be bound by the following terms and commercial guidelines.
+          </div>
+          <h3>1. Platform & Authenticity</h3>
+          <p>Little to Large operates as an Indian family-fashion e-commerce brand registered in Gandhidham, Gujarat (GSTIN: 24DDFPG6913P1Z8). All apparel designs, brand names, imagery, and promotional content are our proprietary property.</p>
+          <h3>2. Pricing & Product Descriptions</h3>
+          <p>All prices are listed in Indian Rupees (₹ INR) inclusive of applicable GST taxes. We strive for accurate color representation, but minor tonal differences may occur due to photography lighting and mobile display calibrations.</p>
+          <h3>3. Order Confirmation & Fulfillment</h3>
+          <p>An order confirmation is issued via email/SMS immediately upon order submission. Little to Large reserves the right to cancel orders in rare events of inventory shortage, incorrect pricing errors, or undeliverable pin codes, with full communication to the buyer.</p>
+          <h3>4. Cash on Delivery (COD) Guidelines</h3>
+          <p>COD is supported across 19,000+ Indian postal codes. To prevent fraudulent orders, mobile verification via OTP or phone verification may be conducted before dispatch.</p>
+        `
+      },
+      shipping: {
+        title: "Shipping & Delivery Policy",
+        icon: "fas fa-truck-fast",
+        content: `
+          <div class="policy-highlight-box">
+            <strong>Fast & Secure Nationwide Delivery:</strong> We ship across all Indian states and Union Territories through tier-1 courier partners including Delhivery, Blue Dart, Xpressbees, and India Post.
+          </div>
+          <h3>1. Shipping Rates</h3>
+          <ul>
+            <li><strong>Free Shipping:</strong> On all prepaid and COD family orders above <strong>₹999</strong>.</li>
+            <li><strong>Standard Flat Fee:</strong> Flat ₹60 delivery fee on orders below ₹999.</li>
+          </ul>
+          <h3>2. Dispatch and Delivery Timelines</h3>
+          <p>Orders are dispatched from our fulfillment warehouse within <strong>24 working hours</strong> of order placement. Standard delivery timelines:</p>
+          <ul>
+            <li><strong>Metro Cities (Delhi, Mumbai, Bengaluru, Ahmedabad, etc.):</strong> 2 to 3 working days.</li>
+            <li><strong>Tier 2 & 3 Cities and Towns:</strong> 3 to 5 working days.</li>
+            <li><strong>North-East & Remote Regions:</strong> 5 to 7 working days.</li>
+          </ul>
+          <h3>3. Real-Time Tracking</h3>
+          <p>Once your order is shipped, a live tracking link with Air Waybill (AWB) number is shared via SMS and email. You can also track your shipment live on the <a href="/account?tab=orders" style="color:var(--primary); font-weight:700">Account Dashboard</a>.</p>
+        `
+      },
+      privacy: {
+        title: "Privacy, Data Protection & Grievance Policy",
+        icon: "fas fa-shield-halved",
+        content: `
+          <div class="policy-highlight-box">
+            <strong>Your Family Privacy Matters:</strong> We strictly protect your personal information. We never sell, rent, or lease your private data to third-party marketing entities.
+          </div>
+          <h3>1. Information We Collect</h3>
+          <p>When you create an account, purchase outfits, or use our sizing advisors, we collect: Name, Delivery Address, Mobile Number, Email Address, and clothing sizing preferences.</p>
+          <h3>2. Payment Security</h3>
+          <p>All online payment transactions (UPI, Credit Cards, Debit Cards, NetBanking) are processed via RBI-authorized, PCI-DSS compliant payment gateways (Razorpay). Little to Large does NOT store your banking passwords, CVVs, or card credentials.</p>
+          <h3>3. Cookies & Session Storage</h3>
+          <p>We use essential cookies to maintain your shopping bag across devices, optimize site loading speed, and remember login sessions.</p>
+          <h3>4. Statutory Grievance Redressal (Consumer Protection Act)</h3>
+          <div class="grievance-contact-grid">
+            <div class="grievance-card">
+              <strong>Grievance Officer:</strong> Reenaben<br>
+              <strong>Designation:</strong> Customer Trust & Escalation Manager<br>
+              <strong>Email:</strong> <a href="mailto:indiancloths980@gmail.com" style="color:var(--primary); font-weight:700">indiancloths980@gmail.com</a><br>
+              <strong>Response Time:</strong> Within 48 business hours
+            </div>
+            <div class="grievance-card">
+              <strong>Registered Office:</strong><br>
+              Little to Large Headquarters,<br>
+              Sector 4, Gandhidham, Kutch,<br>
+              Gujarat - 370201, India.
+            </div>
+          </div>
+        `
+      },
+      "size-guide": {
+        title: "Family Size Guide & Garment Care",
+        icon: "fas fa-ruler-combined",
+        content: `
+          <div class="policy-highlight-box">
+            <strong>Finding the Perfect Family Fit:</strong> Standard Indian sizing chart calibrated for infants, kids, men, and women.
+          </div>
+          <h3>Women's Ethnic & Western Wear (Inches)</h3>
+          <table style="width:100%; border-collapse:collapse; margin-bottom:1.5rem; font-size:0.9rem;">
+            <thead>
+              <tr style="background:#f4f4f5; text-align:left;">
+                <th style="padding:8px; border:1px solid #e4e4e7">Size</th>
+                <th style="padding:8px; border:1px solid #e4e4e7">Bust (in)</th>
+                <th style="padding:8px; border:1px solid #e4e4e7">Waist (in)</th>
+                <th style="padding:8px; border:1px solid #e4e4e7">Hip (in)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="padding:8px; border:1px solid #e4e4e7"><strong>XS (34)</strong></td><td style="padding:8px; border:1px solid #e4e4e7">34"</td><td style="padding:8px; border:1px solid #e4e4e7">28"</td><td style="padding:8px; border:1px solid #e4e4e7">36"</td></tr>
+              <tr><td style="padding:8px; border:1px solid #e4e4e7"><strong>S (36)</strong></td><td style="padding:8px; border:1px solid #e4e4e7">36"</td><td style="padding:8px; border:1px solid #e4e4e7">30"</td><td style="padding:8px; border:1px solid #e4e4e7">38"</td></tr>
+              <tr><td style="padding:8px; border:1px solid #e4e4e7"><strong>M (38)</strong></td><td style="padding:8px; border:1px solid #e4e4e7">38"</td><td style="padding:8px; border:1px solid #e4e4e7">32"</td><td style="padding:8px; border:1px solid #e4e4e7">40"</td></tr>
+              <tr><td style="padding:8px; border:1px solid #e4e4e7"><strong>L (40)</strong></td><td style="padding:8px; border:1px solid #e4e4e7">40"</td><td style="padding:8px; border:1px solid #e4e4e7">34"</td><td style="padding:8px; border:1px solid #e4e4e7">42"</td></tr>
+              <tr><td style="padding:8px; border:1px solid #e4e4e7"><strong>XL (42)</strong></td><td style="padding:8px; border:1px solid #e4e4e7">42"</td><td style="padding:8px; border:1px solid #e4e4e7">36"</td><td style="padding:8px; border:1px solid #e4e4e7">44"</td></tr>
+              <tr><td style="padding:8px; border:1px solid #e4e4e7"><strong>XXL (44)</strong></td><td style="padding:8px; border:1px solid #e4e4e7">44"</td><td style="padding:8px; border:1px solid #e4e4e7">38"</td><td style="padding:8px; border:1px solid #e4e4e7">46"</td></tr>
+            </tbody>
+          </table>
+          <h3>Garment Washing & Care Instructions</h3>
+          <ul>
+            <li><strong>Handloom & Silk Outfits:</strong> Dry clean recommended for first two washes to preserve golden zari and fine embroidery.</li>
+            <li><strong>Pure Cotton Kurtas & Tees:</strong> Gentle machine wash in cold water with similar colors. Line dry in shade to maintain color brilliance.</li>
+            <li><strong>Ironing:</strong> Warm iron inside out. Do not place direct hot iron over prints, rubberized logos, or embellishments.</li>
+          </ul>
+        `
+      }
+    };
+
+    let serverPolicies = {};
+
+    async function loadPoliciesFromServer() {
+      try {
+        const res = await fetch('/api/policies');
+        const data = await res.json();
+        if (data.success && data.policies) {
+          serverPolicies = data.policies;
+        }
+      } catch (e) {
+        console.warn('Using offline policy defaults');
+      }
+      renderActiveTab();
+    }
+
+    function switchPolicyTab(tabKey) {
+      document.querySelectorAll('.policy-nav-item').forEach(el => {
+        el.classList.toggle('active', el.getAttribute('data-tab') === tabKey);
+      });
+      // Update browser URL query parameter cleanly without reloading
+      const url = new URL(window.location);
+      url.searchParams.set('tab', tabKey);
+      window.history.replaceState({}, '', url);
+      renderActiveTab();
+    }
+
+    function renderActiveTab() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const activeTab = urlParams.get('tab') || 'replacement';
+
+      const fallback = FALLBACK_POLICIES[activeTab] || FALLBACK_POLICIES['replacement'];
+      const serverData = serverPolicies[activeTab];
+
+      const title = (serverData && serverData.title) ? serverData.title : fallback.title;
+      const content = (serverData && serverData.content) ? serverData.content : fallback.content;
+      const icon = fallback.icon || 'fas fa-info-circle';
+      const updated = serverData && serverData.updated_at ? `Last updated: ${new Date(serverData.updated_at).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}` : 'Last updated: October 2026 | Verified by Admin';
+
+      document.getElementById('policyTitle').innerHTML = `<i class="${icon}"></i> ${title}`;
+      document.getElementById('policyUpdated').textContent = updated;
+      document.getElementById('policyBody').innerHTML = content;
+
+      // Ensure corresponding sidebar item is highlighted
+      document.querySelectorAll('.policy-nav-item').forEach(el => {
+        el.classList.toggle('active', el.getAttribute('data-tab') === activeTab);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check initial URL tab parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const tab = urlParams.get('tab');
+      if (tab && FALLBACK_POLICIES[tab]) {
+        document.querySelectorAll('.policy-nav-item').forEach(el => {
+          el.classList.toggle('active', el.getAttribute('data-tab') === tab);
+        });
+      }
+      loadPoliciesFromServer();
+    });
+  </script>
+
+</body>
+</html>

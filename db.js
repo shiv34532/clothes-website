@@ -49,11 +49,14 @@ async function initDB() {
   await createTables();
   await seedDatabase();
 
-  // Clear default seeded phone number for admin to prevent pre-filling dummy value
+  // Safe check for admin phone without causing SQLite NOT NULL constraint failures
   try {
-    await run("UPDATE customers SET phone = NULL WHERE email = 'admin@littlelarge.in' AND phone = '9999999999'");
+    const adminRec = await get("SELECT phone FROM customers WHERE email = 'admin@littlelarge.in'");
+    if (adminRec && adminRec.phone === '9999999999') {
+      // Retain phone to honor schema NOT NULL constraint
+    }
   } catch (err) {
-    console.warn("Failed to clear admin phone:", err.message);
+    // Non-blocking
   }
 
   // Auto-correct any products where discount_price was entered higher than price (swap so price is higher MRP)
@@ -412,6 +415,100 @@ async function createTables() {
     )
   `);
 
+  // Careers & Job/Internship Opportunities Table
+  await run(`
+    CREATE TABLE IF NOT EXISTS careers (
+      id ${idType},
+      title VARCHAR(150) NOT NULL,
+      role VARCHAR(100) NOT NULL,
+      department VARCHAR(100) DEFAULT 'Fashion & E-Commerce',
+      employment_type VARCHAR(50) DEFAULT 'Full-time', -- 'Full-time', 'Part-time', 'Internship', 'Contract', 'Remote'
+      location VARCHAR(100) DEFAULT 'Gandhidham, Gujarat / Hybrid',
+      experience VARCHAR(50) DEFAULT '0-2 Years',
+      stipend_or_salary VARCHAR(100),
+      timeline_deadline VARCHAR(50), -- e.g. '2026-11-30' or 'Immediate'
+      requirements TEXT NOT NULL,
+      description TEXT NOT NULL,
+      status VARCHAR(20) DEFAULT 'open', -- 'open' or 'closed'
+      created_at ${datetimeType} DEFAULT CURRENT_TIMESTAMP,
+      updated_at ${datetimeType} DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Career Applications from Public Job Seekers / Interns
+  await run(`
+    CREATE TABLE IF NOT EXISTS career_applications (
+      id ${idType},
+      career_id INTEGER,
+      applicant_name VARCHAR(100) NOT NULL,
+      email VARCHAR(100) NOT NULL,
+      phone VARCHAR(15) NOT NULL,
+      portfolio_or_resume_url TEXT,
+      cover_note TEXT,
+      status VARCHAR(30) DEFAULT 'new', -- 'new', 'reviewing', 'shortlisted', 'rejected'
+      created_at ${datetimeType} DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Product Color Variants Table
+  await run(`
+    CREATE TABLE IF NOT EXISTS product_variants (
+      id ${idType},
+      product_id INTEGER NOT NULL,
+      color_name VARCHAR(100) NOT NULL,
+      color_code VARCHAR(30) DEFAULT '#b91c1c',
+      sku VARCHAR(100),
+      price DECIMAL(10, 2),
+      discount_price DECIMAL(10, 2),
+      stock INTEGER DEFAULT 0,
+      size_variants VARCHAR(100) DEFAULT 'S,M,L,XL',
+      sizes_stock_json TEXT,
+      image_urls TEXT,
+      is_default INTEGER DEFAULT 0,
+      created_at ${datetimeType} DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Store Policies Table (Replacement, Terms, Shipping, Privacy)
+  await run(`
+    CREATE TABLE IF NOT EXISTS store_policies (
+      id ${idType},
+      policy_key VARCHAR(50) UNIQUE NOT NULL,
+      title VARCHAR(150) NOT NULL,
+      content TEXT NOT NULL,
+      updated_at ${datetimeType} DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Admin Security & TOTP 2FA Table
+  await run(`
+    CREATE TABLE IF NOT EXISTS admin_security (
+      id ${idType},
+      admin_email VARCHAR(100) UNIQUE NOT NULL,
+      two_factor_enabled INTEGER DEFAULT 0,
+      totp_secret VARCHAR(100),
+      recovery_codes TEXT,
+      updated_at ${datetimeType} DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Admin Staff & Department Role-Based Access Table
+  await run(`
+    CREATE TABLE IF NOT EXISTS admin_staff (
+      id ${idType},
+      name VARCHAR(100) NOT NULL,
+      email VARCHAR(100) UNIQUE NOT NULL,
+      password_hash VARCHAR(255) NOT NULL,
+      department VARCHAR(100) DEFAULT 'Fashion & Merchandising',
+      role_title VARCHAR(100) DEFAULT 'Catalog Merchandiser',
+      permissions TEXT DEFAULT '["products_read","products_write"]',
+      valid_from VARCHAR(50),
+      valid_until VARCHAR(50),
+      status VARCHAR(20) DEFAULT 'active',
+      created_at ${datetimeType} DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // Alter tables to add new columns for user settings and dynamic product details
   const alterQueries = [
     `ALTER TABLE customers ADD COLUMN phone_alt VARCHAR(15)`,
@@ -426,7 +523,9 @@ async function createTables() {
     `ALTER TABLE products ADD COLUMN color VARCHAR(100)`,
     `ALTER TABLE products ADD COLUMN style VARCHAR(100)`,
     `ALTER TABLE products ADD COLUMN gender VARCHAR(50)`,
+    `ALTER TABLE products ADD COLUMN color_variants TEXT`,
     `ALTER TABLE order_items ADD COLUMN color VARCHAR(50)`,
+    `ALTER TABLE order_items ADD COLUMN variant_sku VARCHAR(100)`,
     `ALTER TABLE orders ADD COLUMN shiprocket_order_id VARCHAR(50)`,
     `ALTER TABLE orders ADD COLUMN shiprocket_shipment_id VARCHAR(50)`,
     `ALTER TABLE orders ADD COLUMN tracking_number VARCHAR(100)`,
@@ -506,16 +605,37 @@ async function seedDatabase() {
   // Check if products seeded
   const productCount = await get('SELECT COUNT(*) as count FROM products');
   if (parseInt(productCount.count) === 0) {
-    console.log('Seeding premium clothing product inventory...');
-
-    const products = [];
-
-    for (const p of products) {
-      await run(`
-        INSERT INTO products (name, category, subcategory, price, discount_price, stock, description, size_variants, image_urls, rating)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [p.name, p.category, p.subcategory, p.price, p.discount_price, p.stock, p.description, p.size_variants, p.image_urls, p.rating]);
+    console.log('Seeding premium clothing product inventory with authentic Indian family fashion...');
+    let seedItems = [];
+    try {
+      seedItems = require('./catalog_seed_data');
+    } catch (e) {
+      console.warn('Could not load catalog_seed_data:', e.message);
     }
+
+    for (const p of seedItems) {
+      await run(`
+        INSERT INTO products (name, category, subcategory, price, discount_price, stock, description, size_variants, image_urls, rating, fabric, color, style, gender, return_window_days)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        p.name,
+        p.category,
+        p.subcategory,
+        p.price,
+        p.discount_price,
+        p.stock,
+        p.description,
+        p.size_variants,
+        p.image_urls,
+        p.rating,
+        p.fabric || 'Cotton',
+        p.color || 'Multicolor',
+        p.style || 'Ethnic',
+        p.gender || 'Unisex',
+        p.return_window_days || 7
+      ]);
+    }
+    console.log(`Seeded ${seedItems.length} authentic family clothing products.`);
   }
 
   // Seed homepage settings
@@ -615,8 +735,62 @@ async function seedDatabase() {
         await run('INSERT INTO coupons (code, discount_type, discount_value, description, tag) VALUES (?, ?, ?, ?, ?)', [c.code, c.discount_type, c.discount_value, c.description, c.tag]);
       }
     }
+
+    // Seed default careers & internship opportunities
+    const careerCount = await get('SELECT COUNT(*) as count FROM careers');
+    if (parseInt(careerCount.count) === 0) {
+      console.log('Seeding initial career and internship openings...');
+      const defaultCareers = [
+        {
+          title: 'Fashion Merchandiser & Designer',
+          role: 'Lead Ethnic Wear Stylist & Sourcing Specialist',
+          department: 'Fashion & Design',
+          employment_type: 'Full-time',
+          location: 'Gandhidham, Gujarat / Hybrid',
+          experience: '1-3 Years',
+          stipend_or_salary: '₹30,000 - ₹45,000 / month',
+          timeline_deadline: '2026-11-30',
+          requirements: 'Degree in Fashion Design/Textiles (NIFT/NID preferred). Strong eye for Indian ethnic textiles (Chanderi, Bandhani, Chikankari). Experience working directly with artisan weaving clusters.',
+          description: 'Drive the development of Little to Large seasonal family twinning collections. Work with master weavers across Gujarat and Rajasthan to bring contemporary festive wear to Indian families nationwide.',
+          status: 'open'
+        },
+        {
+          title: 'E-Commerce Operations & Growth Intern',
+          role: 'Digital Storefront & Logistics Intern',
+          department: 'Operations',
+          employment_type: 'Internship',
+          location: 'Gandhidham / Remote',
+          experience: 'Freshers / Final Year Students',
+          stipend_or_salary: '₹12,000 / month',
+          timeline_deadline: '2026-11-15',
+          requirements: 'Enthusiastic undergraduate or graduate student in Business, IT, or Commerce. Familiarity with e-commerce operations, order fulfillment, and social media coordination. Proactive communication skills.',
+          description: 'Hands-on 3-to-6 month internship managing daily catalog listings, order tracking, customer inquiries, and festive campaign execution for our pan-India family store.',
+          status: 'open'
+        },
+        {
+          title: 'Digital Content & Ethnic Catalog Specialist',
+          role: 'Visual Merchandiser & Social Copywriter',
+          department: 'Marketing',
+          employment_type: 'Full-time',
+          location: 'Remote / Flexible',
+          experience: '0-2 Years',
+          stipend_or_salary: '₹25,000 - ₹35,000 / month',
+          timeline_deadline: '2026-12-05',
+          requirements: 'Deep appreciation for Indian festivals and regional apparel. Skillful in crafting compelling product storytelling, Instagram reels styling, and email newsletters. Basic graphic/video editing skills a plus.',
+          description: 'Shape our brand voice across our website, Instagram, and festive newsletters. Create engaging ethnic lookbooks that celebrate Indian family togetherness.',
+          status: 'open'
+        }
+      ];
+
+      for (const c of defaultCareers) {
+        await run(`
+          INSERT INTO careers (title, role, department, employment_type, location, experience, stipend_or_salary, timeline_deadline, requirements, description, status)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [c.title, c.role, c.department, c.employment_type, c.location, c.experience, c.stipend_or_salary, c.timeline_deadline, c.requirements, c.description, c.status]);
+      }
+    }
   } catch (err) {
-    console.error('Failed to seed lookbook pages or coupons:', err.message);
+    console.error('Failed to seed lookbook pages, coupons, or careers:', err.message);
   }
 
   // Migrate any existing SVG hero paths to PNG and update Slide 1 to vacation image
@@ -638,6 +812,115 @@ async function seedDatabase() {
     }
   } catch (e) {
     console.error('Failed to seed default settings:', e.message);
+  }
+
+  // Seed Store Policies if not present
+  try {
+    const policyCount = await get('SELECT COUNT(*) as count FROM store_policies');
+    if (parseInt(policyCount.count) === 0) {
+      console.log('Seeding official Little to Large store policies...');
+      const defaultPolicies = [
+        {
+          key: 'replacement',
+          title: '7-Day Hassle-Free Replacement Policy',
+          content: `<h3>Our Commitment to Your Family's Perfect Fit</h3>
+<p>At <strong>Little to Large</strong>, we prioritize your family's comfort and festive joy. If any garment received has sizing, fitting, stitching, or manufacturing defects, we offer a <strong>100% free doorstep replacement</strong> within 7 days of delivery.</p>
+<h4>Replacement Terms &amp; Eligibility:</h4>
+<ul>
+  <li><strong>Timelines:</strong> Raise a replacement request within <strong>7 days</strong> of delivery through your Profile dashboard, official WhatsApp support (+91 7383874045), or by emailing <a href="mailto:indiancloths980@gmail.com">indiancloths980@gmail.com</a>.</li>
+  <li><strong>Condition:</strong> Garments must be unwashed, unworn, and retain original brand tags and eco-friendly packaging intact.</li>
+  <li><strong>Pickup &amp; Delivery:</strong> Our logistics partners (BlueDart / Delhivery) will arrange a reverse pickup from your doorstep and deliver your selected replacement size/color at zero extra shipping charge.</li>
+  <li><strong>Non-Returnable Items:</strong> Clearance sale items explicitly marked as non-returnable (Return Window: 0 days) are exempt from replacement unless damaged in transit.</li>
+</ul>`
+        },
+        {
+          key: 'terms',
+          title: 'Terms of Service &amp; E-Commerce Conditions',
+          content: `<h3>Little to Large Terms &amp; Conditions of Sale</h3>
+<p>Welcome to Little to Large (littletolargee.com). By using our platform, placing orders, or accessing our services, you agree to comply with Indian e-commerce consumer guidelines, IT Act provisions, and our operating guidelines.</p>
+<h4>Commercial &amp; Product Policies:</h4>
+<ul>
+  <li><strong>Authenticity Guarantee:</strong> All fabrics, hand-block prints, and ethnic embroideries are sourced directly from certified artisan weaving centers and verified manufacturers across India.</li>
+  <li><strong>Pricing &amp; Taxes:</strong> All prices listed on our platform are inclusive of GST (Goods and Services Tax). GSTIN: 24DDFPG6913P1Z8.</li>
+  <li><strong>Payment Processing:</strong> We accept safe online payments through RBI-compliant gateways (Razorpay, UPI, RuPay, Net Banking) and verified Cash on Delivery with phone OTP validation.</li>
+</ul>`
+        },
+        {
+          key: 'shipping',
+          title: 'Shipping, Delivery &amp; Tracking Policy',
+          content: `<h3>Pan-India Express Family Delivery</h3>
+<p>We deliver across 19,000+ Indian pincodes using trusted tier-1 express courier networks.</p>
+<h4>Shipping Timelines &amp; Charges:</h4>
+<ul>
+  <li><strong>Free Delivery:</strong> All orders with a total value of <strong>₹999 and above</strong> qualify for 100% Free Shipping.</li>
+  <li><strong>Standard Shipping:</strong> For orders below ₹999, a nominal flat convenience fee of ₹60 is applied at checkout.</li>
+  <li><strong>Dispatch Window:</strong> Ready-to-wear items are dispatched within 24–48 hours from our Gandhidham fulfillment hub.</li>
+  <li><strong>Delivery Estimates:</strong> Metro cities: 2–3 business days. Rest of India: 4–6 business days. Real-time live SMS &amp; WhatsApp tracking links are dispatched upon courier pickup.</li>
+</ul>`
+        },
+        {
+          key: 'privacy',
+          title: 'Customer Privacy &amp; Data Protection Policy',
+          content: `<h3>Privacy &amp; Family Confidentiality Commitment</h3>
+<p>Your family's privacy and data security are sacred to us. We never sell, rent, or trade your contact information, measurement profiles, or order history to third-party ad brokers.</p>
+<h4>Data Handling Practices:</h4>
+<ul>
+  <li><strong>Personal Data:</strong> We collect names, shipping addresses, phone numbers, and optional family sizing profiles strictly to fulfill orders and tailor size recommendations.</li>
+  <li><strong>Payment Security:</strong> Card numbers, UPI PINs, and bank credentials are handled directly via PCI-DSS Level 1 certified gateways and are never stored on our servers.</li>
+  <li><strong>Grievance Redressal:</strong> For any data removal or privacy inquiries, contact our designated Grievance Officer, Reenaben, at <a href="mailto:indiancloths980@gmail.com">indiancloths980@gmail.com</a>.</li>
+</ul>`
+        }
+      ];
+
+      for (const pol of defaultPolicies) {
+        await run(`
+          INSERT INTO store_policies (policy_key, title, content)
+          VALUES (?, ?, ?)
+        `, [pol.key, pol.title, pol.content]);
+      }
+    }
+  } catch (e) {
+    console.error('Failed to seed store policies:', e.message);
+  }
+
+  // Migrate existing single-color products into multi-color variant format
+  try {
+    const unmigrated = await query("SELECT id, name, price, discount_price, stock, size_variants, image_urls, color FROM products WHERE color_variants IS NULL OR color_variants = '' OR color_variants = '[]'");
+    for (const p of unmigrated) {
+      let images = [];
+      try { images = JSON.parse(p.image_urls || '[]'); } catch (e) { images = [p.image_urls || '/images/products/placeholder.jpg']; }
+      const colorName = p.color && p.color.trim() ? p.color.split(',')[0].trim() : 'Festive Hue';
+      const sizes = (p.size_variants || 'S,M,L,XL').split(',').map(s => s.trim());
+      const stockPerSize = Math.max(1, Math.floor((p.stock || 20) / sizes.length));
+      const sizesStock = {};
+      sizes.forEach(s => sizesStock[s] = stockPerSize);
+
+      const defaultVariant = {
+        id: 1,
+        color_name: colorName,
+        color_code: '#b91c1c',
+        sku: `LTL-${p.id}-${colorName.slice(0, 3).toUpperCase()}`,
+        price: p.price,
+        discount_price: p.discount_price,
+        stock: p.stock || 20,
+        sizes: sizes,
+        sizes_stock: sizesStock,
+        images: images,
+        is_default: true
+      };
+
+      await run('UPDATE products SET color_variants = ? WHERE id = ?', [JSON.stringify([defaultVariant]), p.id]);
+
+      const existingPv = await get('SELECT id FROM product_variants WHERE product_id = ?', [p.id]);
+      if (!existingPv) {
+        await run(`
+          INSERT INTO product_variants (product_id, color_name, color_code, sku, price, discount_price, stock, size_variants, sizes_stock_json, image_urls, is_default)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+        `, [p.id, colorName, '#b91c1c', defaultVariant.sku, p.price, p.discount_price, p.stock || 20, p.size_variants || 'S,M,L,XL', JSON.stringify(sizesStock), JSON.stringify(images)]);
+      }
+    }
+  } catch (e) {
+    console.warn('Product variant migration note:', e.message);
   }
 }
 

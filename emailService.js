@@ -352,11 +352,105 @@ async function sendPromotionalOffersEmail(toEmail, customerName, offerData = {},
   }
 }
 
+/**
+ * 5. Send Real-Time Admin New Order Alert Notification
+ */
+async function sendAdminNewOrderNotification(orderData, db = null) {
+  try {
+    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || DEFAULT_SENDER_EMAIL;
+    const transporter = await getTransporter(db);
+    const orderId = orderData.order_id || orderData.id;
+    const customerName = orderData.customer_name || 'Customer';
+    const customerPhone = orderData.phone || orderData.customer_phone || 'N/A';
+    const items = orderData.items || [];
+    const totalAmount = parseFloat(orderData.total_amount || 0).toLocaleString('en-IN');
+    const paymentMethod = orderData.payment_method || 'Online';
+    const shippingAddress = orderData.shipping_address || 'Address on file';
+
+    let itemsRows = '';
+    items.forEach(item => {
+      const price = parseFloat(item.price || 0).toLocaleString('en-IN');
+      const itemTitle = item.product_name || item.name || `Product #${item.product_id}`;
+      const sizeVariant = item.size ? `Size: ${item.size}` : '';
+      const color = item.color && item.color !== 'Default' ? `Color: ${item.color}` : '';
+      const meta = [sizeVariant, color].filter(Boolean).join(' | ');
+
+      itemsRows += `
+        <tr>
+          <td>
+            <strong>${itemTitle}</strong>
+            ${meta ? `<br><small style="color:#64748b;">${meta}</small>` : ''}
+          </td>
+          <td style="text-align:center;">${item.quantity || 1}</td>
+          <td style="text-align:right;">₹${price}</td>
+        </tr>
+      `;
+    });
+
+    const bodyContent = `
+      <div style="background:#fef3c7; border:1px solid #f59e0b; border-radius:8px; padding:12px; margin-bottom:20px;">
+        <strong style="color:#92400e;">⚡ NEW CUSTOMER ORDER ALERT (#L2L-${orderId})</strong>
+        <p style="margin:4px 0 0; color:#b45309; font-size:13px;">A new family clothing order has been placed on Little to Large storefront.</p>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
+        <div style="background:#f8fafc; padding:12px; border-radius:6px; border:1px solid #e2e8f0;">
+          <small style="color:#64748b; font-weight:700;">CUSTOMER</small>
+          <div style="font-weight:700; color:#1e1b4b; margin-top:2px;">${customerName}</div>
+          <div style="font-size:13px; color:#475569;">📞 ${customerPhone}</div>
+        </div>
+        <div style="background:#f8fafc; padding:12px; border-radius:6px; border:1px solid #e2e8f0;">
+          <small style="color:#64748b; font-weight:700;">ORDER VALUE</small>
+          <div style="font-size:18px; font-weight:900; color:#1e1b4b; margin-top:2px;">₹${totalAmount}</div>
+          <div style="font-size:12px; color:#10b981; font-weight:700;">Payment: ${paymentMethod}</div>
+        </div>
+      </div>
+
+      <table class="order-table">
+        <thead>
+          <tr>
+            <th>Item Details</th>
+            <th style="text-align:center;">Qty</th>
+            <th style="text-align:right;">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsRows}
+        </tbody>
+      </table>
+
+      <div style="margin-top:15px; padding:12px; background:#f1f5f9; border-radius:6px;">
+        <strong style="color:#1e1b4b; font-size:13px;">📍 Shipping Destination:</strong>
+        <p style="margin:4px 0 0 0; font-size:13px; color:#475569;">${shippingAddress}</p>
+      </div>
+
+      <div style="text-align:center; margin: 25px 0;">
+        <a href="${WEBSITE_URL}/admin.html" class="email-btn" style="background:#1e1b4b;">Open Admin Control Center &rarr;</a>
+      </div>
+    `;
+
+    const mailOptions = {
+      from: `"${BRAND_NAME} Orders" <${DEFAULT_SENDER_EMAIL}>`,
+      to: adminEmail,
+      subject: `🚨 [New Order Alert] #L2L-${orderId} from ${customerName} (₹${totalAmount})`,
+      html: wrapHtmlTemplate(`New Order Alert #L2L-${orderId}`, bodyContent, `New order #L2L-${orderId} placed for ₹${totalAmount} by ${customerName}`)
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[Admin Order Notification Sent] Order #${orderId} To: ${adminEmail} | MessageID: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+  } catch (err) {
+    console.error(`[Admin Order Alert Error] Order #${orderData.order_id}:`, err.message);
+    return { success: false, error: err.message };
+  }
+}
+
 module.exports = {
   getTransporter,
   sendWelcomeEmail,
   sendOrderConfirmationEmail,
   sendEmailOtp,
   sendPromotionalOffersEmail,
+  sendAdminNewOrderNotification,
   DEFAULT_SENDER_EMAIL
 };

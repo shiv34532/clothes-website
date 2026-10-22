@@ -67,6 +67,27 @@ To connect the application to a live MySQL server:
 
 ---
 
+## Credentials & Environment Setup Guide
+
+To enable live transactional emails, online payments, AI studio features, and automated order tracking, copy `.env.example` to `.env` and fill in your keys:
+
+```bash
+cp .env.example .env
+```
+
+### Essential Checklist for the Administrator:
+
+| Service | Environment Variable | Where to get it & Instructions |
+| :--- | :--- | :--- |
+| **Gmail SMTP (Free Emails)** | `GMAIL_USER`<br>`GMAIL_APP_PASSWORD` | 1. Go to [Google Account Security](https://myaccount.google.com/security)<br>2. Turn on **2-Step Verification**<br>3. Search **App passwords** ([Direct Link](https://myaccount.google.com/apppasswords))<br>4. Generate a password for "Little to Large"<br>5. Paste the 16-character code into `GMAIL_APP_PASSWORD`<br>*(Allows sending 500 free welcome, order confirmation, and invoice emails/day)* |
+| **Razorpay (Live Payments)** | `RAZORPAY_KEY_ID`<br>`RAZORPAY_KEY_SECRET` | 1. Log in to [Razorpay Dashboard](https://dashboard.razorpay.com/)<br>2. Navigate to **Account & Settings > API Keys**<br>3. Generate your Key ID and Secret (`rzp_test_...` for test, `rzp_live_...` for production) |
+| **Google Gemini AI** | `GEMINI_API_KEY` | 1. Visit [Google AI Studio](https://aistudio.google.com/app/apikey)<br>2. Click **Create API Key** (Free)<br>3. Enables Visual Search, AI Product Descriptions, and Virtual Studio model generator |
+| **Cloudinary Media Storage** | `CLOUDINARY_CLOUD_NAME`<br>`CLOUDINARY_API_KEY`<br>`CLOUDINARY_API_SECRET` | 1. Log in to [Cloudinary Console](https://console.cloudinary.com/)<br>2. Copy your Cloud Name, API Key, and Secret from the Dashboard dashboard for persistent image uploads |
+| **Shiprocket Courier (Optional)** | `SHIPROCKET_EMAIL`<br>`SHIPROCKET_PASSWORD` | 1. Sign up on [Shiprocket](https://app.shiprocket.in/)<br>2. Enter your account credentials or configure them dynamically in the Admin Settings tab |
+| **Admin Security** | `JWT_SECRET`<br>`ADMIN_IP_WHITELIST` | 1. Set a random 32+ character string for `JWT_SECRET`<br>2. (Optional) Provide comma-separated IPs to lock `/admin.html` down |
+
+---
+
 ## Pre-Seeded Accounts for Testing
 
 During database initialization, the system automatically creates two accounts:

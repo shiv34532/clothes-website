@@ -49,21 +49,24 @@
         </div>
       </div>
       
-      <!-- Premium Multi-Modal Search Bar (Voice + Image AI + Text) -->
-      <div style="background:#fff; border-radius:50px; padding:0.4rem 1.2rem; display:flex; align-items:center; box-shadow:var(--shadow-md); max-width:650px; width:100%; margin:0 auto">
-        <i class="fas fa-search" style="color:var(--text-light); font-size:1.1rem; margin-right:10px"></i>
-        <input type="text" id="catalogSearchInput" placeholder="Search ethnic, western, cotton, silk, Gujarati style..." style="flex:1; border:none; padding:0.6rem 0; font-size:0.95rem; color:var(--text-dark); background:none" onkeypress="handleCatalogSearchKeyPress(event)">
-        
-        <!-- Voice Search Trigger -->
-        <button onclick="startVoiceSearch()" style="background:none; border:none; color:var(--primary); font-size:1.2rem; margin:0 8px; cursor:pointer" title="Voice Search">
-          <i class="fas fa-microphone" id="micIcon"></i>
-        </button>
-        
-        <!-- Image Search Trigger -->
-        <button onclick="triggerCameraUpload()" style="background:none; border:none; color:var(--primary); font-size:1.2rem; cursor:pointer" title="Search by Image">
-          <i class="fas fa-camera"></i>
-        </button>
-        <input type="file" id="cameraUploadInput" accept="image/*" style="display:none" onchange="handleCameraUpload(this)">
+      <!-- Premium Multi-Modal Search Bar (Voice + Image AI + Text + Autocomplete) -->
+      <div class="search-container-relative" style="max-width:650px; width:100%; margin:0 auto">
+        <div style="background:#fff; border-radius:50px; padding:0.4rem 1.2rem; display:flex; align-items:center; box-shadow:var(--shadow-md);">
+          <i class="fas fa-search" style="color:var(--text-light); font-size:1.1rem; margin-right:10px"></i>
+          <input type="text" id="catalogSearchInput" placeholder="Search ethnic, kurtas, silk sarees, kids twinning..." autocomplete="off" style="flex:1; border:none; padding:0.6rem 0; font-size:0.95rem; color:var(--text-dark); background:none" onkeypress="handleCatalogSearchKeyPress(event)" oninput="handleSearchAutocomplete(this.value, 'catalogSearchSuggestions')">
+          
+          <!-- Voice Search Trigger -->
+          <button onclick="startVoiceSearch()" style="background:none; border:none; color:var(--primary); font-size:1.2rem; margin:0 8px; cursor:pointer" title="Voice Search">
+            <i class="fas fa-microphone" id="micIcon"></i>
+          </button>
+          
+          <!-- Image Search Trigger -->
+          <button onclick="triggerCameraUpload()" style="background:none; border:none; color:var(--primary); font-size:1.2rem; cursor:pointer" title="Search by Image">
+            <i class="fas fa-camera"></i>
+          </button>
+          <input type="file" id="cameraUploadInput" accept="image/*" style="display:none" onchange="handleCameraUpload(this)">
+        </div>
+        <div class="search-suggestions-dropdown" id="catalogSearchSuggestions"></div>
       </div>
     </div>
   </section>

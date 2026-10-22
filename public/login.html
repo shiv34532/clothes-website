@@ -458,6 +458,68 @@
       }
     });
 
+    // 2FA Prompt Modal Logic
+    let pending2FaEmail = '';
+    let pending2FaPassword = '';
+
+    function show2FaPromptModal(email, password) {
+      pending2FaEmail = email;
+      pending2FaPassword = password;
+      const modal = document.getElementById('login2FaModal');
+      const input = document.getElementById('totpInput');
+      if (modal) {
+        modal.style.display = 'flex';
+        if (input) {
+          input.value = '';
+          input.focus();
+        }
+      }
+    }
+
+    function close2FaModal() {
+      const modal = document.getElementById('login2FaModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    async function submit2FaVerification() {
+      const input = document.getElementById('totpInput');
+      const code = input ? input.value.trim() : '';
+      if (!code) {
+        showToast('Please enter your 6-digit code or recovery key', 'error');
+        return;
+      }
+
+      const verifyBtn = document.getElementById('btnSubmit2Fa');
+      if (verifyBtn) {
+        verifyBtn.disabled = true;
+        verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+      }
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pending2FaEmail, password: pending2FaPassword, totp_code: code })
+        });
+        const data = await res.json();
+        if (data.success) {
+          saveToken(data.token, data.user);
+          showToast('2FA Verification successful! Redirecting to Admin...', 'success');
+          close2FaModal();
+          setTimeout(() => window.location.replace('/admin'), 600);
+        } else {
+          showToast(data.message || 'Invalid 6-digit authenticator code or recovery key', 'error');
+        }
+      } catch (err) {
+        showToast('2FA verification network error: ' + err.message, 'error');
+      } finally {
+        if (verifyBtn) {
+          verifyBtn.disabled = false;
+          verifyBtn.innerHTML = 'Verify &amp; Enter Dashboard';
+        }
+      }
+    }
+
     // Submit Traditional Login
     document.getElementById('traditionalLoginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -465,55 +527,83 @@
       const email = document.getElementById('loginEmail').value.trim().toLowerCase();
       const password = document.getElementById('loginPassword').value.trim();
 
-      try {
-        let idToken;
-        try {
-          // 1. Try Firebase Authentication first
-          const userCredential = await auth.signInWithEmailAndPassword(email, password);
-          idToken = await userCredential.user.getIdToken();
-        } catch (fbErr) {
-          // If Firebase fails and it's the admin email, fallback to local DB check
-          if (email === 'admin@littlelarge.in') {
-            const res = await fetch('/api/auth/login', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email, password })
-            });
-            const data = await res.json();
-            if (data.success) {
-              saveToken(data.token, data.user);
-              showToast(`Welcome back Admin!`, 'success');
-              window.location.replace('/admin');
-              return;
-            }
-          }
-          throw fbErr; // Otherwise propagate Firebase error
-        }
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+      }
 
-        // 2. Sync token with backend to establish session and get local token
-        const res = await fetch('/api/auth/firebase-login', {
+      try {
+        // 1. Authenticate with backend /api/auth/login directly (handles Admin, Staff, and Local Customers)
+        const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken })
+          body: JSON.stringify({ email, password })
         });
         const data = await res.json();
-        
+
+        if (data.require_2fa) {
+          show2FaPromptModal(email, password);
+          return;
+        }
+
         if (data.success) {
           saveToken(data.token, data.user);
-          showToast(`Welcome back, ${data.user.name}!`, 'success');
+          showToast(`Welcome back, ${data.user.name || 'User'}!`, 'success');
           
           setTimeout(() => {
-            if (data.user.email.toLowerCase() === 'admin@littlelarge.in') {
+            const isAdmin = data.user.email.toLowerCase() === 'admin@littlelarge.in' || 
+                            data.user.role === 'admin' || 
+                            data.user.role === 'staff' || 
+                            data.user.isStaff;
+            if (isAdmin) {
               window.location.replace('/admin');
             } else {
               window.location.replace('/');
             }
-          }, 1200);
-        } else {
-          showToast(data.message || 'Firebase login sync failed', 'error');
+          }, 800);
+          return;
         }
+
+        // 2. If backend user not found, fallback to Firebase authentication for legacy Firebase accounts
+        if (typeof auth !== 'undefined' && auth.signInWithEmailAndPassword) {
+          try {
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            const idToken = await userCredential.user.getIdToken();
+            const fbRes = await fetch('/api/auth/firebase-login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ idToken })
+            });
+            const fbData = await fbRes.json();
+            if (fbData.success) {
+              saveToken(fbData.token, fbData.user);
+              showToast(`Welcome back, ${fbData.user.name}!`, 'success');
+              setTimeout(() => {
+                const isAdmin = fbData.user.email.toLowerCase() === 'admin@littlelarge.in' || 
+                                fbData.user.role === 'admin' || 
+                                fbData.user.role === 'staff';
+                if (isAdmin) {
+                  window.location.replace('/admin');
+                } else {
+                  window.location.replace('/');
+                }
+              }, 800);
+              return;
+            }
+          } catch (fbErr) {
+            // Firebase failed as well, show the primary message
+          }
+        }
+
+        showToast(data.message || 'Login failed: Check email or password', 'error');
       } catch (err) {
         showToast(err.message || 'Login failed: Check email or password', 'error');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = 'Sign In';
+        }
       }
     });
 
@@ -680,5 +770,30 @@
       }
     }
   </script>
+  <!-- Admin Two-Factor Authentication Modal Dialog -->
+  <div id="login2FaModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.75); backdrop-filter:blur(4px); z-index:999999; justify-content:center; align-items:center; padding:1rem;">
+    <div style="background:#fff; border-radius:14px; width:100%; max-width:440px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); overflow:hidden; border:1px solid #e2e8f0; animation:modalPop 0.25s ease-out;">
+      <div style="background:linear-gradient(135deg, var(--primary, #800020), #500014); color:#fff; padding:1.25rem 1.5rem; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:1.4rem;">🔐</span>
+          <h3 style="margin:0; font-size:1.15rem; font-weight:700;">Two-Factor Verification</h3>
+        </div>
+        <button type="button" onclick="close2FaModal()" style="background:none; border:none; color:#fff; font-size:1.4rem; cursor:pointer; opacity:0.8;">&times;</button>
+      </div>
+      <div style="padding:1.5rem;">
+        <p style="font-size:0.88rem; color:#475569; margin:0 0 1.2rem 0; line-height:1.5;">
+          This administrator account is protected with Two-Factor Authentication (TOTP). Please enter the 6-digit verification code from your authenticator app (Google Authenticator, Microsoft Authenticator, or Aegis), or an emergency 8-character recovery code.
+        </p>
+        <div class="form-group" style="margin-bottom:1.2rem;">
+          <label style="font-weight:700; font-size:0.82rem; color:#1e293b; display:block; margin-bottom:6px;">6-Digit TOTP Code / Recovery Key</label>
+          <input type="text" id="totpInput" class="form-input" placeholder="000000 or ABC12345" maxlength="12" style="width:100%; font-size:1.2rem; font-family:monospace; text-align:center; letter-spacing:3px; padding:0.6rem; border:2px solid #cbd5e1; border-radius:8px;" onkeypress="if(event.key==='Enter') submit2FaVerification()">
+        </div>
+        <div style="display:flex; gap:10px; justify-content:flex-end;">
+          <button type="button" class="btn" onclick="close2FaModal()" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:0.6rem 1.2rem; font-size:0.85rem; font-weight:600;">Cancel</button>
+          <button type="button" id="btnSubmit2Fa" class="btn btn-primary" onclick="submit2FaVerification()" style="padding:0.6rem 1.5rem; font-size:0.85rem; font-weight:700;">Verify &amp; Enter Dashboard</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

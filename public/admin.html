@@ -51,6 +51,17 @@
   </style>
   <link rel="stylesheet" href="css/ux-premium.css?v=13">
   <script>
+    window.escapeHTML = function(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    };
+    function escapeHTML(str) { return window.escapeHTML(str); }
+
     window.onerror = function(message, source, lineno, colno, error) {
       const errBanner = document.createElement('div');
       errBanner.style.position = 'fixed';
@@ -88,15 +99,20 @@
     </div>
     <ul class="admin-sidebar-menu">
       <li><a href="#" class="active" data-section="analyticsSection"><i class="fas fa-chart-line"></i> Analytics</a></li>
-      <li><a href="#" data-section="intelligenceSection"><i class="fas fa-brain"></i> Merchant Intelligence</a></li>
       <li><a href="#" data-section="productsSection"><i class="fas fa-tshirt"></i> Products Inventory</a></li>
+      <li><a href="#" data-section="aiProductStudioSection" style="color:var(--marigold); font-weight:700;"><i class="fas fa-magic"></i> ✨ AI Product Studio</a></li>
+      <li><a href="#" data-section="careersSection"><i class="fas fa-briefcase"></i> Careers & Interns</a></li>
+      <li><a href="#" data-section="aiAssistantsSection"><i class="fas fa-robot"></i> AI Assistants</a></li>
+      <li><a href="#" data-section="mediaStudioSection"><i class="fas fa-photo-video"></i> Image & Video Studio</a></li>
       <li><a href="#" data-section="ordersSection"><i class="fas fa-shipping-fast"></i> Order Fulfillment</a></li>
       <li><a href="#" data-section="promotionsSection"><i class="fas fa-ad"></i> Promotions & Hero</a></li>
-      <li><a href="#" data-section="errorSection"><i class="fas fa-bug"></i> Error Tracking</a></li>
       <li><a href="#" data-section="inquiriesSection"><i class="far fa-envelope-open"></i> Customer Inquiries</a></li>
+      <li><a href="#" data-section="intelligenceSection"><i class="fas fa-brain"></i> Merchant Intelligence</a></li>
       <li><a href="#" data-section="lookbookSection"><i class="fas fa-book-open"></i> Lookbook Manager</a></li>
+      <li><a href="#" data-section="policiesSection"><i class="fas fa-file-contract"></i> Store Policies & Terms</a></li>
+      <li><a href="#" data-section="securitySection"><i class="fas fa-user-shield"></i> Security & Staff Roles</a></li>
       <li><a href="#" data-section="settingsSection"><i class="fas fa-sliders-h"></i> Shipping Settings</a></li>
-      <li><a href="/" style="color:var(--marigold); margin-top:3rem"><i class="fas fa-home"></i> View Website</a></li>
+      <li><a href="/" style="color:var(--marigold); margin-top:2rem"><i class="fas fa-home"></i> View Website</a></li>
     </ul>
   </aside>
 
@@ -232,8 +248,18 @@
       <section id="productsSection" style="display: none;">
         <div class="admin-table-card">
           <div class="table-header-row">
-            <h3 style="font-size:1.2rem; color:var(--primary); font-weight:800">Inventory Catalog</h3>
-            <button class="btn btn-primary" onclick="openAddProductModal()" style="padding:0.5rem 1.2rem; font-size:0.85rem"><i class="fas fa-plus"></i> Add Product</button>
+            <div>
+              <h3 style="font-size:1.2rem; color:var(--primary); font-weight:800">Inventory Catalog</h3>
+              <span style="font-size:0.8rem; color:var(--text-light)">Manage store SKUs, prices, stock, and photography</span>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="showSection('aiProductStudioSection')" style="padding:0.5rem 1.2rem; font-size:0.85rem; background:linear-gradient(135deg, hsl(348,75%,26%), hsl(348,75%,38%)); border-color:var(--primary);">
+                <i class="fas fa-magic"></i> ✨ Create Product with AI
+              </button>
+              <button class="btn" onclick="openAddProductModal()" style="padding:0.5rem 1.2rem; font-size:0.85rem; background:#ffffff; color:var(--primary); border:1px solid #cbd5e1;">
+                <i class="fas fa-plus"></i> Manual Entry
+              </button>
+            </div>
           </div>
           <div style="overflow-x:auto">
             <table class="admin-table" id="adminProductsTable">
@@ -251,6 +277,593 @@
                 <!-- Injected dynamically -->
               </tbody>
             </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================================================
+           2B. MODE B: AI-ASSISTED PRODUCT CREATION STUDIO
+           ========================================================================== -->
+      <section id="aiProductStudioSection" style="display: none;">
+        <div style="background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:2rem; margin-bottom:2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; border-bottom:1px solid #e2e8f0; padding-bottom:1.5rem; margin-bottom:1.5rem;">
+            <div>
+              <div style="display:inline-flex; align-items:center; gap:8px; background:hsl(348,75%,96%); color:var(--primary); padding:4px 12px; border-radius:20px; font-size:0.78rem; font-weight:700; margin-bottom:8px;">
+                <i class="fas fa-sparkles"></i> Mode B &bull; 100% Free Local AI Pipeline
+              </div>
+              <h2 style="font-size:1.5rem; color:var(--primary); font-weight:800; margin:0;">✨ AI-Assisted Product Creation Studio</h2>
+              <p style="font-size:0.88rem; color:var(--text-light); margin-top:4px; max-width:850px;">
+                Upload 2&ndash;3 raw clothing photos. Our local Python ML models analyze dominant colors, fabric textures, occasion suitability, and draft SEO titles and descriptions. <strong>You retain 100% authority over final prices, stock, sizes, and return policies.</strong>
+              </p>
+            </div>
+            <button class="btn" onclick="showSection('productsSection')" style="background:#f1f5f9; color:#475569; font-size:0.85rem;">
+              <i class="fas fa-arrow-left"></i> Back to Inventory
+            </button>
+          </div>
+
+          <!-- Step 1: Upload & Image Selection -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-bottom:2rem;">
+            <div>
+              <h3 style="font-size:1.05rem; color:var(--primary); font-weight:800; margin-bottom:0.8rem; display:flex; align-items:center; gap:8px;">
+                <span style="background:var(--primary); color:#fff; width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.75rem;">1</span>
+                Upload Garment Photographs (2&ndash;3 Recommended)
+              </h3>
+              <div id="aiStudioDropzone" style="border:2px dashed #cbd5e1; border-radius:12px; padding:2rem 1.5rem; text-align:center; background:#f8fafc; cursor:pointer; transition:all 0.2s;" onclick="document.getElementById('aiStudioFileInput').click()">
+                <i class="fas fa-cloud-upload-alt" style="font-size:2.5rem; color:var(--primary); margin-bottom:0.8rem; opacity:0.8;"></i>
+                <div style="font-weight:700; font-size:0.95rem; color:#1e293b;">Click to browse or drop front &amp; detail photos</div>
+                <div style="font-size:0.8rem; color:#64748b; margin-top:4px;">Supported: JPG, PNG, WebP (Max 5MB each)</div>
+                <input type="file" id="aiStudioFileInput" multiple accept="image/*" style="display:none;" onchange="handleAiStudioFiles(event)">
+              </div>
+
+              <!-- Selected Images Preview Row -->
+              <div id="aiStudioUploadPreviews" style="display:flex; gap:12px; margin-top:12px; flex-wrap:wrap; min-height:80px; align-items:center;">
+                <span style="font-size:0.8rem; color:#94a3b8; font-style:italic;">No photos uploaded yet. Select 1 to 3 images to begin.</span>
+              </div>
+            </div>
+
+            <!-- Step 2: Processing Options -->
+            <div>
+              <h3 style="font-size:1.05rem; color:var(--primary); font-weight:800; margin-bottom:0.8rem; display:flex; align-items:center; gap:8px;">
+                <span style="background:var(--primary); color:#fff; width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.75rem;">2</span>
+                Choose Local Processing Capabilities
+              </h3>
+              <div style="display:flex; flex-direction:column; gap:10px; background:#f8fafc; padding:1.2rem; border-radius:12px; border:1px solid #e2e8f0;">
+                <label style="display:flex; align-items:center; gap:10px; font-size:0.88rem; cursor:pointer; font-weight:600; color:#1e293b;">
+                  <input type="checkbox" id="aiOptMetadata" checked style="accent-color:var(--primary); width:18px; height:18px;">
+                  <span>Extract garment metadata, dominant colors, and craft title/SEO</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:10px; font-size:0.88rem; cursor:pointer; font-weight:600; color:#1e293b;">
+                  <input type="checkbox" id="aiOptStudioClean" checked style="accent-color:var(--primary); width:18px; height:18px;">
+                  <span>Studio Canvas Clean (Centered on neutral 1080x1080 canvas)</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:10px; font-size:0.88rem; cursor:pointer; font-weight:600; color:#1e293b;">
+                  <input type="checkbox" id="aiOptConcepts" style="accent-color:var(--primary); width:18px; height:18px;">
+                  <span>Generate 5 Model-Worn / Visual Setting Concepts (Preview Watermarked)</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:10px; font-size:0.88rem; cursor:pointer; font-weight:600; color:#1e293b;">
+                  <input type="checkbox" id="aiOptVideo" style="accent-color:var(--primary); width:18px; height:18px;">
+                  <span>Render 10-Second Deterministic Promotional Animated Video Showcase</span>
+                </label>
+              </div>
+
+              <!-- Action Trigger -->
+              <div style="margin-top:1.5rem;">
+                <button id="btnRunAiAnalysis" class="btn btn-primary" onclick="runAiProductAnalysis()" style="width:100%; padding:0.9rem; font-size:0.95rem; font-weight:700; display:flex; align-items:center; justify-content:center; gap:10px; background:linear-gradient(135deg, hsl(348,75%,26%), hsl(348,75%,38%)); border-radius:8px;">
+                  <i class="fas fa-wand-magic-sparkles"></i> Step 3: Analyze &amp; Generate Product Suggestions
+                </button>
+                <div id="aiStudioLoadingStatus" style="display:none; margin-top:10px; text-align:center; font-size:0.85rem; color:var(--primary); font-weight:600;">
+                  <i class="fas fa-spinner fa-spin"></i> Analyzing garment fabric, colors, and building review draft...
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Review & Edit Screen (Visible after analysis) -->
+          <div id="aiStudioReviewContainer" style="display:none; border-top:2px solid #e2e8f0; padding-top:2rem; margin-top:1rem;">
+            <div style="background:hsl(38,92%,96%); border-left:4px solid var(--marigold); padding:1rem 1.2rem; border-radius:6px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+              <div>
+                <strong style="color:#78350f; font-size:0.92rem;"><i class="fas fa-clipboard-check"></i> Step 4: Administrator Verification &amp; Editable Draft</strong>
+                <p style="margin:4px 0 0; font-size:0.82rem; color:#92400e;">Green badges indicate AI-extracted observations. You must review and set final prices, stock, and size variants.</p>
+              </div>
+              <span id="aiObservedBadge" style="background:#fff; color:#92400e; padding:4px 10px; border-radius:12px; font-size:0.75rem; font-weight:700; border:1px solid #fde68a;">
+                AI Confidence: High
+              </span>
+            </div>
+
+            <!-- AI Visual Observation Summary Cards -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1.8rem;">
+              <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:0.9rem;">
+                <span style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Observed Colors</span>
+                <div id="aiReviewColors" style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">-</div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:0.9rem;">
+                <span style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Pattern &amp; Craft</span>
+                <div id="aiReviewPattern" style="font-size:0.9rem; font-weight:700; color:#1e293b; margin-top:6px;">-</div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:0.9rem;">
+                <span style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Occasion &amp; Season</span>
+                <div id="aiReviewOccasions" style="font-size:0.85rem; font-weight:600; color:#334155; margin-top:6px;">-</div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:0.9rem;">
+                <span style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Suggested Pairings</span>
+                <div id="aiReviewPairings" style="font-size:0.82rem; color:#475569; margin-top:6px;">-</div>
+              </div>
+            </div>
+
+            <!-- Editable Form Fields -->
+            <form id="aiProductPublishForm" onsubmit="handleAiProductPublish(event)">
+              <div style="display:grid; grid-template-columns:2fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+                <!-- Left: Catalog Content -->
+                <div style="display:flex; flex-direction:column; gap:1rem;">
+                  <div class="form-group">
+                    <label style="font-weight:700; font-size:0.85rem; display:flex; justify-content:space-between;">
+                      <span>Product Title (AI Suggested &bull; Editable)</span>
+                      <small style="color:var(--primary); font-weight:600;">Verified</small>
+                    </label>
+                    <input type="text" id="aiProdName" class="form-input" style="width:100%; font-size:0.95rem; font-weight:700;" required>
+                  </div>
+
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div class="form-group">
+                      <label style="font-weight:700; font-size:0.85rem;">Category</label>
+                      <select id="aiProdCategory" class="form-input" style="width:100%;" required>
+                        <option value="Women">Women</option>
+                        <option value="Men">Men</option>
+                        <option value="Kids">Kids</option>
+                        <option value="Accessories">Accessories</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label style="font-weight:700; font-size:0.85rem;">Subcategory / Style</label>
+                      <input type="text" id="aiProdSubcategory" class="form-input" placeholder="e.g. Ethnic, Kurta, Family Sets" style="width:100%;">
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label style="font-weight:700; font-size:0.85rem;">Product Description (AI Generated &bull; Polish or edit freely)</label>
+                    <textarea id="aiProdDesc" rows="4" class="form-input" style="width:100%; font-family:inherit; font-size:0.88rem; line-height:1.5;" required></textarea>
+                  </div>
+
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div class="form-group">
+                      <label style="font-weight:700; font-size:0.85rem;">SEO Meta Title</label>
+                      <input type="text" id="aiProdSeoTitle" class="form-input" style="width:100%; font-size:0.85rem;">
+                    </div>
+                    <div class="form-group">
+                      <label style="font-weight:700; font-size:0.85rem;">Search Keywords</label>
+                      <input type="text" id="aiProdKeywords" class="form-input" placeholder="e.g. floral anarkali, cotton kurta" style="width:100%; font-size:0.85rem;">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right: Commercial, Inventory & Policy Controls (ADMIN EXCLUSIVE) -->
+                <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:12px; padding:1.2rem; display:flex; flex-direction:column; gap:1rem;">
+                  <div style="font-size:0.9rem; font-weight:800; color:var(--primary); border-bottom:1px solid #e2e8f0; padding-bottom:8px;">
+                    <i class="fas fa-lock"></i> Financial &amp; Stock Authority
+                  </div>
+
+                  <div class="form-group">
+                    <label style="font-weight:700; font-size:0.82rem;">Original MRP (₹) <small style="color:#64748b;">(Strikethrough)</small></label>
+                    <input type="number" id="aiProdMrp" class="form-input" placeholder="e.g. 2999" oninput="calculateAiDiscount()" required style="width:100%; font-weight:700;">
+                  </div>
+
+                  <div class="form-group">
+                    <label style="font-weight:700; font-size:0.82rem;">Selling Price (₹) <small style="color:#64748b;">(Bold checkout)</small></label>
+                    <input type="number" id="aiProdPrice" class="form-input" placeholder="e.g. 1499" oninput="calculateAiDiscount()" required style="width:100%; font-weight:700;">
+                    <div id="aiDiscountBadge" style="font-size:0.78rem; font-weight:700; color:#16a34a; margin-top:4px;">Discount: --%</div>
+                  </div>
+
+                  <div class="form-group">
+                    <label style="font-weight:700; font-size:0.82rem;">Stock Units</label>
+                    <input type="number" id="aiProdStock" class="form-input" placeholder="e.g. 50" value="30" required style="width:100%;">
+                  </div>
+
+                  <div class="form-group">
+                    <label style="font-weight:700; font-size:0.82rem;">Available Sizes (Comma separated)</label>
+                    <input type="text" id="aiProdSizes" class="form-input" placeholder="S, M, L, XL" value="S, M, L, XL" required style="width:100%;">
+                  </div>
+
+                  <div class="form-group">
+                    <label style="font-weight:700; font-size:0.82rem;">Return Window (Days)</label>
+                    <input type="number" id="aiProdReturnWindow" class="form-input" min="0" value="7" required style="width:100%;">
+                    <small style="color:#64748b; font-size:0.75rem;">Set to 0 if non-returnable clearance item</small>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Generated Visual Assets Preview Row -->
+              <div id="aiStudioAssetsRow" style="margin-bottom:1.5rem; background:#f1f5f9; padding:1.2rem; border-radius:10px;">
+                <div style="font-size:0.88rem; font-weight:700; color:#1e293b; margin-bottom:8px;">
+                  📸 Generated Catalog &amp; Studio Assets
+                </div>
+                <div id="aiStudioAssetsGrid" style="display:flex; gap:12px; overflow-x:auto; padding-bottom:8px;">
+                  <!-- Filled dynamically with cleaned image, concept previews, or video thumbnail -->
+                </div>
+                <input type="hidden" id="aiProdImagesJson">
+                <input type="hidden" id="aiProdVideoUrl">
+              </div>
+
+              <!-- Final Confirmation & Actions -->
+              <div style="display:flex; justify-content:flex-end; gap:12px; border-top:1px solid #e2e8f0; padding-top:1.2rem;">
+                <button type="button" class="btn" onclick="saveAiProductDraft()" style="background:#fff; border:1px solid #cbd5e1; color:#334155; font-weight:600;">
+                  <i class="fas fa-save"></i> Save as Draft (Stock 0)
+                </button>
+                <button type="submit" id="btnPublishAiProduct" class="btn btn-primary" style="padding:0.7rem 1.8rem; font-weight:700; background:linear-gradient(135deg, hsl(348,75%,26%), hsl(348,75%,38%));">
+                  <i class="fas fa-check-circle"></i> Approve &amp; Publish to Store Catalog
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================================================
+           2C. CAREERS & INTERNSHIP MANAGEMENT SECTION
+           ========================================================================== -->
+      <section id="careersSection" style="display: none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <h2 style="font-size:1.5rem; color:var(--primary); font-weight:800; margin:0;">💼 Careers &amp; Internship Opportunities</h2>
+            <p style="font-size:0.85rem; color:var(--text-light); margin-top:4px;">Manage openings for fashion merchandisers, stylists, operations interns, and review applications.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openNewCareerForm()" style="padding:0.5rem 1.2rem; font-size:0.85rem;">
+            <i class="fas fa-plus-circle"></i> Post New Role / Internship
+          </button>
+        </div>
+
+        <!-- Add/Edit Career Form Modal/Drawer -->
+        <div id="careerFormCard" style="display:none; background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:1.8rem; margin-bottom:2rem; border-left:4px solid var(--primary);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 id="careerFormTitle" style="font-size:1.15rem; color:var(--primary); font-weight:800; margin:0;">Post New Opportunity</h3>
+            <button class="btn" onclick="closeCareerForm()" style="padding:0.3rem 0.8rem; font-size:0.8rem; background:#f1f5f9;">Cancel</button>
+          </div>
+          <form id="adminCareerForm" onsubmit="handleCareerFormSubmit(event)">
+            <input type="hidden" id="careerEditId">
+            <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:1.2rem; margin-bottom:1rem;">
+              <div class="form-group">
+                <label style="font-weight:700; font-size:0.82rem;">Job / Internship Title</label>
+                <input type="text" id="careerTitle" class="form-input" placeholder="e.g. Fashion Merchandiser & Designer" required style="width:100%;">
+              </div>
+              <div class="form-group">
+                <label style="font-weight:700; font-size:0.82rem;">Role / Designation</label>
+                <input type="text" id="careerRole" class="form-input" placeholder="e.g. Lead Ethnic Wear Stylist" required style="width:100%;">
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-bottom:1rem;">
+              <div class="form-group">
+                <label style="font-weight:700; font-size:0.82rem;">Department</label>
+                <select id="careerDept" class="form-input" style="width:100%;">
+                  <option value="Fashion & Design">Fashion &amp; Design</option>
+                  <option value="Operations & Logistics">Operations &amp; Logistics</option>
+                  <option value="Marketing & Content">Marketing &amp; Content</option>
+                  <option value="E-Commerce & Tech">E-Commerce &amp; Tech</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label style="font-weight:700; font-size:0.82rem;">Employment Type</label>
+                <select id="careerType" class="form-input" style="width:100%;">
+                  <option value="Full-time">Full-time</option>
+                  <option value="Internship">Internship</option>
+                  <option value="Part-time">Part-time</option>
+                  <option value="Remote">Remote</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label style="font-weight:700; font-size:0.82rem;">Location</label>
+                <input type="text" id="careerLocation" class="form-input" placeholder="Gandhidham / Hybrid" value="Gandhidham, Gujarat / Hybrid" style="width:100%;">
+              </div>
+              <div class="form-group">
+                <label style="font-weight:700; font-size:0.82rem;">Experience</label>
+                <input type="text" id="careerExperience" class="form-input" placeholder="e.g. 0-2 Years / Freshers" value="0-2 Years" style="width:100%;">
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; margin-bottom:1rem;">
+              <div class="form-group">
+                <label style="font-weight:700; font-size:0.82rem;">Stipend / Salary Range</label>
+                <input type="text" id="careerSalary" class="form-input" placeholder="e.g. ₹15,000 / mo or ₹3-5 LPA" style="width:100%;">
+              </div>
+              <div class="form-group">
+                <label style="font-weight:700; font-size:0.82rem;">Timeline / Application Deadline</label>
+                <input type="date" id="careerDeadline" class="form-input" style="width:100%;">
+              </div>
+              <div class="form-group">
+                <label style="font-weight:700; font-size:0.82rem;">Status</label>
+                <select id="careerStatus" class="form-input" style="width:100%;">
+                  <option value="open">Open (Active on /careers)</option>
+                  <option value="closed">Closed / Archived</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label style="font-weight:700; font-size:0.82rem;">Requirements &amp; Qualifications</label>
+              <textarea id="careerRequirements" rows="3" class="form-input" placeholder="Degree, textile knowledge, skills required..." style="width:100%; font-family:inherit;" required></textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom:1.5rem;">
+              <label style="font-weight:700; font-size:0.82rem;">Role Description &amp; Responsibilities</label>
+              <textarea id="careerDescription" rows="4" class="form-input" placeholder="Day-to-day responsibilities and mission..." style="width:100%; font-family:inherit;" required></textarea>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+              <button type="button" class="btn" onclick="closeCareerForm()" style="background:#f1f5f9;">Cancel</button>
+              <button type="submit" id="btnSaveCareer" class="btn btn-primary" style="padding:0.6rem 1.8rem; font-weight:700;">Save Opportunity</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Careers Catalog Table -->
+        <div class="admin-table-card" style="margin-bottom:2rem;">
+          <div class="table-header-row">
+            <div>
+              <h3 style="font-size:1.15rem; color:var(--primary); font-weight:800; margin:0;">Active &amp; Archived Openings</h3>
+              <span style="font-size:0.8rem; color:var(--text-light);">Visible to applicants on public /careers page</span>
+            </div>
+            <button class="btn" onclick="loadAdminCareers()" style="padding:0.4rem 0.8rem; font-size:0.8rem; background:#f1f5f9;">
+              <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="admin-table" id="adminCareersTable">
+              <thead>
+                <tr>
+                  <th>Role &amp; Title</th>
+                  <th>Department &amp; Type</th>
+                  <th>Location &amp; Comp</th>
+                  <th>Deadline</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminCareersTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Applicant Submissions Table -->
+        <div class="admin-table-card">
+          <div class="table-header-row">
+            <div>
+              <h3 style="font-size:1.15rem; color:var(--primary); font-weight:800; margin:0;">Applicant Submissions &amp; Intern Resumes</h3>
+              <span style="font-size:0.8rem; color:var(--text-light);">Direct job and internship applications submitted from /careers</span>
+            </div>
+            <button class="btn" onclick="loadCareerApplications()" style="padding:0.4rem 0.8rem; font-size:0.8rem; background:#f1f5f9;">
+              <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="admin-table" id="adminApplicationsTable">
+              <thead>
+                <tr>
+                  <th>Applicant Name</th>
+                  <th>Role Applied For</th>
+                  <th>Email &amp; Phone</th>
+                  <th>Resume / Portfolio</th>
+                  <th>Cover Note</th>
+                  <th>Applied On</th>
+                </tr>
+              </thead>
+              <tbody id="adminApplicationsTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================================================
+           2D. ADMIN AI ASSISTANTS WORKSPACE
+           ========================================================================== -->
+      <section id="aiAssistantsSection" style="display: none;">
+        <div style="margin-bottom:1.5rem;">
+          <h2 style="font-size:1.5rem; color:var(--primary); font-weight:800; margin:0;">🤖 Admin AI Assistants Workspace</h2>
+          <p style="font-size:0.85rem; color:var(--text-light); margin-top:4px;">Specialized local intelligence tools for marketing campaigns, customer support drafting, and inventory health.</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-bottom:2rem;">
+          <!-- 1. Marketing Campaign Copywriter Assistant -->
+          <div style="background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:1.8rem; border-top:4px solid var(--primary);">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:1rem;">
+              <i class="fas fa-bullhorn" style="font-size:1.2rem; color:var(--primary);"></i>
+              <h3 style="font-size:1.1rem; color:var(--primary); font-weight:800; margin:0;">Festival Marketing Assistant</h3>
+            </div>
+            <p style="font-size:0.82rem; color:var(--text-light); margin-bottom:1rem;">Draft high-converting Indian festive campaigns (Diwali, Navratri, Eid, Wedding Season) and Instagram captions.</p>
+
+            <form onsubmit="handleMarketingAssistantSubmit(event)" style="display:flex; flex-direction:column; gap:0.9rem;">
+              <div class="form-group">
+                <label style="font-weight:700; font-size:0.8rem;">Festival / Campaign Theme</label>
+                <select id="mktTheme" class="form-input" style="width:100%;">
+                  <option value="diwali">Diwali Lights &amp; Ethnic Family Twinning</option>
+                  <option value="navratri">Navratri Chaniya Choli &amp; Garba Vibes</option>
+                  <option value="wedding">Royal Indian Wedding &amp; Reception Wear</option>
+                  <option value="eid">Eid Festive Celebration</option>
+                  <option value="monsoon">Monsoon Comfort Cotton Collection</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label style="font-weight:700; font-size:0.8rem;">Target Collection</label>
+                <select id="mktTarget" class="form-input" style="width:100%;">
+                  <option value="Family Sets">Family Matching Sets (Mom, Dad &amp; Kids)</option>
+                  <option value="Silk Sarees">Handloom Silk &amp; Bandhani Sarees</option>
+                  <option value="Mens Kurta">Men's Embroidered Kurta Pajama</option>
+                  <option value="Kids Ethnic">Kids Dhoti Kurta &amp; Lehengas</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label style="font-weight:700; font-size:0.8rem;">Special Offer / Discount</label>
+                <input type="text" id="mktOffer" class="form-input" placeholder="e.g. Flat 25% Off + Extra 10% on Prepaid Orders" value="Flat 25% Off Festive Launch" style="width:100%;">
+              </div>
+              <button type="submit" id="btnGenMarketing" class="btn btn-primary" style="margin-top:4px; font-weight:700;">
+                <i class="fas fa-wand-magic-sparkles"></i> Generate Campaign Drafts
+              </button>
+            </form>
+
+            <div id="mktResultBox" style="display:none; margin-top:1.2rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:1rem; font-size:0.85rem;">
+              <div style="font-weight:700; color:var(--primary); margin-bottom:6px;">Generated Campaign Draft:</div>
+              <div id="mktCampaignHeadline" style="font-weight:800; font-size:0.95rem; color:#0f172a; margin-bottom:6px;"></div>
+              <div id="mktCaptionText" style="white-space:pre-wrap; color:#334155; line-height:1.5; font-size:0.82rem; background:#fff; padding:10px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom:8px;"></div>
+              <button class="btn" onclick="copyMktCaption()" style="padding:0.3rem 0.8rem; font-size:0.78rem; background:#e2e8f0;">
+                <i class="far fa-copy"></i> Copy to Clipboard
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. Customer Support Response Assistant -->
+          <div style="background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:1.8rem; border-top:4px solid var(--marigold);">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:1rem;">
+              <i class="fas fa-headset" style="font-size:1.2rem; color:var(--marigold);"></i>
+              <h3 style="font-size:1.1rem; color:var(--primary); font-weight:800; margin:0;">Support Reply Assistant</h3>
+            </div>
+            <p style="font-size:0.82rem; color:var(--text-light); margin-bottom:1rem;">Draft empathetic, policy-compliant responses for size exchanges, delivery status, and festive shipping.</p>
+
+            <form onsubmit="handleSupportAssistantSubmit(event)" style="display:flex; flex-direction:column; gap:0.9rem;">
+              <div class="form-group">
+                <label style="font-weight:700; font-size:0.8rem;">Customer Name</label>
+                <input type="text" id="suppCustomer" class="form-input" placeholder="e.g. Priya Sharma" value="Priya Sharma" style="width:100%;">
+              </div>
+              <div class="form-group">
+                <label style="font-weight:700; font-size:0.8rem;">Subject / Scenario</label>
+                <select id="suppSubject" class="form-input" style="width:100%;">
+                  <option value="Delivery Tracking & Shiprocket">Where is my order? (Shiprocket Tracking)</option>
+                  <option value="Size Exchange Request">Size Exchange Request (Within 7-day window)</option>
+                  <option value="Damaged / Fabric Quality Issue">Item received condition / Quality check</option>
+                  <option value="Payment / Refund Status">UPI / Prepaid Refund confirmation</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label style="font-weight:700; font-size:0.8rem;">Customer Message (Paste from inquiries)</label>
+                <textarea id="suppMessage" rows="3" class="form-input" placeholder="e.g. Hi, my order is showing in transit for 3 days, will it arrive before Navratri?" style="width:100%; font-family:inherit;">I ordered the green floral kurta set yesterday. Can you please confirm when it will arrive in Ahmedabad?</textarea>
+              </div>
+              <button type="submit" id="btnGenSupport" class="btn btn-primary" style="margin-top:4px; font-weight:700; background:linear-gradient(135deg, hsl(38,92%,45%), hsl(38,92%,35%)); border-color:var(--marigold);">
+                <i class="fas fa-envelope-open-text"></i> Draft Official Reply
+              </button>
+            </form>
+
+            <div id="suppResultBox" style="display:none; margin-top:1.2rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:1rem; font-size:0.85rem;">
+              <div style="font-weight:700; color:var(--primary); margin-bottom:6px;">Draft Policy Response (Editable):</div>
+              <textarea id="suppDraftArea" rows="5" class="form-input" style="width:100%; font-family:inherit; font-size:0.82rem; line-height:1.5; margin-bottom:8px;"></textarea>
+              <button class="btn" onclick="copySupportDraft()" style="padding:0.3rem 0.8rem; font-size:0.78rem; background:#e2e8f0;">
+                <i class="far fa-copy"></i> Copy Draft Reply
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================================================
+           2E. PRODUCT IMAGE & VIDEO STUDIO
+           ========================================================================== -->
+      <section id="mediaStudioSection" style="display: none;">
+        <div style="margin-bottom:1.5rem;">
+          <h2 style="font-size:1.5rem; color:var(--primary); font-weight:800; margin:0;">📸 Image &amp; Video Media Studio</h2>
+          <p style="font-size:0.85rem; color:var(--text-light); margin-top:4px;">Produce clean neutral studio canvases, 5 model-worn visual concepts, and 10-second deterministic animated showcase videos.</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-bottom:2rem;">
+          <!-- 1. Studio Canvas & Background Cleaner -->
+          <div style="background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:1.8rem;">
+            <h3 style="font-size:1.15rem; color:var(--primary); font-weight:800; margin-bottom:0.8rem; display:flex; align-items:center; gap:8px;">
+              <i class="fas fa-crop-alt"></i> Neutral Studio Canvas Cleaner
+            </h3>
+            <p style="font-size:0.82rem; color:var(--text-light); margin-bottom:1rem;">Centers the garment onto a pristine 1080x1080 canvas with soft contact shadowing for marketplace compliance.</p>
+            
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label style="font-weight:700; font-size:0.8rem;">Select Product Image or Upload</label>
+              <select id="studioCleanImageSelect" class="form-input" style="width:100%; margin-bottom:8px;" onchange="updateStudioCleanSource(this.value)">
+                <!-- Populated with catalog products -->
+              </select>
+              <input type="file" id="studioCleanFileInput" accept="image/*" class="form-input" style="width:100%; padding:0.4rem;" onchange="handleStudioCleanFileUpload(event)">
+            </div>
+
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label style="font-weight:700; font-size:0.8rem;">Canvas Backdrop Palette</label>
+              <select id="studioCanvasPreset" class="form-input" style="width:100%;">
+                <option value="white">Pristine Catalog White (#FFFFFF)</option>
+                <option value="cream">Festive Warm Cream (#FFFDF8)</option>
+                <option value="slate">Modern Neutral Slate (#F8FAFC)</option>
+              </select>
+            </div>
+
+            <button id="btnRunStudioClean" class="btn btn-primary" onclick="runStudioClean()" style="width:100%; font-weight:700;">
+              <i class="fas fa-magic"></i> Clean onto Studio Canvas
+            </button>
+
+            <!-- Preview Box -->
+            <div id="studioCleanPreviewBox" style="display:none; margin-top:1.2rem; text-align:center;">
+              <div style="font-size:0.8rem; font-weight:700; color:#475569; margin-bottom:6px;">Cleaned Studio Canvas (1080x1080):</div>
+              <img id="studioCleanResultImg" src="" alt="Cleaned Studio" style="max-height:220px; border-radius:8px; border:1px solid #cbd5e1; box-shadow:var(--shadow-sm);">
+              <div style="margin-top:8px;">
+                <a id="studioCleanDownloadLink" href="#" download="studio_clean.png" class="btn" style="padding:0.3rem 0.8rem; font-size:0.78rem; background:#f1f5f9;">
+                  <i class="fas fa-download"></i> Download High-Res
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. 10-Second Deterministic Promotional Video Generator -->
+          <div style="background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:1.8rem;">
+            <h3 style="font-size:1.15rem; color:var(--primary); font-weight:800; margin-bottom:0.8rem; display:flex; align-items:center; gap:8px;">
+              <i class="fas fa-film"></i> 10-Second Promotional Video Generator
+            </h3>
+            <p style="font-size:0.82rem; color:var(--text-light); margin-bottom:1rem;">Lightweight, deterministic animated product video asset with hero pan, fabric zoom, and price badge (Zero paid GPUs required).</p>
+
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label style="font-weight:700; font-size:0.8rem;">Select Product for Video</label>
+              <select id="studioVideoProductSelect" class="form-input" style="width:100%;" onchange="updateStudioVideoFields(this.value)">
+                <!-- Populated with catalog products -->
+              </select>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+              <div class="form-group">
+                <label style="font-weight:700; font-size:0.8rem;">Campaign Headline</label>
+                <input type="text" id="studioVideoHeadline" class="form-input" value="Festive Pure Cotton Ethnic Set" style="width:100%;">
+              </div>
+              <div class="form-group">
+                <label style="font-weight:700; font-size:0.8rem;">Special Discount Badge</label>
+                <input type="text" id="studioVideoDiscount" class="form-input" value="Special 50% Off" style="width:100%;">
+              </div>
+            </div>
+
+            <button id="btnRunStudioVideo" class="btn btn-primary" onclick="runStudioVideo()" style="width:100%; font-weight:700; background:linear-gradient(135deg, hsl(348,75%,26%), hsl(348,75%,38%));">
+              <i class="fas fa-play-circle"></i> Render 10-Second Promo Video
+            </button>
+
+            <!-- Video Result Preview Box -->
+            <div id="studioVideoPreviewBox" style="display:none; margin-top:1.2rem; text-align:center;">
+              <div style="font-size:0.8rem; font-weight:700; color:#475569; margin-bottom:6px;">10-Second Animated Showcase Asset:</div>
+              <img id="studioVideoResultAsset" src="" alt="Promo Video Preview" style="max-height:220px; border-radius:8px; border:1px solid #cbd5e1; box-shadow:var(--shadow-sm);">
+              <div style="margin-top:8px;">
+                <a id="studioVideoDownloadLink" href="#" download="promo_video.webp" class="btn" style="padding:0.3rem 0.8rem; font-size:0.78rem; background:#f1f5f9;">
+                  <i class="fas fa-download"></i> Download Video WebP
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Five Model-Worn / Setting Visual Concepts Grid -->
+        <div style="background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:1.8rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1rem;">
+            <div>
+              <h3 style="font-size:1.15rem; color:var(--primary); font-weight:800; margin:0;">5 Model-Worn &amp; Setting Concept Variations</h3>
+              <p style="font-size:0.82rem; color:var(--text-light); margin-top:4px;">
+                Generates 5 distinct angles and ambient settings. <strong>Clear watermarking prevents accidental misrepresentation.</strong>
+              </p>
+            </div>
+            <button id="btnRunStudioConcepts" class="btn btn-primary" onclick="runStudioConcepts()" style="font-weight:700;">
+              <i class="fas fa-images"></i> Generate 5 Concepts for Selected Image
+            </button>
+          </div>
+
+          <div id="studioConceptsGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.2rem; margin-top:1rem;">
+            <div style="border:1px dashed #cbd5e1; border-radius:8px; padding:2rem 1rem; text-align:center; color:#94a3b8; font-size:0.85rem; grid-column:1/-1;">
+              Click "Generate 5 Concepts" above to preview Front Catalog, 3/4 Angle, Side Profile, Festive Setting, and Artisan Studio views.
+            </div>
           </div>
         </div>
       </section>
@@ -763,96 +1376,290 @@
         </div>
       </section>
 
+      <!-- ==========================================================================
+           13. STORE POLICIES & TERMS MANAGEMENT SECTION
+           ========================================================================== -->
+      <section id="policiesSection" style="display: none;">
+        <div style="background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:2rem; margin-bottom:2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; border-bottom:1px solid #e2e8f0; padding-bottom:1rem;">
+            <div>
+              <h2 style="font-size:1.5rem; color:var(--primary); font-weight:800; margin:0;"><i class="fas fa-file-contract"></i> Store Policies &amp; Legal Terms CMS</h2>
+              <p style="font-size:0.85rem; color:var(--text-light); margin-top:4px;">
+                Manage customer-facing Replacement Policy, Returns, Shipping, Privacy, Terms, and Size Guide in real time.
+              </p>
+            </div>
+            <div style="display:flex; gap:10px;">
+              <a href="/policies" target="_blank" class="btn" style="background:#f1f5f9; color:var(--primary); font-size:0.85rem;">
+                <i class="fas fa-external-link-alt"></i> View Live Policies Page
+              </a>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:260px 1fr; gap:1.5rem;">
+            <!-- Policy Navigation List -->
+            <div style="border-right:1px solid #e2e8f0; padding-right:1rem;">
+              <label style="font-weight:700; font-size:0.82rem; color:var(--primary); display:block; margin-bottom:0.6rem;">Select Policy to Edit</label>
+              <div class="policy-nav-list" style="display:flex; flex-direction:column; gap:6px;">
+                <button type="button" class="btn btn-policy-tab active" onclick="loadPolicyForEdit('replacement', this)" style="text-align:left; justify-content:flex-start; padding:0.6rem 0.8rem; font-size:0.85rem; width:100%; border:1px solid #cbd5e1; background:#f8fafc;">
+                  <i class="fas fa-sync-alt" style="margin-right:8px; color:var(--primary);"></i> Replacement Policy
+                </button>
+                <button type="button" class="btn btn-policy-tab" onclick="loadPolicyForEdit('return', this)" style="text-align:left; justify-content:flex-start; padding:0.6rem 0.8rem; font-size:0.85rem; width:100%; border:1px solid #e2e8f0; background:#fff;">
+                  <i class="fas fa-undo-alt" style="margin-right:8px; color:var(--primary);"></i> Return &amp; Refund Policy
+                </button>
+                <button type="button" class="btn btn-policy-tab" onclick="loadPolicyForEdit('shipping', this)" style="text-align:left; justify-content:flex-start; padding:0.6rem 0.8rem; font-size:0.85rem; width:100%; border:1px solid #e2e8f0; background:#fff;">
+                  <i class="fas fa-truck" style="margin-right:8px; color:var(--primary);"></i> Shipping &amp; Delivery
+                </button>
+                <button type="button" class="btn btn-policy-tab" onclick="loadPolicyForEdit('privacy', this)" style="text-align:left; justify-content:flex-start; padding:0.6rem 0.8rem; font-size:0.85rem; width:100%; border:1px solid #e2e8f0; background:#fff;">
+                  <i class="fas fa-shield-alt" style="margin-right:8px; color:var(--primary);"></i> Privacy Policy
+                </button>
+                <button type="button" class="btn btn-policy-tab" onclick="loadPolicyForEdit('terms', this)" style="text-align:left; justify-content:flex-start; padding:0.6rem 0.8rem; font-size:0.85rem; width:100%; border:1px solid #e2e8f0; background:#fff;">
+                  <i class="fas fa-gavel" style="margin-right:8px; color:var(--primary);"></i> Terms &amp; Conditions
+                </button>
+                <button type="button" class="btn btn-policy-tab" onclick="loadPolicyForEdit('size_guide', this)" style="text-align:left; justify-content:flex-start; padding:0.6rem 0.8rem; font-size:0.85rem; width:100%; border:1px solid #e2e8f0; background:#fff;">
+                  <i class="fas fa-ruler-combined" style="margin-right:8px; color:var(--primary);"></i> Size &amp; Fit Guide
+                </button>
+              </div>
+            </div>
+
+            <!-- Policy Editor Area -->
+            <div>
+              <form id="policyEditorForm" onsubmit="savePolicyChanges(event)">
+                <input type="hidden" id="currentPolicyKey" value="replacement">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                  <div class="form-group" style="flex:1; margin-right:1rem; margin-bottom:0;">
+                    <label style="font-weight:700; font-size:0.82rem;">Policy Display Title</label>
+                    <input type="text" id="policyTitleInput" class="form-input" style="width:100%; font-weight:700;" required>
+                  </div>
+                  <div>
+                    <span id="policyLastUpdatedBadge" style="font-size:0.75rem; color:#64748b; background:#f1f5f9; padding:4px 10px; border-radius:12px;">Last Updated: --</span>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:1rem;">
+                  <label style="font-weight:700; font-size:0.82rem;">Policy Legal &amp; Customer Terms (HTML / Formatted Content)</label>
+                  <textarea id="policyContentInput" rows="12" class="form-input" style="width:100%; font-family:monospace; font-size:0.85rem; line-height:1.6;" required></textarea>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <button type="button" class="btn" onclick="previewCurrentPolicyModal()" style="background:#f1f5f9;">
+                    <i class="fas fa-eye"></i> Live Preview
+                  </button>
+                  <button type="submit" id="btnSavePolicy" class="btn btn-primary" style="padding:0.6rem 1.8rem; font-weight:700;">
+                    <i class="fas fa-save"></i> Save Policy Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================================================
+           14. ADMIN TWO-FACTOR AUTHENTICATION & STAFF ROLES SECTION
+           ========================================================================== -->
+      <section id="securitySection" style="display: none;">
+        <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:2rem; margin-bottom:2rem;">
+          <!-- Left: TOTP 2FA Management -->
+          <div style="background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:2rem; border-top:4px solid var(--primary);">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem;">
+              <div style="width:40px; height:40px; border-radius:50%; background:hsl(348,75%,94%); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:1.2rem;">
+                <i class="fas fa-shield-alt"></i>
+              </div>
+              <div>
+                <h3 style="font-size:1.15rem; color:var(--primary); font-weight:800; margin:0;">Two-Factor Authentication (2FA)</h3>
+                <span style="font-size:0.78rem; color:var(--text-light)">RFC 6238 TOTP Standard &bull; 100% Free &amp; Open-Source</span>
+              </div>
+            </div>
+
+            <p style="font-size:0.85rem; color:var(--text-light); line-height:1.5; margin-bottom:1.5rem;">
+              Protect the Little to Large administrator control panel with hardware or app-based authenticator codes (Google Authenticator, Microsoft Authenticator, Authy, 1Password).
+            </p>
+
+            <div id="mfaStatusCard" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1.2rem; margin-bottom:1.5rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:700; font-size:0.85rem;">Current Security Status:</span>
+                <span id="mfaStatusBadge" style="background:#ef4444; color:#fff; font-size:0.75rem; font-weight:800; padding:3px 10px; border-radius:12px;">MFA Disabled</span>
+              </div>
+              <div id="mfaUpdatedText" style="font-size:0.75rem; color:#64748b; margin-top:6px;">No authenticator app currently linked.</div>
+            </div>
+
+            <div id="mfaActionsContainer">
+              <button class="btn btn-primary" onclick="startTotpEnrollment()" style="width:100%; padding:0.7rem; font-weight:700;">
+                <i class="fas fa-qrcode"></i> Setup Two-Factor Authentication
+              </button>
+            </div>
+
+            <!-- Enrollment Drawer / Modal Content -->
+            <div id="mfaEnrollmentBox" style="display:none; margin-top:1.5rem; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:1.2rem;">
+              <h4 style="font-size:0.95rem; color:#166534; font-weight:800; margin:0 0 10px 0;">Step 1: Scan QR Code</h4>
+              <p style="font-size:0.8rem; color:#14532d; margin-bottom:10px;">Scan this barcode in Google Authenticator or Microsoft Authenticator:</p>
+              <div style="text-align:center; margin-bottom:10px;">
+                <img id="mfaQrImage" src="" alt="2FA QR Code" style="width:160px; height:160px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; padding:6px;">
+              </div>
+              <div style="font-size:0.78rem; color:#475569; margin-bottom:12px; word-break:break-all;">
+                <strong>Manual Key:</strong> <code id="mfaSecretText" style="background:#fff; padding:2px 6px; border-radius:4px; font-weight:700;"></code>
+              </div>
+
+              <h4 style="font-size:0.95rem; color:#166534; font-weight:800; margin:0 0 10px 0;">Step 2: Enter 6-Digit Code</h4>
+              <form id="mfaVerifyForm" onsubmit="handleMfaVerify(event)">
+                <input type="text" id="mfaVerificationCode" class="form-input" placeholder="e.g. 123456" maxlength="6" pattern="[0-9]{6}" required style="width:100%; font-size:1.1rem; text-align:center; font-weight:800; letter-spacing:4px; margin-bottom:10px;">
+                <div style="display:flex; gap:10px;">
+                  <button type="button" class="btn" onclick="cancelTotpEnrollment()" style="flex:1; background:#fff; font-size:0.85rem;">Cancel</button>
+                  <button type="submit" class="btn btn-primary" style="flex:1; font-weight:700; font-size:0.85rem;">Activate 2FA</button>
+                </div>
+              </form>
+
+              <!-- Recovery Codes -->
+              <div id="mfaRecoveryCodesBox" style="display:none; margin-top:12px; background:#fff; border:1px dashed #16a34a; border-radius:8px; padding:10px;">
+                <div style="font-weight:700; font-size:0.8rem; color:#166534; margin-bottom:4px;">🚨 Save Your Single-Use Recovery Codes:</div>
+                <div id="mfaRecoveryCodesList" style="font-family:monospace; font-size:0.75rem; color:#1e293b; display:grid; grid-template-columns:1fr 1fr; gap:4px;"></div>
+                <button type="button" class="btn" onclick="copyRecoveryCodes()" style="margin-top:8px; font-size:0.75rem; padding:4px 8px; width:100%;">Copy Recovery Codes</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Staff Roles & Access Permissions Management -->
+          <div style="background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:2rem; border-top:4px solid var(--accent);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
+              <div>
+                <h3 style="font-size:1.15rem; color:var(--primary); font-weight:800; margin:0;">Staff &amp; Department Access Roles</h3>
+                <span style="font-size:0.78rem; color:var(--text-light)">Delegate scoped admin privileges safely without sharing master credentials</span>
+              </div>
+              <button class="btn btn-primary" onclick="openStaffModal()" style="font-size:0.82rem; padding:0.4rem 1rem;">
+                <i class="fas fa-user-plus"></i> Add Staff Member
+              </button>
+            </div>
+
+            <div style="overflow-x:auto;">
+              <table class="admin-table" id="adminStaffTable">
+                <thead>
+                  <tr>
+                    <th>Staff User</th>
+                    <th>Role &amp; Department</th>
+                    <th>Permissions</th>
+                    <th>Validity</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Injected dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
   </div>
 
   <!-- PRODUCT EDIT/ADD DIALOG MODAL -->
   <div class="modal-backdrop" id="productModal">
-    <div class="modal-content" style="max-width: 600px; padding: 2rem;">
+    <div class="modal-content" style="max-width: 900px; width: 95vw; padding: 2.2rem; max-height: 90vh; overflow-y: auto;">
       <button class="modal-close" onclick="closeProductModal()"><i class="fas fa-times"></i></button>
-      <h3 style="font-size: 1.4rem; color: var(--primary); font-weight: 800; margin-bottom: 1.5rem;" id="productModalTitle">Add New Product</h3>
+      <div style="border-bottom:1px solid #e2e8f0; padding-bottom:1rem; margin-bottom:1.5rem;">
+        <h3 style="font-size: 1.4rem; color: var(--primary); font-weight: 800; margin:0;" id="productModalTitle">Add New Clothing Product</h3>
+        <p style="font-size:0.85rem; color:var(--text-light); margin-top:4px;">Define base garment details and configure sellable multi-color variants below.</p>
+      </div>
       
-      <form id="productForm" onsubmit="handleProductFormSubmit(event)" style="display:flex; flex-direction:column; gap:1rem; max-height: 480px; overflow-y: auto; padding-right: 5px;">
-        <div class="form-group">
-          <label>Product Name</label>
-          <input type="text" id="prodName" name="name" class="form-input" placeholder="e.g. Boy's Cotton Dungaree" required>
-        </div>
-
-        <div style="display:flex; gap:1rem">
-          <div class="form-group" style="flex:1">
-            <label>Category</label>
-            <select id="prodCategory" name="category" class="form-input" style="font-weight:600" required>
+      <form id="productForm" onsubmit="handleProductFormSubmit(event)" style="display:flex; flex-direction:column; gap:1.2rem;">
+        <!-- Base Garment Information -->
+        <div style="display:grid; grid-template-columns:1.5fr 1fr 1fr; gap:1rem;">
+          <div class="form-group">
+            <label style="font-weight:700; font-size:0.82rem;">Product Name</label>
+            <input type="text" id="prodName" name="name" class="form-input" placeholder="e.g. Premium Embroidered Kurti" required style="width:100%;">
+          </div>
+          <div class="form-group">
+            <label style="font-weight:700; font-size:0.82rem;">Category</label>
+            <select id="prodCategory" name="category" class="form-input" style="font-weight:600; width:100%;" required>
               <option value="Men">Men</option>
-              <option value="Women">Women</option>
+              <option value="Women" selected>Women</option>
               <option value="Kids">Kids</option>
               <option value="Accessories">Accessories</option>
             </select>
           </div>
-          <div class="form-group" style="flex:1">
-            <label>Subcategory (Style)</label>
-            <input type="text" id="prodSubcategory" name="subcategory" class="form-input" placeholder="e.g. Ethnic, Western, Footwear">
+          <div class="form-group">
+            <label style="font-weight:700; font-size:0.82rem;">Subcategory (Style)</label>
+            <input type="text" id="prodSubcategory" name="subcategory" class="form-input" placeholder="e.g. Ethnic Wear, Kurti, Lehenga" style="width:100%;">
           </div>
         </div>
 
-        <div style="display:flex; gap:1rem">
-          <div class="form-group" style="flex:1">
-            <label>Original MRP (₹) <small style="color:#777; font-weight:normal">(e.g. 3000 - crossed out)</small></label>
-            <input type="number" id="prodPrice" name="price" class="form-input" placeholder="3000" required>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:1rem;">
+          <div class="form-group">
+            <label style="font-weight:700; font-size:0.82rem;">Default MRP (₹) <small style="color:#777;">(Crossed out)</small></label>
+            <input type="number" id="prodPrice" name="price" class="form-input" placeholder="2999" required style="width:100%;">
           </div>
-          <div class="form-group" style="flex:1">
-            <label>Discounted Selling Price (₹) <small style="color:#777; font-weight:normal">(e.g. 1000 - bold selling price)</small></label>
-            <input type="number" id="prodDiscountPrice" name="discount_price" class="form-input" placeholder="1000">
+          <div class="form-group">
+            <label style="font-weight:700; font-size:0.82rem;">Selling Price (₹) <small style="color:#777;">(Bold)</small></label>
+            <input type="number" id="prodDiscountPrice" name="discount_price" class="form-input" placeholder="1499" style="width:100%;">
+          </div>
+          <div class="form-group">
+            <label style="font-weight:700; font-size:0.82rem;">Total Stock Units</label>
+            <input type="number" id="prodStock" name="stock" class="form-input" placeholder="50" required style="width:100%;">
+          </div>
+          <div class="form-group">
+            <label style="font-weight:700; font-size:0.82rem;">Return Window (Days)</label>
+            <input type="number" id="prodReturnWindow" name="return_window_days" class="form-input" min="0" placeholder="7" value="7" required style="width:100%;">
           </div>
         </div>
 
-        <div style="display:flex; gap:1rem">
-          <div class="form-group" style="flex:1">
-            <label>Stock Count</label>
-            <input type="number" id="prodStock" name="stock" class="form-input" placeholder="50" required>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+          <div class="form-group">
+            <label style="font-weight:700; font-size:0.82rem;">Available Sizes (Comma separated)</label>
+            <input type="text" id="prodSizes" name="size_variants" class="form-input" placeholder="S, M, L, XL" value="S, M, L, XL" required style="width:100%;">
           </div>
-          <div class="form-group" style="flex:1">
-            <label>Sizes (Comma separated)</label>
-            <input type="text" id="prodSizes" name="size_variants" class="form-input" placeholder="S,M,L,XL" required>
+          <div class="form-group">
+            <label style="font-weight:700; font-size:0.82rem;">Primary Image URL</label>
+            <input type="text" id="prodImageUrl" name="image_url" class="form-input" placeholder="e.g. /images/products/Product_11/front.png" style="width:100%;">
           </div>
+        </div>
+
+        <!-- Primary Garment Color & Ethnic Color Chart Palette -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1.2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+            <label style="font-weight:700; font-size:0.85rem; color:var(--primary); margin:0;">
+              🎨 Primary Garment Color &amp; Color Chart Palette
+            </label>
+            <span style="font-size:0.75rem; color:#64748b;">Click any swatch to apply color &amp; hex instantly</span>
+          </div>
+          <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:1rem; align-items:center; margin-bottom:0.8rem;">
+            <div class="form-group">
+              <label style="font-weight:600; font-size:0.8rem;">Primary Color Name</label>
+              <input type="text" id="prodColorName" name="color" class="form-input" placeholder="e.g. Royal Saffron, Peacock Teal" value="Standard" style="width:100%;">
+            </div>
+            <div class="form-group">
+              <label style="font-weight:600; font-size:0.8rem;">Color Swatch (Hex / Custom Picker)</label>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <input type="color" id="prodColorPicker" value="#800020" onchange="document.getElementById('prodColorHex').value = this.value; if(window.onMainColorPickerChange) window.onMainColorPickerChange(this.value);" style="width:38px; height:36px; padding:0; border:1px solid #cbd5e1; border-radius:6px; cursor:pointer;">
+                <input type="text" id="prodColorHex" class="form-input" value="#800020" oninput="document.getElementById('prodColorPicker').value = this.value;" style="flex:1; font-family:monospace; font-size:0.85rem;">
+              </div>
+            </div>
+          </div>
+          <!-- Quick Ethnic Color Swatch Chips -->
+          <label style="font-size:0.75rem; font-weight:700; color:#64748b; margin-bottom:6px; display:block;">Ethnic &amp; Festive Color Chart Presets:</label>
+          <div id="mainProdColorChips" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
         </div>
 
         <div class="form-group">
-          <label>Return Window (Days)</label>
-          <input type="number" id="prodReturnWindow" name="return_window_days" class="form-input" min="0" placeholder="7" value="7" required>
-          <small style="color:#666; font-size:0.72rem; display:block; margin-top:2px">Set to 0 if this product is non-returnable</small>
+          <label style="font-weight:700; font-size:0.82rem;">Product Description &amp; Fabric Details</label>
+          <textarea id="prodDesc" name="description" rows="3" class="form-input" placeholder="Garment weave, festive embroidery, styling recommendations, wash care..." style="font-family:inherit; width:100%;" required></textarea>
         </div>
 
-        <div class="form-group">
-          <label>Product Description</label>
-          <textarea id="prodDesc" name="description" rows="3" class="form-input" placeholder="Product details, material blend, size tips..." style="font-family:inherit" required></textarea>
-        </div>
-
-        <div style="display:flex; gap:1rem; align-items:center;">
-          <div class="form-group" style="flex:1">
-            <label>Upload Images (Max 5)</label>
-            <input type="file" id="prodImages" name="images" multiple accept="image/*" class="form-input" style="padding:0.4rem">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; align-items:center;">
+          <div class="form-group">
+            <label style="font-weight:700; font-size:0.82rem;">Upload Garment Photos (Multiple)</label>
+            <input type="file" id="prodImages" name="images" multiple accept="image/*" class="form-input" style="padding:0.4rem; width:100%;">
           </div>
-          <div style="font-size:0.8rem; font-weight:700; color:var(--text-light); margin-top:1.2rem">OR</div>
-          <div class="form-group" style="flex:1.2">
-            <label>Paste Image URL</label>
-            <input type="text" id="prodImageUrl" name="image_url" class="form-input" placeholder="e.g. https://example.com/image.jpg">
+          <div class="form-group">
+            <label style="font-weight:700; font-size:0.82rem;">Product Walkthrough Video (Optional URL or File)</label>
+            <input type="text" id="prodVideoUrl" name="video_url" class="form-input" placeholder="https://example.com/walkthrough.mp4" style="width:100%;">
+            <input type="file" id="prodVideoFile" name="video" accept="video/*" class="form-input" style="padding:0.3rem; margin-top:4px; width:100%;">
           </div>
-        </div>
-
-        <div class="form-group">
-          <label>Product Video URL (Optional)</label>
-          <input type="text" id="prodVideoUrl" name="video_url" class="form-input" placeholder="https://example.com/video.mp4">
-          <small style="color:#666; font-size:0.72rem; display:block; margin-top:2px">Add a product demo video or walkthrough for the product detail page.</small>
-        </div>
-
-        <div class="form-group">
-          <label>Upload Product Video (Optional)</label>
-          <input type="file" id="prodVideoFile" name="video" accept="video/*" class="form-input" style="padding:0.4rem">
         </div>
 
         <!-- AI Image Generator for Product -->
-        <div style="background: hsl(243, 75%, 97%); border: 1px dashed var(--primary); padding: 12px; border-radius: 8px; margin-top: 5px; width: 100%;">
-          <label style="font-weight:700; font-size:0.8rem; color:var(--primary); display:block; margin-bottom:5px;">✨ Generate Product Image with AI (Pollinations.ai)</label>
+        <div style="background: hsl(243, 75%, 97%); border: 1px dashed var(--primary); padding: 12px; border-radius: 8px;">
+          <label style="font-weight:700; font-size:0.8rem; color:var(--primary); display:block; margin-bottom:5px;">✨ Generate Product Image with AI</label>
           <div style="display:flex; gap:8px;">
             <input type="text" id="productAiPrompt" class="form-input" placeholder="e.g. Saffron yellow silk kurta, high quality studio photo, solid background" style="flex:1; font-size:0.8rem;">
             <button type="button" onclick="generateBannerImage('product')" class="btn btn-primary" style="padding:0.4rem 1rem; font-size:0.8rem; white-space:nowrap; cursor:pointer;">Generate</button>
@@ -863,7 +1670,101 @@
           </div>
         </div>
 
-        <button type="submit" class="auth-btn" style="margin-top:10px">Save Product</button>
+        <!-- ==========================================================
+             PRODUCT VARIANTS — COLORS, SIZES, IMAGES AND PRICING
+             ========================================================== -->
+        <div style="border-top:2px dashed #cbd5e1; margin-top:1.5rem; padding-top:1.5rem; background:#f8fafc; border-radius:12px; padding:1.2rem; border:1px solid #e2e8f0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
+            <div>
+              <h4 style="font-size:1.1rem; color:var(--primary); font-weight:800; margin:0; display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-palette" style="color:var(--accent);"></i> Product Variants — Colors, Sizes, Images and Pricing
+              </h4>
+              <p style="font-size:0.8rem; color:var(--text-light); margin:4px 0 0 0;">
+                Add independent color variants with dedicated photo galleries, specific SKUs, individual stock levels, and custom prices.
+              </p>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="addManualVariantRow()" style="font-size:0.82rem; padding:0.45rem 1.1rem; background:linear-gradient(135deg, hsl(348,75%,26%), hsl(348,75%,38%));">
+              <i class="fas fa-plus-circle"></i> Add Color Variant
+            </button>
+          </div>
+
+          <!-- Variants list container -->
+          <div id="manualVariantsContainer" style="display:flex; flex-direction:column; gap:1rem;">
+            <!-- Rendered dynamically by admin.js -->
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:1.5rem; border-top:1px solid #e2e8f0; padding-top:1.2rem;">
+          <button type="button" class="btn" onclick="closeProductModal()" style="background:#f1f5f9; color:#475569; font-weight:600;">Cancel</button>
+          <button type="button" class="btn" onclick="saveManualProductDraft()" style="background:#fff; border:1px solid #cbd5e1; color:#334155; font-weight:600;">
+            <i class="fas fa-save"></i> Save Draft
+          </button>
+          <button type="submit" id="btnPublishProduct" class="btn btn-primary" style="padding:0.7rem 2rem; font-weight:700;">
+            <i class="fas fa-check-circle"></i> Validate &amp; Publish
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- STAFF USER ADD/EDIT MODAL -->
+  <div class="modal-backdrop" id="staffModal" style="display:none;">
+    <div class="modal-content" style="max-width: 550px; padding: 2rem;">
+      <button class="modal-close" onclick="closeStaffModal()"><i class="fas fa-times"></i></button>
+      <h3 style="font-size: 1.3rem; color: var(--primary); font-weight: 800; margin-bottom: 1.2rem;" id="staffModalTitle">Add Staff Member</h3>
+      <form id="adminStaffForm" onsubmit="handleStaffFormSubmit(event)">
+        <input type="hidden" id="staffEditId">
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label style="font-weight:700; font-size:0.82rem;">Full Name</label>
+          <input type="text" id="staffName" class="form-input" placeholder="e.g. Priyank Sharma" required style="width:100%;">
+        </div>
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label style="font-weight:700; font-size:0.82rem;">Staff Email</label>
+          <input type="email" id="staffEmail" class="form-input" placeholder="e.g. priyank@littlelarge.in" required style="width:100%;">
+        </div>
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label style="font-weight:700; font-size:0.82rem;">Temporary Password <span id="staffPwdHelp" style="font-weight:normal; font-size:0.75rem; color:#64748b;">(Must be at least 6 characters)</span></label>
+          <input type="password" id="staffPassword" class="form-input" placeholder="Enter password" minlength="6" style="width:100%;">
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+          <div class="form-group">
+            <label style="font-weight:700; font-size:0.82rem;">Department</label>
+            <select id="staffDepartment" class="form-input" style="width:100%;">
+              <option value="Fashion & Merchandising">Fashion &amp; Merchandising</option>
+              <option value="Operations & Fulfillment">Operations &amp; Fulfillment</option>
+              <option value="Customer Care">Customer Care</option>
+              <option value="Marketing & Content">Marketing &amp; Content</option>
+              <option value="E-Commerce & Tech">E-Commerce &amp; Tech</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="font-weight:700; font-size:0.82rem;">Designation / Title</label>
+            <input type="text" id="staffRoleTitle" class="form-input" placeholder="e.g. Catalog Specialist" value="Catalog Merchandiser" required style="width:100%;">
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+          <div class="form-group">
+            <label style="font-weight:700; font-size:0.82rem;">Access Valid From</label>
+            <input type="date" id="staffValidFrom" class="form-input" style="width:100%;">
+          </div>
+          <div class="form-group">
+            <label style="font-weight:700; font-size:0.82rem;">Access Valid Until</label>
+            <input type="date" id="staffValidUntil" class="form-input" style="width:100%;">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:1.5rem;">
+          <label style="font-weight:700; font-size:0.82rem; margin-bottom:0.4rem; display:block;">Role Permissions Scope</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.82rem; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+            <label><input type="checkbox" name="staffPerm" value="products_write" checked> Manage Products (Add/Edit)</label>
+            <label><input type="checkbox" name="staffPerm" value="orders_write" checked> Order Fulfillment</label>
+            <label><input type="checkbox" name="staffPerm" value="policies_write"> Store Policies Editor</label>
+            <label><input type="checkbox" name="staffPerm" value="marketing_write"> Marketing &amp; Promotions</label>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn" onclick="closeStaffModal()" style="background:#f1f5f9;">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="padding:0.6rem 1.6rem; font-weight:700;">Save Staff Member</button>
+        </div>
       </form>
     </div>
   </div>
@@ -873,9 +1774,9 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Scripts -->
-  <script src="js/ux-premium.js?v=16"></script>
-  <script src="js/app.js?v=16"></script>
-  <script src="js/admin.js?v=16"></script>
+  <script src="js/ux-premium.js?v=20"></script>
+  <script src="js/app.js?v=20"></script>
+  <script src="js/admin.js?v=20"></script>
   <script>
     function renderPromoPreview() {
       const title = document.getElementById('promoTitle') ? document.getElementById('promoTitle').value : 'Demo Title';

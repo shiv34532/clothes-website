@@ -11,6 +11,36 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://littletolargee.com/products?category=Women</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/products?category=Men</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/products?category=Kids</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/products?subcategory=Family%20Sets</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/products?style=Ethnic</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/products?style=Wedding</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
     <loc>https://littletolargee.com/offers</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -49,18 +79,445 @@
     <loc>https://littletolargee.com/product-detail?id=1</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Green_Floral_Womens_Kurta/front.png</image:loc>
+      <image:title>Emerald Floral Anarkali Kurta</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Green_Floral_Womens_Kurta/model_pose.png</image:loc>
+      <image:title>Emerald Floral Anarkali Kurta</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Green_Floral_Womens_Kurta/back.png</image:loc>
+      <image:title>Emerald Floral Anarkali Kurta</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Green_Floral_Womens_Kurta/angle_left_45.png</image:loc>
+      <image:title>Emerald Floral Anarkali Kurta</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Green_Floral_Womens_Kurta/angle_right_45.png</image:loc>
+      <image:title>Emerald Floral Anarkali Kurta</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Green_Floral_Womens_Kurta/left.png</image:loc>
+      <image:title>Emerald Floral Anarkali Kurta</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Green_Floral_Womens_Kurta/right.png</image:loc>
+      <image:title>Emerald Floral Anarkali Kurta</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=2</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Beige_Rabbit_Kids_Set/front.png</image:loc>
+      <image:title>Beige Meadow Organic Cotton Kids Play Set</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Beige_Rabbit_Kids_Set/model_pose.png</image:loc>
+      <image:title>Beige Meadow Organic Cotton Kids Play Set</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Beige_Rabbit_Kids_Set/back.png</image:loc>
+      <image:title>Beige Meadow Organic Cotton Kids Play Set</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Beige_Rabbit_Kids_Set/angle_left_45.png</image:loc>
+      <image:title>Beige Meadow Organic Cotton Kids Play Set</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Beige_Rabbit_Kids_Set/angle_right_45.png</image:loc>
+      <image:title>Beige Meadow Organic Cotton Kids Play Set</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://littletolargee.com/product-detail?id=3</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
     <image:image>
-      <image:loc>https://res.cloudinary.com/wzknhexk/image/upload/v1787765408/little_to_large/products/n33yxh52pudmz3u0puto.png</image:loc>
-      <image:title>Comfortable night gown for women</image:title>
+      <image:loc>https://littletolargee.com/images/products/Green_Spiderman_Kids_Set/front.png</image:loc>
+      <image:title>Active Hero Cotton Kids Summer Set</image:title>
     </image:image>
     <image:image>
-      <image:loc>https://res.cloudinary.com/wzknhexk/image/upload/v1787765416/little_to_large/products/sxkwv2sennjgizltmney.png</image:loc>
-      <image:title>Comfortable night gown for women</image:title>
+      <image:loc>https://littletolargee.com/images/products/Green_Spiderman_Kids_Set/model_pose.png</image:loc>
+      <image:title>Active Hero Cotton Kids Summer Set</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Green_Spiderman_Kids_Set/back.png</image:loc>
+      <image:title>Active Hero Cotton Kids Summer Set</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Green_Spiderman_Kids_Set/angle_left_45.png</image:loc>
+      <image:title>Active Hero Cotton Kids Summer Set</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Green_Spiderman_Kids_Set/angle_right_45.png</image:loc>
+      <image:title>Active Hero Cotton Kids Summer Set</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=4</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_11/angle_left_45.png</image:loc>
+      <image:title>Fuchsia Bloom Festive Girl's Tunic Set</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_11/angle_right_45.png</image:loc>
+      <image:title>Fuchsia Bloom Festive Girl's Tunic Set</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_11/back.png</image:loc>
+      <image:title>Fuchsia Bloom Festive Girl's Tunic Set</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_11/front.png</image:loc>
+      <image:title>Fuchsia Bloom Festive Girl's Tunic Set</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=5</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_12/front.png</image:loc>
+      <image:title>Heritage Royal Saffron Men's Kurta</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_12/top.png</image:loc>
+      <image:title>Heritage Royal Saffron Men's Kurta</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_12/bottom.png</image:loc>
+      <image:title>Heritage Royal Saffron Men's Kurta</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=6</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_13/front.png</image:loc>
+      <image:title>Deep Burgundy Chanderi Silk Kurta Set</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_13/top.png</image:loc>
+      <image:title>Deep Burgundy Chanderi Silk Kurta Set</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_13/bottom.png</image:loc>
+      <image:title>Deep Burgundy Chanderi Silk Kurta Set</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=7</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_14/front.png</image:loc>
+      <image:title>Ivory Gold Family Festive Kurta</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_14/top.png</image:loc>
+      <image:title>Ivory Gold Family Festive Kurta</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_14/bottom.png</image:loc>
+      <image:title>Ivory Gold Family Festive Kurta</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=8</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_15/front.png</image:loc>
+      <image:title>Royal Indigo Handloom Silk Saree</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_15/top.png</image:loc>
+      <image:title>Royal Indigo Handloom Silk Saree</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_15/bottom.png</image:loc>
+      <image:title>Royal Indigo Handloom Silk Saree</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=9</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_16/front.png</image:loc>
+      <image:title>Maroon &amp; Antique Gold Festive Lehenga</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_16/top.png</image:loc>
+      <image:title>Maroon &amp; Antique Gold Festive Lehenga</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_16/bottom.png</image:loc>
+      <image:title>Maroon &amp; Antique Gold Festive Lehenga</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=10</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_17/front.png</image:loc>
+      <image:title>Pastel Mint Embroidered Kurti</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_17/top.png</image:loc>
+      <image:title>Pastel Mint Embroidered Kurti</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_17/bottom.png</image:loc>
+      <image:title>Pastel Mint Embroidered Kurti</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=11</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_18/front.png</image:loc>
+      <image:title>Sunshine Yellow Brocade Kids Kurta Pyjama</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_18/top.png</image:loc>
+      <image:title>Sunshine Yellow Brocade Kids Kurta Pyjama</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_18/bottom.png</image:loc>
+      <image:title>Sunshine Yellow Brocade Kids Kurta Pyjama</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=12</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_19/front.png</image:loc>
+      <image:title>Peacock Blue Silk Anarkali Gown</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_19/top.png</image:loc>
+      <image:title>Peacock Blue Silk Anarkali Gown</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_19/bottom.png</image:loc>
+      <image:title>Peacock Blue Silk Anarkali Gown</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=13</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_20/front.png</image:loc>
+      <image:title>Classic Olive Linen Casual Shirt</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_20/top.png</image:loc>
+      <image:title>Classic Olive Linen Casual Shirt</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_20/bottom.png</image:loc>
+      <image:title>Classic Olive Linen Casual Shirt</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=14</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_21/front.png</image:loc>
+      <image:title>Blush Pink Floral Tiered Dress</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_21/top.png</image:loc>
+      <image:title>Blush Pink Floral Tiered Dress</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_21/bottom.png</image:loc>
+      <image:title>Blush Pink Floral Tiered Dress</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=15</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_22/front.png</image:loc>
+      <image:title>Navy Blue Denim Stretch Jeans</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_22/top.png</image:loc>
+      <image:title>Navy Blue Denim Stretch Jeans</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_22/bottom.png</image:loc>
+      <image:title>Navy Blue Denim Stretch Jeans</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=16</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_23/front.png</image:loc>
+      <image:title>Embroidered Velvet Festive Mojaris</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_23/top.png</image:loc>
+      <image:title>Embroidered Velvet Festive Mojaris</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_23/bottom.png</image:loc>
+      <image:title>Embroidered Velvet Festive Mojaris</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=17</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_5/front.png</image:loc>
+      <image:title>Grey Urban Cartoon Vehicle Singlet</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_5/top.png</image:loc>
+      <image:title>Grey Urban Cartoon Vehicle Singlet</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_5/bottom.png</image:loc>
+      <image:title>Grey Urban Cartoon Vehicle Singlet</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=18</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_6/front.png</image:loc>
+      <image:title>Candy Pink Play Singlet &amp; Shorts Set</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_6/top.png</image:loc>
+      <image:title>Candy Pink Play Singlet &amp; Shorts Set</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_6/bottom.png</image:loc>
+      <image:title>Candy Pink Play Singlet &amp; Shorts Set</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=19</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_7/front.png</image:loc>
+      <image:title>Sky Blue Cotton Summer Coordinates</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_7/top.png</image:loc>
+      <image:title>Sky Blue Cotton Summer Coordinates</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_7/bottom.png</image:loc>
+      <image:title>Sky Blue Cotton Summer Coordinates</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=20</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_8/front.png</image:loc>
+      <image:title>Coral Sunset Toddler Romper</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_8/top.png</image:loc>
+      <image:title>Coral Sunset Toddler Romper</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_8/bottom.png</image:loc>
+      <image:title>Coral Sunset Toddler Romper</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=21</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_9/front.png</image:loc>
+      <image:title>Mint Breeze Infant Loungewear</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_9/top.png</image:loc>
+      <image:title>Mint Breeze Infant Loungewear</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_9/bottom.png</image:loc>
+      <image:title>Mint Breeze Infant Loungewear</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=22</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_13/front.png</image:loc>
+      <image:title>Diwali Parivaar Matching Silk Kurta Set (Family Combo)</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_16/front.png</image:loc>
+      <image:title>Diwali Parivaar Matching Silk Kurta Set (Family Combo)</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_18/front.png</image:loc>
+      <image:title>Diwali Parivaar Matching Silk Kurta Set (Family Combo)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=23</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Green_Floral_Womens_Kurta/front.png</image:loc>
+      <image:title>Vasant Utsav Family Matching Twinning Outfits</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Product_14/front.png</image:loc>
+      <image:title>Vasant Utsav Family Matching Twinning Outfits</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://littletolargee.com/images/products/Beige_Rabbit_Kids_Set/front.png</image:loc>
+      <image:title>Vasant Utsav Family Matching Twinning Outfits</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=25</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/wzknhexk/image/upload/f_auto,q_auto,w_800/v1792419664/little_to_large/products/qojtnvhilkwjbo3qxipp.jpg</image:loc>
+      <image:title>beach clor floral kurti</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://littletolargee.com/product-detail?id=26</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/wzknhexk/image/upload/f_auto,q_auto,w_800/v1792439388/little_to_large/products/mgrtj4swpuunqz0ch8ni.jpg</image:loc>
+      <image:title>Teal Blue &amp; White Floral Printed Women's shoert Kurti</image:title>
     </image:image>
   </url>
 </urlset>

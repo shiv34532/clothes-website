@@ -2,7 +2,74 @@
    LITTLE TO LARGE - ADMIN DASHBOARD LOGIC
    ========================================================================= */
 
-const token = getToken();
+let token = getToken();
+
+function safeJsonParse(val, fallback = []) {
+  if (val === null || val === undefined || val === '' || val === 'undefined' || val === 'null') {
+    return fallback;
+  }
+  if (typeof val !== 'string') {
+    return val;
+  }
+  try {
+    return JSON.parse(val);
+  } catch (e) {
+    return fallback;
+  }
+}
+window.safeJsonParse = safeJsonParse;
+
+const FASHION_COLOR_PALETTE = [
+  { name: 'Crimson Red', hex: '#990000', label: '🔴 Crimson Red' },
+  { name: 'Royal Saffron', hex: '#ff9933', label: '🟠 Royal Saffron' },
+  { name: 'Mustard Haldi', hex: '#e5a00d', label: '🟡 Mustard / Haldi' },
+  { name: 'Emerald Green', hex: '#008055', label: '🟢 Emerald Green' },
+  { name: 'Peacock Teal', hex: '#005f73', label: '🦚 Peacock Teal' },
+  { name: 'Royal Navy', hex: '#00205b', label: '🔷 Royal Navy' },
+  { name: 'Rani Pink', hex: '#c2185b', label: '🌸 Rani Pink' },
+  { name: 'Wine Plum', hex: '#4a0e4e', label: '🍇 Wine / Plum' },
+  { name: 'Ivory Gold', hex: '#e8d8b0', label: '⚪ Ivory Gold' },
+  { name: 'Jet Black', hex: '#111111', label: '⚫ Jet Black' },
+  { name: 'Chanderi Gold', hex: '#d4af37', label: '🟤 Chanderi Gold' },
+  { name: 'Pastel Mint', hex: '#98d8c8', label: '🌿 Pastel Mint' },
+  { name: 'Peach Coral', hex: '#e07a5f', label: '🍑 Peach Coral' },
+  { name: 'Royal Purple', hex: '#5c2a9d', label: '💜 Royal Purple' },
+  { name: 'Rust Maroon', hex: '#7a1f1d', label: '🪔 Rust Maroon' },
+  { name: 'Sky Cyan', hex: '#38bdf8', label: '💎 Sky Blue' }
+];
+
+function initAdminColorChips() {
+  const container = document.getElementById('mainProdColorChips');
+  if (!container) return;
+  container.innerHTML = FASHION_COLOR_PALETTE.map(c => `
+    <button type="button" onclick="selectMainProductColor('${c.name}', '${c.hex}')" title="${c.name} (${c.hex})" style="display:inline-flex; align-items:center; gap:6px; background:#fff; border:1px solid #cbd5e1; border-radius:18px; padding:3px 10px; font-size:0.75rem; font-weight:600; cursor:pointer; transition:all 0.15s ease;">
+      <span style="width:14px; height:14px; border-radius:50%; background:${c.hex}; border:1px solid rgba(0,0,0,0.15); display:inline-block;"></span>
+      ${c.name}
+    </button>
+  `).join('');
+}
+
+function selectMainProductColor(name, hex) {
+  const nameInput = document.getElementById('prodColorName');
+  const pickerInput = document.getElementById('prodColorPicker');
+  const hexInput = document.getElementById('prodColorHex');
+  if (nameInput) nameInput.value = name;
+  if (pickerInput) pickerInput.value = hex;
+  if (hexInput) hexInput.value = hex;
+  showToast(`Selected primary color: ${name}`, 'info');
+}
+window.selectMainProductColor = selectMainProductColor;
+
+function escapeHTML(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+window.escapeHTML = escapeHTML;
 
 function toggleAdminSidebar(e) {
   if (e) e.stopPropagation();
@@ -14,14 +81,24 @@ function toggleAdminSidebar(e) {
   }
 }
 
-// Verify Admin on page entry
+// Verify Admin / Staff on page entry
 document.addEventListener('DOMContentLoaded', () => {
+  token = getToken();
   const user = getCurrentUser();
-  if (!user || !user.email || user.email.toLowerCase() !== 'admin@littlelarge.in') {
-    showToast('Unauthorized access!', 'error');
+  const isAuthorized = user && user.email && (
+    user.email.toLowerCase() === 'admin@littlelarge.in' ||
+    user.role === 'admin' ||
+    user.role === 'staff' ||
+    user.isStaff
+  );
+
+  if (!isAuthorized) {
+    showToast('Unauthorized access. Please log in with admin or staff credentials.', 'error');
     setTimeout(() => window.location.href = '/login', 1000);
     return;
   }
+
+  initAdminColorChips();
 
   // Auto-close sidebar on mobile menu clicks
   const sidebarLinks = document.querySelectorAll('.admin-sidebar-menu a');
@@ -57,7 +134,12 @@ function setupSidebarNavigation() {
 }
 
 function showSection(sectionId) {
-  const sections = ['analyticsSection', 'ordersSection', 'productsSection', 'inquiriesSection', 'promotionsSection', 'errorSection', 'lookbookSection', 'settingsSection'];
+  const sections = [
+    'analyticsSection', 'ordersSection', 'productsSection', 'inquiriesSection',
+    'promotionsSection', 'errorSection', 'lookbookSection', 'settingsSection',
+    'intelligenceSection', 'aiProductStudioSection', 'careersSection',
+    'aiAssistantsSection', 'mediaStudioSection', 'policiesSection', 'securitySection'
+  ];
   sections.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = id === sectionId ? 'block' : 'none';
@@ -76,6 +158,20 @@ function showSection(sectionId) {
   else if (sectionId === 'errorSection') loadAdminErrors();
   else if (sectionId === 'lookbookSection') loadAdminLookbook();
   else if (sectionId === 'settingsSection') loadAdminShippingSettings();
+  else if (sectionId === 'careersSection') {
+    loadAdminCareers();
+    loadCareerApplications();
+  }
+  else if (sectionId === 'mediaStudioSection') {
+    populateStudioMediaDropdowns();
+  }
+  else if (sectionId === 'policiesSection') {
+    loadPolicyForEdit('replacement');
+  }
+  else if (sectionId === 'securitySection') {
+    load2FaStatus();
+    loadAdminStaff();
+  }
 }
 
 /* ==========================================================================
@@ -524,7 +620,7 @@ async function loadAdminProducts() {
       tbody.innerHTML = '';
 
       data.products.forEach(p => {
-        const image = formatLocalPath(JSON.parse(p.image_urls || '[]')[0] || '/images/products/placeholder.jpg');
+        const image = formatLocalPath(safeJsonParse(p.image_urls, [])[0] || '/images/products/placeholder.jpg');
         tbody.innerHTML += `
           <tr>
             <td><img src="${image}" style="width:40px; height:50px; object-fit:cover; border-radius:4px"></td>
@@ -545,6 +641,8 @@ async function loadAdminProducts() {
   }
 }
 
+let manualVariants = [];
+
 function openAddProductModal() {
   editingProductId = null;
   const form = document.getElementById('productForm');
@@ -559,6 +657,28 @@ function openAddProductModal() {
   document.getElementById('prodVideoUrl').value = '';
   document.getElementById('productAiPreviewArea').style.display = 'none';
   document.getElementById('productAiPrompt').value = '';
+
+  const nameInput = document.getElementById('prodColorName');
+  const pickerInput = document.getElementById('prodColorPicker');
+  const hexInput = document.getElementById('prodColorHex');
+  if (nameInput) nameInput.value = 'Festive Maroon';
+  if (pickerInput) pickerInput.value = '#800020';
+  if (hexInput) hexInput.value = '#800020';
+
+  // Initialize with 1 default Festive Maroon variant
+  manualVariants = [];
+  addManualVariantRow({
+    color: 'Festive Maroon',
+    color_hex: '#800020',
+    sku: 'KURTI-MAROON-01',
+    price: 2999,
+    discount_price: 1499,
+    stock: 30,
+    size_variants: 'S, M, L, XL',
+    image_urls: [],
+    is_default: 1
+  });
+
   document.getElementById('productModal').style.display = 'flex';
 }
 
@@ -587,12 +707,62 @@ function openEditProductModal(id) {
   document.getElementById('prodReturnWindow').value = product.return_window_days !== undefined ? product.return_window_days : '7';
   document.getElementById('prodDesc').value = product.description;
   
-  const urls = JSON.parse(product.image_urls || '[]').map(formatLocalPath);
+  const urls = safeJsonParse(product.image_urls, []).map(formatLocalPath);
   document.getElementById('prodImageUrl').value = urls.length > 0 ? urls[0] : '';
   document.getElementById('prodVideoUrl').value = product.video_url || '';
   document.getElementById('productAiPreviewArea').style.display = 'none';
   document.getElementById('productAiPrompt').value = '';
 
+  // Prefill color variants
+  manualVariants = [];
+  let vars = [];
+  if (Array.isArray(product.color_variants)) {
+    vars = product.color_variants;
+  } else if (typeof product.color_variants === 'string') {
+    vars = safeJsonParse(product.color_variants, []);
+  }
+
+  const primaryColor = product.color || (vars[0] ? (vars[0].color || vars[0].color_name) : 'Standard');
+  const primaryHex = (vars[0] ? (vars[0].color_hex || vars[0].color_code) : '#800020') || '#800020';
+  const nameInput = document.getElementById('prodColorName');
+  const pickerInput = document.getElementById('prodColorPicker');
+  const hexInput = document.getElementById('prodColorHex');
+  if (nameInput) nameInput.value = primaryColor;
+  if (pickerInput) pickerInput.value = primaryHex;
+  if (hexInput) hexInput.value = primaryHex;
+
+  if (vars && vars.length > 0) {
+    vars.forEach(v => {
+      manualVariants.push({
+        color: v.color || v.color_name || 'Standard',
+        color_hex: v.color_hex || v.color_code || '#800020',
+        sku: v.sku || `${product.name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`,
+        price: v.price || product.price,
+        discount_price: v.discount_price !== undefined ? v.discount_price : product.discount_price,
+        stock: v.stock !== undefined ? v.stock : product.stock,
+        size_variants: v.size_variants || product.size_variants,
+        image_urls: Array.isArray(v.images || v.image_urls) ? (v.images || v.image_urls) : safeJsonParse(v.image_urls, []),
+        is_default: v.is_default ? 1 : (manualVariants.length === 0 ? 1 : 0),
+        collapsed: false
+      });
+    });
+  } else {
+    // Single color fallback
+    manualVariants.push({
+      color: product.color || 'Standard',
+      color_hex: primaryHex,
+      sku: `${product.name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase()}-01`,
+      price: product.price,
+      discount_price: product.discount_price,
+      stock: product.stock,
+      size_variants: product.size_variants,
+      image_urls: urls,
+      is_default: 1,
+      collapsed: false
+    });
+  }
+
+  renderManualVariants();
   document.getElementById('productModal').style.display = 'flex';
 }
 
@@ -607,20 +777,362 @@ function closeProductModal() {
   if (vidInput) vidInput.value = '';
   document.getElementById('prodImageUrl').value = '';
   document.getElementById('prodVideoUrl').value = '';
+  manualVariants = [];
+}
+
+/* ==========================================================================
+   MULTI-COLOR PRODUCT VARIANTS ACTIONS & DOM RENDERER
+   ========================================================================== */
+function addManualVariantRow(data = null) {
+  const prodName = document.getElementById('prodName')?.value || 'Garment';
+  const basePrice = document.getElementById('prodPrice')?.value || '2999';
+  const baseDiscount = document.getElementById('prodDiscountPrice')?.value || '1499';
+  const baseStock = document.getElementById('prodStock')?.value || '25';
+  const baseSizes = document.getElementById('prodSizes')?.value || 'S, M, L, XL';
+
+  const defaultColors = [
+    { name: 'Festive Maroon', hex: '#800020' },
+    { name: 'Royal Saffron', hex: '#ff9933' },
+    { name: 'Emerald Green', hex: '#008055' },
+    { name: 'Midnight Navy', hex: '#002244' },
+    { name: 'Ivory Gold', hex: '#e8d8b0' }
+  ];
+  const nextColor = defaultColors[manualVariants.length % defaultColors.length];
+  const defaultSku = `${prodName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase()}-${nextColor.name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+
+  const newVariant = data ? {
+    color: data.color || nextColor.name,
+    color_hex: data.color_hex || nextColor.hex,
+    sku: data.sku || defaultSku,
+    price: data.price !== undefined ? data.price : basePrice,
+    discount_price: data.discount_price !== undefined ? data.discount_price : baseDiscount,
+    stock: data.stock !== undefined ? data.stock : baseStock,
+    size_variants: data.size_variants || baseSizes,
+    image_urls: Array.isArray(data.image_urls) ? data.image_urls : (typeof data.image_urls === 'string' ? JSON.parse(data.image_urls || '[]') : []),
+    is_default: data.is_default ? 1 : (manualVariants.length === 0 ? 1 : 0),
+    collapsed: false
+  } : {
+    color: nextColor.name,
+    color_hex: nextColor.hex,
+    sku: defaultSku,
+    price: basePrice,
+    discount_price: baseDiscount,
+    stock: baseStock,
+    size_variants: baseSizes,
+    image_urls: [],
+    is_default: manualVariants.length === 0 ? 1 : 0,
+    collapsed: false
+  };
+
+  manualVariants.push(newVariant);
+  renderManualVariants();
+}
+
+function removeManualVariant(idx) {
+  if (manualVariants.length <= 1) {
+    showToast('At least one color variant is required for a complete product catalog', 'warning');
+    return;
+  }
+  const wasDefault = manualVariants[idx].is_default;
+  manualVariants.splice(idx, 1);
+  if (wasDefault && manualVariants.length > 0) {
+    manualVariants[0].is_default = 1;
+  }
+  renderManualVariants();
+}
+
+function duplicateManualVariant(idx) {
+  const source = manualVariants[idx];
+  const copy = JSON.parse(JSON.stringify(source));
+  copy.color = `${source.color} (Copy)`;
+  copy.sku = `${source.sku}-COPY-${Math.floor(Math.random() * 900 + 100)}`;
+  copy.is_default = 0;
+  copy.collapsed = false;
+  manualVariants.push(copy);
+  renderManualVariants();
+  showToast(`Duplicated variant: ${copy.color}`, 'info');
+}
+
+function toggleManualVariantCollapse(idx) {
+  manualVariants[idx].collapsed = !manualVariants[idx].collapsed;
+  renderManualVariants();
+}
+
+function setDefaultManualVariant(idx) {
+  manualVariants.forEach((v, i) => { v.is_default = i === idx ? 1 : 0; });
+  renderManualVariants();
+  showToast(`Default color set to: ${manualVariants[idx].color}`, 'info');
+}
+
+function updateManualVariantField(idx, field, value) {
+  if (manualVariants[idx]) {
+    manualVariants[idx][field] = value;
+    if (field === 'color_hex') {
+      const swatch = document.getElementById(`varSwatchPreview_${idx}`);
+      if (swatch) swatch.style.backgroundColor = value;
+    }
+  }
+}
+
+function addVariantImageUrl(idx) {
+  const urlInput = document.getElementById(`varAddUrl_${idx}`);
+  if (!urlInput || !urlInput.value.trim()) return;
+  const url = urlInput.value.trim();
+  if (!manualVariants[idx].image_urls) manualVariants[idx].image_urls = [];
+  manualVariants[idx].image_urls.push(url);
+  urlInput.value = '';
+  renderManualVariants();
+}
+
+function removeVariantImage(varIdx, imgIdx) {
+  if (manualVariants[varIdx] && manualVariants[varIdx].image_urls) {
+    manualVariants[varIdx].image_urls.splice(imgIdx, 1);
+    renderManualVariants();
+  }
+}
+
+function setVariantPrimaryImage(varIdx, imgIdx) {
+  if (manualVariants[varIdx] && manualVariants[varIdx].image_urls) {
+    const primary = manualVariants[varIdx].image_urls.splice(imgIdx, 1)[0];
+    manualVariants[varIdx].image_urls.unshift(primary);
+    renderManualVariants();
+    showToast('Primary photo updated for variant', 'info');
+  }
+}
+
+async function handleVariantFilesUpload(event, varIdx) {
+  const files = event.target.files;
+  if (!files || files.length === 0) return;
+
+  const formData = new FormData();
+  for (let i = 0; i < files.length; i++) {
+    formData.append('files', files[i]);
+  }
+
+  showToast(`Uploading ${files.length} variant photo(s)...`, 'info');
+  try {
+    const res = await fetch('/api/admin/upload-media', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${getToken()}` },
+      body: formData
+    });
+    const data = await res.json();
+    if (data.success && Array.isArray(data.urls)) {
+      if (!manualVariants[varIdx].image_urls) manualVariants[varIdx].image_urls = [];
+      manualVariants[varIdx].image_urls.push(...data.urls);
+      renderManualVariants();
+      showToast(`${data.urls.length} variant photo(s) uploaded successfully!`, 'success');
+    } else {
+      showToast(data.message || 'Failed to upload variant photos', 'error');
+    }
+  } catch (err) {
+    console.error('Variant photo upload error:', err);
+    // Fallback to FileReader if network error
+    for (let i = 0; i < files.length; i++) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        if (!manualVariants[varIdx].image_urls) manualVariants[varIdx].image_urls = [];
+        manualVariants[varIdx].image_urls.push(e.target.result);
+        renderManualVariants();
+      };
+      reader.readAsDataURL(files[i]);
+    }
+    showToast('Uploaded photos locally for draft preview', 'info');
+  }
+}
+
+function selectVariantPresetColor(idx, colorName, colorHex) {
+  if (manualVariants[idx]) {
+    manualVariants[idx].color = colorName;
+    manualVariants[idx].color_hex = colorHex;
+    const prodName = document.getElementById('prodName')?.value || 'Garment';
+    const cleanProd = prodName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase() || 'L2L';
+    const cleanColor = colorName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase();
+    manualVariants[idx].sku = `${cleanProd}-${cleanColor}-${Math.floor(100 + Math.random() * 900)}`;
+    renderManualVariants();
+    showToast(`Variant updated to ${colorName}`, 'info');
+  }
+}
+window.selectVariantPresetColor = selectVariantPresetColor;
+
+function renderManualVariants() {
+  const container = document.getElementById('manualVariantsContainer');
+  if (!container) return;
+
+  if (manualVariants.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:1.5rem; background:#fff; border-radius:8px; border:1px dashed #cbd5e1; color:#64748b; font-size:0.85rem;">
+        No color variants defined yet. Click "Add Color Variant" to add Red, Orange, Navy, etc.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = manualVariants.map((v, idx) => {
+    const isCollapsed = Boolean(v.collapsed);
+    const isDef = Boolean(v.is_default);
+    const images = Array.isArray(v.image_urls) ? v.image_urls : [];
+
+    return `
+      <div class="variant-card" style="background:#fff; border:1px solid ${isDef ? 'var(--primary)' : '#cbd5e1'}; border-radius:10px; box-shadow:var(--shadow-sm); overflow:hidden;">
+        <!-- Card Header -->
+        <div style="background:${isDef ? 'hsl(348,75%,97%)' : '#f8fafc'}; padding:0.8rem 1.2rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; flex-wrap:wrap; gap:8px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div id="varSwatchPreview_${idx}" style="width:24px; height:24px; border-radius:50%; background-color:${v.color_hex || '#800020'}; border:2px solid #fff; box-shadow:0 0 0 1px #cbd5e1;"></div>
+            <strong style="font-size:0.95rem; color:var(--primary);">${escapeHTML(v.color || 'Variant ' + (idx + 1))}</strong>
+            <span style="font-size:0.75rem; color:#64748b; background:#fff; padding:2px 8px; border-radius:12px; border:1px solid #e2e8f0;">SKU: ${escapeHTML(v.sku || 'N/A')}</span>
+            ${isDef ? '<span style="background:var(--primary); color:#fff; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:10px;">Default Color</span>' : ''}
+          </div>
+
+          <div style="display:flex; align-items:center; gap:8px;">
+            ${!isDef ? `
+              <button type="button" class="btn" onclick="setDefaultManualVariant(${idx})" style="padding:0.25rem 0.6rem; font-size:0.75rem; background:#fff; border:1px solid #cbd5e1;">
+                Set as Default
+              </button>
+            ` : ''}
+            <button type="button" class="btn" onclick="duplicateManualVariant(${idx})" style="padding:0.25rem 0.6rem; font-size:0.75rem; background:#fff; border:1px solid #cbd5e1;" title="Duplicate Variant">
+              <i class="fas fa-copy"></i>
+            </button>
+            <button type="button" class="btn" onclick="toggleManualVariantCollapse(${idx})" style="padding:0.25rem 0.6rem; font-size:0.75rem; background:#fff; border:1px solid #cbd5e1;">
+              <i class="fas ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i>
+            </button>
+            <button type="button" class="btn btn-danger" onclick="removeManualVariant(${idx})" style="padding:0.25rem 0.6rem; font-size:0.75rem;" title="Remove Variant">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Card Body -->
+        <div style="padding:1.2rem; display:${isCollapsed ? 'none' : 'block'};">
+          <!-- Quick Color Preset Palette Chips for this Variant -->
+          <div style="margin-bottom:1rem; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; padding:0.6rem 0.8rem;">
+            <span style="font-size:0.72rem; font-weight:700; color:#475569; display:block; margin-bottom:5px;">🎨 Select from Ethnic Fashion Color Chart:</span>
+            <div style="display:flex; flex-wrap:wrap; gap:5px;">
+              ${FASHION_COLOR_PALETTE.map(c => `
+                <button type="button" onclick="selectVariantPresetColor(${idx}, '${c.name}', '${c.hex}')" title="${c.name} (${c.hex})" style="display:inline-flex; align-items:center; gap:4px; background:#fff; border:1px solid ${v.color_hex === c.hex ? 'var(--primary)' : '#cbd5e1'}; border-radius:12px; padding:2px 7px; font-size:0.7rem; font-weight:600; cursor:pointer;">
+                  <span style="width:10px; height:10px; border-radius:50%; background:${c.hex}; display:inline-block;"></span>
+                  ${c.name}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:1rem; margin-bottom:1rem;">
+            <div class="form-group">
+              <label style="font-weight:700; font-size:0.8rem;">Color Name</label>
+              <input type="text" class="form-input" value="${escapeHTML(v.color || '')}" placeholder="e.g. Crimson Red" oninput="updateManualVariantField(${idx}, 'color', this.value)" style="width:100%;" required>
+            </div>
+            <div class="form-group">
+              <label style="font-weight:700; font-size:0.8rem;">Color Swatch (Hex / Picker)</label>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <input type="color" value="${v.color_hex || '#800020'}" onchange="updateManualVariantField(${idx}, 'color_hex', this.value); this.nextElementSibling.value = this.value;" style="width:36px; height:34px; padding:0; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer;">
+                <input type="text" class="form-input" value="${v.color_hex || '#800020'}" oninput="updateManualVariantField(${idx}, 'color_hex', this.value)" style="flex:1; font-family:monospace; font-size:0.8rem;">
+              </div>
+            </div>
+            <div class="form-group">
+              <label style="font-weight:700; font-size:0.8rem;">Variant SKU</label>
+              <input type="text" class="form-input" value="${escapeHTML(v.sku || '')}" placeholder="e.g. KURTI-RED-01" oninput="updateManualVariantField(${idx}, 'sku', this.value)" style="width:100%;" required>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1.5fr; gap:1rem; margin-bottom:1rem;">
+            <div class="form-group">
+              <label style="font-weight:700; font-size:0.8rem;">Variant MRP (₹)</label>
+              <input type="number" class="form-input" value="${v.price || ''}" placeholder="2999" oninput="updateManualVariantField(${idx}, 'price', this.value)" style="width:100%;" required>
+            </div>
+            <div class="form-group">
+              <label style="font-weight:700; font-size:0.8rem;">Selling Price (₹)</label>
+              <input type="number" class="form-input" value="${v.discount_price || ''}" placeholder="1499" oninput="updateManualVariantField(${idx}, 'discount_price', this.value)" style="width:100%;">
+            </div>
+            <div class="form-group">
+              <label style="font-weight:700; font-size:0.8rem;">Stock Units</label>
+              <input type="number" class="form-input" value="${v.stock !== undefined ? v.stock : 20}" placeholder="20" min="0" oninput="updateManualVariantField(${idx}, 'stock', parseInt(this.value)||0)" style="width:100%;" required>
+            </div>
+            <div class="form-group">
+              <label style="font-weight:700; font-size:0.8rem;">Available Sizes for this Color</label>
+              <input type="text" class="form-input" value="${escapeHTML(v.size_variants || 'S, M, L, XL')}" placeholder="S, M, L, XL" oninput="updateManualVariantField(${idx}, 'size_variants', this.value)" style="width:100%;" required>
+            </div>
+          </div>
+
+          <!-- Color-Specific Photos Management -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:1rem;">
+            <label style="font-weight:700; font-size:0.8rem; color:var(--primary); display:block; margin-bottom:6px;">
+              📸 Color-Specific Image Gallery (${images.length} photos)
+            </label>
+            <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; align-items:center;">
+              <input type="text" id="varAddUrl_${idx}" class="form-input" placeholder="Paste photo URL (e.g. /images/products/...)" style="flex:1; min-width:240px; font-size:0.8rem;">
+              <button type="button" class="btn btn-primary" onclick="addVariantImageUrl(${idx})" style="padding:0.4rem 0.9rem; font-size:0.8rem;">
+                Add URL
+              </button>
+              <label class="btn" style="background:#fff; border:1px solid #cbd5e1; padding:0.4rem 0.9rem; font-size:0.8rem; cursor:pointer;">
+                <i class="fas fa-upload"></i> Upload Files
+                <input type="file" multiple accept="image/*" style="display:none;" onchange="handleVariantFilesUpload(event, ${idx})">
+              </label>
+            </div>
+
+            <!-- Image Previews Grid -->
+            <div style="display:flex; gap:10px; flex-wrap:wrap; min-height:60px; align-items:center;">
+              ${images.length === 0 ? '<span style="font-size:0.75rem; color:#94a3b8; font-style:italic;">No photos attached yet for this color variant.</span>' : ''}
+              ${images.map((imgUrl, imgI) => `
+                <div style="position:relative; width:64px; height:64px; border:1px solid ${imgI === 0 ? 'var(--primary)' : '#cbd5e1'}; border-radius:6px; overflow:hidden; background:#fff;">
+                  <img src="${formatLocalPath(imgUrl)}" alt="Variant Photo" style="width:100%; height:100%; object-fit:cover;">
+                  ${imgI === 0 ? '<span style="position:absolute; top:2px; left:2px; background:var(--primary); color:#fff; font-size:0.55rem; padding:1px 3px; border-radius:2px;">Primary</span>' : `
+                    <button type="button" onclick="setVariantPrimaryImage(${idx}, ${imgI})" title="Set as primary" style="position:absolute; bottom:2px; left:2px; background:rgba(0,0,0,0.6); color:#fff; border:none; border-radius:2px; font-size:0.55rem; padding:1px 3px; cursor:pointer;">★</button>
+                  `}
+                  <button type="button" onclick="removeVariantImage(${idx}, ${imgI})" title="Remove photo" style="position:absolute; top:2px; right:2px; background:rgba(239,68,68,0.85); color:#fff; border:none; border-radius:50%; width:16px; height:16px; display:flex; align-items:center; justify-content:center; font-size:0.6rem; cursor:pointer;">&times;</button>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function saveManualProductDraft() {
+  document.getElementById('prodStock').value = '0';
+  document.getElementById('btnPublishProduct').click();
 }
 
 async function handleProductFormSubmit(e) {
   e.preventDefault();
 
-  const submitBtn = e.target.querySelector('button[type="submit"]');
+  // Validate Variants
+  if (manualVariants.length > 0) {
+    const skus = new Set();
+    for (const v of manualVariants) {
+      if (!v.color || !v.color.trim()) {
+        showToast('All color variants must have a valid color name', 'error');
+        return;
+      }
+      if (!v.sku || !v.sku.trim()) {
+        showToast(`Variant "${v.color}" is missing a SKU`, 'error');
+        return;
+      }
+      const cleanSku = v.sku.trim().toUpperCase();
+      if (skus.has(cleanSku)) {
+        showToast(`Duplicate SKU detected: ${cleanSku}. Each variant SKU must be unique across the catalog.`, 'error');
+        return;
+      }
+      skus.add(cleanSku);
+    }
+  }
+
+  const submitBtn = document.getElementById('btnPublishProduct') || e.target.querySelector('button[type="submit"]');
   if (submitBtn) {
     if (submitBtn.disabled) return;
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validating & Publishing...';
   }
 
   const form = document.getElementById('productForm');
   const formData = new FormData(form);
+
+  // Attach structured color variants
+  if (manualVariants.length > 0) {
+    formData.append('color_variants', JSON.stringify(manualVariants));
+  }
 
   const url = editingProductId ? `/api/products/${editingProductId}` : '/api/products';
   const method = editingProductId ? 'PUT' : 'POST';
@@ -636,18 +1148,18 @@ async function handleProductFormSubmit(e) {
 
     const data = await res.json();
     if (data.success) {
-      showToast(data.message, 'success');
+      showToast(data.message || 'Product published successfully with color variants!', 'success');
       closeProductModal();
       loadAdminProducts();
     } else {
       showToast(data.message || 'Failed to save product', 'error');
     }
   } catch (err) {
-    showToast('Error uploading product data', 'error');
+    showToast('Error uploading product data: ' + err.message, 'error');
   } finally {
     if (submitBtn) {
       submitBtn.disabled = false;
-      submitBtn.innerHTML = 'Save Product';
+      submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Validate &amp; Publish';
     }
   }
 }
@@ -1587,5 +2099,1190 @@ async function loadIntelligenceReport() {
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-bolt"></i> Run AI Analysis';
+  }
+}
+
+/* ==========================================================================
+   CAREERS & INTERNSHIP MANAGEMENT CONTROLLER
+   ========================================================================== */
+let adminCareersList = [];
+
+async function loadAdminCareers() {
+  try {
+    const res = await fetch('/api/admin/careers', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      adminCareersList = data.careers || [];
+      renderAdminCareersTable(adminCareersList);
+    }
+  } catch (err) {
+    showToast('Failed to load career listings', 'error');
+  }
+}
+
+function renderAdminCareersTable(careers) {
+  const tbody = document.getElementById('adminCareersTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (careers.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#64748b;">No active or archived careers found.</td></tr>';
+    return;
+  }
+  careers.forEach(c => {
+    const statusBadge = c.status === 'open' 
+      ? '<span style="background:#dcfce7; color:#166534; padding:3px 8px; border-radius:12px; font-size:0.75rem; font-weight:700;">Open</span>'
+      : '<span style="background:#f1f5f9; color:#64748b; padding:3px 8px; border-radius:12px; font-size:0.75rem; font-weight:700;">Closed</span>';
+    
+    tbody.innerHTML += `
+      <tr>
+        <td>
+          <div style="font-weight:700; color:var(--primary);">${escapeHTML(c.title)}</div>
+          <div style="font-size:0.8rem; color:#64748b;">${escapeHTML(c.role)}</div>
+        </td>
+        <td>
+          <div style="font-weight:600;">${escapeHTML(c.department || 'Fashion')}</div>
+          <div style="font-size:0.8rem; color:var(--primary); font-weight:700;">${escapeHTML(c.employment_type || 'Full-time')}</div>
+        </td>
+        <td>
+          <div style="font-size:0.85rem;">${escapeHTML(c.location || 'Gandhidham / Hybrid')}</div>
+          <div style="font-size:0.8rem; color:#16a34a; font-weight:700;">${escapeHTML(c.stipend_or_salary || 'Competitive')}</div>
+        </td>
+        <td>
+          <div style="font-size:0.85rem; font-weight:600;">${escapeHTML(c.timeline_deadline || 'Open Until Filled')}</div>
+          <small style="color:#64748b;">${escapeHTML(c.experience || '0-2 Yrs')}</small>
+        </td>
+        <td>${statusBadge}</td>
+        <td>
+          <div style="display:flex; gap:6px;">
+            <button class="btn" onclick="openEditCareerForm(${c.id})" style="padding:0.3rem 0.6rem; font-size:0.75rem; background:#f1f5f9; color:var(--primary);" title="Edit"><i class="fas fa-edit"></i></button>
+            <button class="btn" onclick="deleteCareer(${c.id})" style="padding:0.3rem 0.6rem; font-size:0.75rem; background:#fee2e2; color:#b91c1c;" title="Delete"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function openNewCareerForm() {
+  document.getElementById('careerEditId').value = '';
+  document.getElementById('careerFormTitle').textContent = 'Post New Opportunity';
+  document.getElementById('adminCareerForm').reset();
+  document.getElementById('careerStatus').value = 'open';
+  document.getElementById('careerFormCard').style.display = 'block';
+  document.getElementById('careerTitle').focus();
+}
+
+function openEditCareerForm(id) {
+  const c = adminCareersList.find(item => item.id === id);
+  if (!c) return;
+  document.getElementById('careerEditId').value = c.id;
+  document.getElementById('careerFormTitle').textContent = `Edit Opportunity: ${c.title}`;
+  document.getElementById('careerTitle').value = c.title;
+  document.getElementById('careerRole').value = c.role;
+  document.getElementById('careerDept').value = c.department || 'Fashion & Design';
+  document.getElementById('careerType').value = c.employment_type || 'Full-time';
+  document.getElementById('careerLocation').value = c.location || '';
+  document.getElementById('careerExperience').value = c.experience || '';
+  document.getElementById('careerSalary').value = c.stipend_or_salary || '';
+  document.getElementById('careerDeadline').value = c.timeline_deadline || '';
+  document.getElementById('careerStatus').value = c.status || 'open';
+  document.getElementById('careerRequirements').value = c.requirements || '';
+  document.getElementById('careerDescription').value = c.description || '';
+  document.getElementById('careerFormCard').style.display = 'block';
+  document.getElementById('careerFormCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+function closeCareerForm() {
+  document.getElementById('careerFormCard').style.display = 'none';
+  document.getElementById('adminCareerForm').reset();
+}
+
+async function handleCareerFormSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('careerEditId').value;
+  const payload = {
+    title: document.getElementById('careerTitle').value.trim(),
+    role: document.getElementById('careerRole').value.trim(),
+    department: document.getElementById('careerDept').value,
+    employment_type: document.getElementById('careerType').value,
+    location: document.getElementById('careerLocation').value.trim(),
+    experience: document.getElementById('careerExperience').value.trim(),
+    stipend_or_salary: document.getElementById('careerSalary').value.trim(),
+    timeline_deadline: document.getElementById('careerDeadline').value,
+    status: document.getElementById('careerStatus').value,
+    requirements: document.getElementById('careerRequirements').value.trim(),
+    description: document.getElementById('careerDescription').value.trim()
+  };
+
+  const btn = document.getElementById('btnSaveCareer');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+  try {
+    const url = id ? `/api/admin/careers/${id}` : '/api/admin/careers';
+    const method = id ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(id ? 'Career opportunity updated!' : 'Career opportunity posted!', 'success');
+      closeCareerForm();
+      loadAdminCareers();
+    } else {
+      showToast(data.message || 'Operation failed', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to save career opportunity', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Save Opportunity';
+  }
+}
+
+async function deleteCareer(id) {
+  if (!confirm('Are you sure you want to delete this career listing?')) return;
+  try {
+    const res = await fetch(`/api/admin/careers/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Career opening deleted', 'success');
+      loadAdminCareers();
+    } else {
+      showToast(data.message || 'Failed to delete', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to delete career', 'error');
+  }
+}
+
+async function loadCareerApplications() {
+  try {
+    const res = await fetch('/api/admin/career-applications', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      renderAdminApplicationsTable(data.applications || []);
+    }
+  } catch (err) {
+    console.warn('Failed to load applications:', err.message);
+  }
+}
+
+function renderAdminApplicationsTable(apps) {
+  const tbody = document.getElementById('adminApplicationsTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (apps.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#64748b;">No applications submitted yet.</td></tr>';
+    return;
+  }
+  apps.forEach(a => {
+    const link = a.portfolio_or_resume_url 
+      ? `<a href="${escapeHTML(a.portfolio_or_resume_url)}" target="_blank" style="color:var(--primary); font-weight:600;"><i class="fas fa-external-link-alt"></i> View Link</a>`
+      : '<span style="color:#94a3b8;">None</span>';
+    tbody.innerHTML += `
+      <tr>
+        <td style="font-weight:700; color:#1e293b;">${escapeHTML(a.applicant_name)}</td>
+        <td>
+          <div style="font-weight:600; color:var(--primary);">${escapeHTML(a.job_title || 'General Influx')}</div>
+          <small style="color:#64748b;">${escapeHTML(a.job_role || '')}</small>
+        </td>
+        <td>
+          <div><a href="mailto:${escapeHTML(a.email)}" style="color:#2563eb;">${escapeHTML(a.email)}</a></div>
+          <div style="font-size:0.8rem; color:#64748b;"><i class="fas fa-phone-alt"></i> ${escapeHTML(a.phone)}</div>
+        </td>
+        <td>${link}</td>
+        <td style="font-size:0.8rem; max-width:260px; color:#475569;">${escapeHTML(a.cover_note || '-')}</td>
+        <td style="font-size:0.8rem; color:#64748b;">${new Date(a.created_at).toLocaleDateString('en-IN')}</td>
+      </tr>
+    `;
+  });
+}
+
+/* ==========================================================================
+   MODE B: AI-ASSISTED PRODUCT CREATION CONTROLLER
+   ========================================================================== */
+let aiStudioSelectedFiles = [];
+
+function handleAiStudioFiles(e) {
+  const files = Array.from(e.target.files);
+  if (!files || files.length === 0) return;
+  aiStudioSelectedFiles = files.slice(0, 3);
+  renderAiStudioUploadPreviews();
+}
+
+function renderAiStudioUploadPreviews() {
+  const container = document.getElementById('aiStudioUploadPreviews');
+  if (!container) return;
+  container.innerHTML = '';
+  if (aiStudioSelectedFiles.length === 0) {
+    container.innerHTML = '<span style="font-size:0.8rem; color:#94a3b8; font-style:italic;">No photos uploaded yet. Select 1 to 3 images to begin.</span>';
+    return;
+  }
+  aiStudioSelectedFiles.forEach((file, idx) => {
+    const url = URL.createObjectURL(file);
+    container.innerHTML += `
+      <div style="position:relative; width:80px; height:80px; border-radius:8px; overflow:hidden; border:2px solid var(--primary); box-shadow:var(--shadow-sm);">
+        <img src="${url}" style="width:100%; height:100%; object-fit:cover;">
+        <span style="position:absolute; top:2px; left:2px; background:var(--primary); color:#fff; font-size:0.65rem; padding:1px 4px; border-radius:4px; font-weight:700;">#${idx+1}</span>
+        <button type="button" onclick="removeAiStudioFile(${idx})" style="position:absolute; top:2px; right:2px; background:rgba(0,0,0,0.6); color:#fff; border:none; border-radius:50%; width:16px; height:16px; font-size:9px; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
+      </div>
+    `;
+  });
+}
+
+function removeAiStudioFile(idx) {
+  aiStudioSelectedFiles.splice(idx, 1);
+  renderAiStudioUploadPreviews();
+}
+
+async function runAiProductAnalysis() {
+  if (aiStudioSelectedFiles.length === 0) {
+    showToast('Please select at least 1 product photograph', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('btnRunAiAnalysis');
+  const status = document.getElementById('aiStudioLoadingStatus');
+  btn.disabled = true;
+  status.style.display = 'block';
+
+  try {
+    const formData = new FormData();
+    aiStudioSelectedFiles.forEach(file => {
+      formData.append('images', file);
+    });
+
+    const res = await fetch('/api/admin/ai/analyze-images', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      showToast('AI analysis completed!', 'success');
+      populateAiReviewScreen(data);
+    } else {
+      showToast(data.message || 'Analysis failed', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to run AI analysis: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    status.style.display = 'none';
+  }
+}
+
+function populateAiReviewScreen(data) {
+  const container = document.getElementById('aiStudioReviewContainer');
+  if (!container) return;
+  container.style.display = 'block';
+  container.scrollIntoView({ behavior: 'smooth' });
+
+  const aiSug = data.ai_suggestions || {};
+  const obsVis = data.observed_visuals || {};
+
+  // 1. Observed Colors
+  const colorsBox = document.getElementById('aiReviewColors');
+  if (colorsBox) {
+    colorsBox.innerHTML = '';
+    const colors = data.observed_colors || obsVis.dominant_colors || ['Multicolor'];
+    colors.forEach(c => {
+      colorsBox.innerHTML += `<span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:700;">${escapeHTML(c)}</span>`;
+    });
+  }
+
+  // 2. Pattern
+  const patBox = document.getElementById('aiReviewPattern');
+  if (patBox) patBox.textContent = data.pattern_and_craft || obsVis.detected_pattern || 'Printed Ethnic';
+
+  // 3. Occasions
+  const occBox = document.getElementById('aiReviewOccasions');
+  const occs = data.occasions || aiSug.occasions || ['Festive', 'Traditional'];
+  if (occBox) occBox.textContent = Array.isArray(occs) ? occs.join(', ') : occs;
+
+  // 4. Pairings
+  const pairBox = document.getElementById('aiReviewPairings');
+  const pairs = data.suggested_outfit_pairings || ['Mojaris', 'Earrings', 'Potli Bag'];
+  if (pairBox) pairBox.textContent = Array.isArray(pairs) ? pairs.join(' • ') : pairs;
+
+  // 5. Pre-fill form
+  const title = data.title_suggestion || aiSug.title || 'Handcrafted Festive Ethnic Kurta & Outfit';
+  const cat = data.category || aiSug.category || 'Women';
+  const subcat = data.subcategory || aiSug.subcategory || 'Ethnic Wear';
+  const desc = data.detailed_description || aiSug.detailed_description || data.short_description || aiSug.short_description || 'Exquisite handcrafted Indian ethnic outfit crafted for festive celebrations and family gatherings.';
+  const seo = data.seo_title || aiSug.seo_title || (title + ' | Little to Large');
+  const kw = data.search_keywords || aiSug.search_keywords || 'ethnic wear, festive kurta, indian family clothes';
+
+  document.getElementById('aiProdName').value = title;
+  document.getElementById('aiProdCategory').value = cat;
+  document.getElementById('aiProdSubcategory').value = subcat;
+  document.getElementById('aiProdDesc').value = desc;
+  document.getElementById('aiProdSeoTitle').value = seo;
+  document.getElementById('aiProdKeywords').value = Array.isArray(kw) ? kw.join(', ') : kw;
+
+  // Sensible pricing defaults to avoid blank numbers (Administrator must confirm!)
+  document.getElementById('aiProdMrp').value = 2499;
+  document.getElementById('aiProdPrice').value = 1199;
+  document.getElementById('aiProdStock').value = 35;
+  document.getElementById('aiProdSizes').value = 'S, M, L, XL, XXL';
+  document.getElementById('aiProdReturnWindow').value = 7;
+  calculateAiDiscount();
+
+  // Assets grid
+  const assetsGrid = document.getElementById('aiStudioAssetsGrid');
+  const uploadedUrls = data.uploaded_image_urls || [];
+  document.getElementById('aiProdImagesJson').value = JSON.stringify(uploadedUrls);
+  
+  if (assetsGrid) {
+    assetsGrid.innerHTML = '';
+    uploadedUrls.forEach((u, i) => {
+      assetsGrid.innerHTML += `
+        <div style="flex-shrink:0; text-align:center;">
+          <img src="${u}" style="width:100px; height:100px; object-fit:cover; border-radius:8px; border:2px solid #cbd5e1;">
+          <div style="font-size:0.7rem; color:#64748b; margin-top:2px;">Photo #${i+1}</div>
+        </div>
+      `;
+    });
+  }
+}
+
+function calculateAiDiscount() {
+  const mrp = parseFloat(document.getElementById('aiProdMrp').value) || 0;
+  const selling = parseFloat(document.getElementById('aiProdPrice').value) || 0;
+  const badge = document.getElementById('aiDiscountBadge');
+  if (!badge) return;
+  if (mrp > 0 && selling > 0 && mrp >= selling) {
+    const pct = Math.round(((mrp - selling) / mrp) * 100);
+    badge.textContent = `Discount: ${pct}% OFF`;
+    badge.style.color = '#16a34a';
+  } else if (selling > mrp) {
+    badge.textContent = '⚠️ Selling price is higher than MRP!';
+    badge.style.color = '#dc2626';
+  } else {
+    badge.textContent = 'Discount: --%';
+  }
+}
+
+async function saveAiProductDraft() {
+  document.getElementById('aiProdStock').value = 0;
+  await submitAiProductForm(true);
+}
+
+async function handleAiProductPublish(e) {
+  e.preventDefault();
+  await submitAiProductForm(false);
+}
+
+async function submitAiProductForm(isDraft) {
+  const btn = document.getElementById('btnPublishAiProduct');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+  }
+
+  try {
+    const name = document.getElementById('aiProdName').value.trim();
+    const category = document.getElementById('aiProdCategory').value;
+    const subcategory = document.getElementById('aiProdSubcategory').value.trim();
+    const price = parseFloat(document.getElementById('aiProdMrp').value);
+    const discount_price = parseFloat(document.getElementById('aiProdPrice').value);
+    const stock = parseInt(document.getElementById('aiProdStock').value);
+    const size_variants = document.getElementById('aiProdSizes').value.trim();
+    const return_window_days = parseInt(document.getElementById('aiProdReturnWindow').value) || 7;
+    const description = document.getElementById('aiProdDesc').value.trim();
+    const imageUrls = document.getElementById('aiProdImagesJson').value || '[]';
+    const videoUrl = document.getElementById('aiProdVideoUrl').value || '';
+
+    const payload = {
+      name,
+      category,
+      subcategory,
+      price,
+      discount_price,
+      stock,
+      size_variants,
+      return_window_days,
+      description,
+      image_urls: imageUrls,
+      video_url: videoUrl
+    };
+
+    const res = await fetch('/api/products', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    let data;
+    const resText = await res.text();
+    try {
+      data = JSON.parse(resText);
+    } catch (e) {
+      throw new Error(`Server returned status ${res.status}: ${resText.slice(0, 100)}`);
+    }
+
+    if (data.success) {
+      showToast(isDraft ? 'Draft product saved!' : '🎉 Product published to catalog!', 'success');
+      showSection('productsSection');
+      loadAdminProducts();
+    } else {
+      showToast(data.message || 'Failed to save product', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to save product: ' + err.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-check-circle"></i> Approve & Publish to Store Catalog';
+    }
+  }
+}
+
+/* ==========================================================================
+   ADMIN AI ASSISTANTS CONTROLLER
+   ========================================================================== */
+async function handleMarketingAssistantSubmit(e) {
+  e.preventDefault();
+  const theme = document.getElementById('mktTheme').value;
+  const target = document.getElementById('mktTarget').value;
+  const offer = document.getElementById('mktOffer').value;
+  const btn = document.getElementById('btnGenMarketing');
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Campaign...';
+
+  try {
+    const res = await fetch('/api/admin/ai/assistant/marketing', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ theme, target_category: target, offer })
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('mktCampaignHeadline').textContent = data.campaign_name || 'Festive Launch';
+      document.getElementById('mktCaptionText').textContent = data.instagram_caption || data.social_caption || '';
+      document.getElementById('mktResultBox').style.display = 'block';
+      showToast('Campaign copy generated!', 'success');
+    } else {
+      showToast(data.message || 'Generation failed', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to generate marketing copy', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Generate Campaign Drafts';
+  }
+}
+
+function copyMktCaption() {
+  const text = document.getElementById('mktCaptionText').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!', 'success'));
+}
+
+async function handleSupportAssistantSubmit(e) {
+  e.preventDefault();
+  const customer = document.getElementById('suppCustomer').value;
+  const subject = document.getElementById('suppSubject').value;
+  const message = document.getElementById('suppMessage').value;
+  const btn = document.getElementById('btnGenSupport');
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Drafting Reply...';
+
+  try {
+    const res = await fetch('/api/admin/ai/assistant/support-reply', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ customer, subject, message })
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('suppDraftArea').value = data.draft_reply || '';
+      document.getElementById('suppResultBox').style.display = 'block';
+      showToast('Support reply drafted!', 'success');
+    } else {
+      showToast(data.message || 'Drafting failed', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to draft support reply', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-envelope-open-text"></i> Draft Official Reply';
+  }
+}
+
+function copySupportDraft() {
+  const text = document.getElementById('suppDraftArea').value;
+  navigator.clipboard.writeText(text).then(() => showToast('Draft copied!', 'success'));
+}
+
+/* ==========================================================================
+   IMAGE & VIDEO STUDIO CONTROLLER
+   ========================================================================== */
+let studioCleanCustomFile = null;
+
+function populateStudioMediaDropdowns() {
+  const cleanSelect = document.getElementById('studioCleanImageSelect');
+  const vidSelect = document.getElementById('studioVideoProductSelect');
+  if (!allProducts || allProducts.length === 0) return;
+
+  if (cleanSelect) {
+    cleanSelect.innerHTML = '<option value="">-- Choose from Catalog Product Photos --</option>';
+    allProducts.forEach(p => {
+      let urls = [];
+      try { urls = JSON.parse(p.image_urls || '[]'); } catch (e) {}
+      if (urls.length > 0) {
+        cleanSelect.innerHTML += `<option value="${urls[0]}">${escapeHTML(p.name)} (${urls[0]})</option>`;
+      }
+    });
+  }
+
+  if (vidSelect) {
+    vidSelect.innerHTML = '<option value="">-- Choose Product for Video --</option>';
+    allProducts.forEach(p => {
+      vidSelect.innerHTML += `<option value="${p.id}">${escapeHTML(p.name)} - ₹${p.discount_price || p.price}</option>`;
+    });
+  }
+}
+
+function updateStudioCleanSource(val) {
+  if (val) {
+    studioCleanCustomFile = null;
+    const fileInput = document.getElementById('studioCleanFileInput');
+    if (fileInput) fileInput.value = '';
+  }
+}
+
+function handleStudioCleanFileUpload(e) {
+  if (e.target.files && e.target.files[0]) {
+    studioCleanCustomFile = e.target.files[0];
+    const select = document.getElementById('studioCleanImageSelect');
+    if (select) select.value = '';
+  }
+}
+
+async function runStudioClean() {
+  const btn = document.getElementById('btnRunStudioClean');
+  const preset = document.getElementById('studioCanvasPreset').value;
+  let imageSource = null;
+
+  if (studioCleanCustomFile) {
+    imageSource = studioCleanCustomFile;
+  } else {
+    imageSource = document.getElementById('studioCleanImageSelect').value;
+  }
+
+  if (!imageSource) {
+    showToast('Please select or upload a product image first', 'warning');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cleaning Canvas...';
+
+  try {
+    let res;
+    if (studioCleanCustomFile) {
+      const fd = new FormData();
+      fd.append('image', studioCleanCustomFile);
+      fd.append('preset', preset);
+      res = await fetch('/api/admin/ai/studio-clean', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: fd
+      });
+    } else {
+      res = await fetch('/api/admin/ai/studio-clean', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ image_path: imageSource, preset })
+      });
+    }
+
+    const data = await res.json();
+    if (data.success && data.cleaned_image_url) {
+      document.getElementById('studioCleanResultImg').src = data.cleaned_image_url + '?t=' + Date.now();
+      document.getElementById('studioCleanDownloadLink').href = data.cleaned_image_url;
+      document.getElementById('studioCleanPreviewBox').style.display = 'block';
+      showToast('Studio canvas cleaned successfully!', 'success');
+    } else {
+      showToast(data.message || 'Clean failed', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to clean image: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-magic"></i> Clean onto Studio Canvas';
+  }
+}
+
+function updateStudioVideoFields(prodId) {
+  const p = allProducts.find(item => item.id == prodId);
+  if (!p) return;
+  document.getElementById('studioVideoHeadline').value = p.name;
+  if (p.price && p.discount_price && p.price > p.discount_price) {
+    const pct = Math.round(((p.price - p.discount_price) / p.price) * 100);
+    document.getElementById('studioVideoDiscount').value = `Special ${pct}% OFF • ₹${p.discount_price}`;
+  } else {
+    document.getElementById('studioVideoDiscount').value = `Special ₹${p.discount_price || p.price}`;
+  }
+}
+
+async function runStudioVideo() {
+  const prodId = document.getElementById('studioVideoProductSelect').value;
+  const p = allProducts.find(item => item.id == prodId);
+  if (!p) {
+    showToast('Please select a product from the catalog', 'warning');
+    return;
+  }
+
+  let urls = [];
+  try { urls = JSON.parse(p.image_urls || '[]'); } catch (e) {}
+  if (urls.length === 0) {
+    showToast('Selected product has no images to compose video', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('btnRunStudioVideo');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rendering 10s Promo Video...';
+
+  try {
+    const headline = document.getElementById('studioVideoHeadline').value;
+    const discount = document.getElementById('studioVideoDiscount').value;
+
+    const res = await fetch('/api/admin/ai/create-video', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        product_id: p.id,
+        image_path: urls[0],
+        headline,
+        price_text: `₹${p.discount_price || p.price}`,
+        discount_text: discount
+      })
+    });
+    const data = await res.json();
+    if (data.success && data.video_url) {
+      document.getElementById('studioVideoResultAsset').src = data.video_url + '?t=' + Date.now();
+      document.getElementById('studioVideoDownloadLink').href = data.video_url;
+      document.getElementById('studioVideoPreviewBox').style.display = 'block';
+      showToast('10-second promo video generated!', 'success');
+    } else {
+      showToast(data.message || 'Video composition failed', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to compose video: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-play-circle"></i> Render 10-Second Promo Video';
+  }
+}
+
+async function runStudioConcepts() {
+  const cleanSelect = document.getElementById('studioCleanImageSelect');
+  let imageSource = cleanSelect ? cleanSelect.value : null;
+  if (!imageSource && allProducts.length > 0) {
+    let urls = [];
+    try { urls = JSON.parse(allProducts[0].image_urls || '[]'); } catch (e) {}
+    if (urls.length > 0) imageSource = urls[0];
+  }
+
+  if (!imageSource) {
+    showToast('Please select a product photo from the studio selector above', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('btnRunStudioConcepts');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating 5 Concept Variations...';
+
+  try {
+    const res = await fetch('/api/admin/ai/studio-concepts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ image_path: imageSource })
+    });
+    const data = await res.json();
+    if (data.success && data.concepts) {
+      renderStudioConcepts(data.concepts);
+      showToast('5 Concept variations generated!', 'success');
+    } else {
+      showToast(data.message || 'Concepts generation failed', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to generate concepts: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-images"></i> Generate 5 Concepts for Selected Image';
+  }
+}
+
+function renderStudioConcepts(concepts) {
+  const grid = document.getElementById('studioConceptsGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  concepts.forEach(c => {
+    grid.innerHTML += `
+      <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; overflow:hidden; box-shadow:var(--shadow-sm); display:flex; flex-direction:column;">
+        <div style="position:relative; width:100%; height:220px; background:#000;">
+          <img src="${c.concept_url}?t=${Date.now()}" alt="${escapeHTML(c.concept_title)}" style="width:100%; height:100%; object-fit:contain;">
+          <span style="position:absolute; bottom:6px; left:6px; right:6px; background:rgba(0,0,0,0.7); color:#fef08a; font-size:0.65rem; padding:2px 6px; border-radius:4px; text-align:center; font-weight:600;">
+            ${escapeHTML(c.watermark)}
+          </span>
+        </div>
+        <div style="padding:0.8rem; flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="font-weight:700; font-size:0.85rem; color:var(--primary);">${escapeHTML(c.concept_title)}</div>
+            <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">${escapeHTML(c.angle_or_pose)}</div>
+          </div>
+          <div style="margin-top:8px;">
+            <a href="${c.concept_url}" download="concept.webp" class="btn" style="padding:0.25rem 0.6rem; font-size:0.72rem; width:100%; text-align:center; background:#fff; border:1px solid #cbd5e1;">
+              <i class="fas fa-download"></i> Save Concept
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+}
+
+/* ==========================================================================
+   10. STORE POLICIES CMS & LEGAL TERMS
+   ========================================================================== */
+let currentLoadedPolicies = {};
+
+async function loadPolicyForEdit(key = 'replacement', btnEl = null) {
+  const keyInput = document.getElementById('currentPolicyKey');
+  if (keyInput) keyInput.value = key;
+
+  if (btnEl) {
+    document.querySelectorAll('.btn-policy-tab').forEach(b => {
+      b.classList.remove('active');
+      b.style.background = '#fff';
+      b.style.borderColor = '#e2e8f0';
+    });
+    btnEl.classList.add('active');
+    btnEl.style.background = '#f8fafc';
+    btnEl.style.borderColor = '#cbd5e1';
+  }
+
+  try {
+    const res = await fetch(`/api/policies/${key}`);
+    const data = await res.json();
+    if (data.success && data.policy) {
+      const titleInput = document.getElementById('policyTitleInput');
+      const contentInput = document.getElementById('policyContentInput');
+      const badge = document.getElementById('policyLastUpdatedBadge');
+      if (titleInput) titleInput.value = data.policy.title || '';
+      if (contentInput) contentInput.value = data.policy.content || '';
+      const updatedDate = data.policy.updated_at ? new Date(data.policy.updated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently';
+      if (badge) badge.textContent = `Last Updated: ${updatedDate}`;
+    }
+  } catch (err) {
+    showToast('Failed to load policy terms', 'error');
+  }
+}
+
+async function savePolicyChanges(e) {
+  e.preventDefault();
+  const key = document.getElementById('currentPolicyKey').value;
+  const title = document.getElementById('policyTitleInput').value.trim();
+  const content = document.getElementById('policyContentInput').value.trim();
+
+  const btn = document.getElementById('btnSavePolicy');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+  }
+
+  try {
+    const res = await fetch(`/api/admin/policies/${key}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ title, content })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Store policy updated successfully!', 'success');
+      loadPolicyForEdit(key);
+    } else {
+      showToast(data.message || 'Failed to update policy', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to save policy: ' + err.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save"></i> Save Policy Changes';
+    }
+  }
+}
+
+function previewCurrentPolicyModal() {
+  const title = document.getElementById('policyTitleInput')?.value || 'Store Policy';
+  const content = document.getElementById('policyContentInput')?.value || '';
+  const previewWin = window.open('', '_blank');
+  if (previewWin) {
+    previewWin.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Preview: ${escapeHTML(title)}</title>
+        <link rel="stylesheet" href="/css/style.css">
+        <link rel="stylesheet" href="/css/ux-premium.css">
+        <style>body { font-family: 'Plus Jakarta Sans', sans-serif; padding: 2.5rem; max-width: 850px; margin: 0 auto; line-height: 1.8; color: #1e293b; }</style>
+      </head>
+      <body>
+        <h1 style="color:hsl(348,75%,26%); font-family:'Playfair Display', serif; font-size:2rem; margin-bottom:0.5rem;">${escapeHTML(title)}</h1>
+        <hr style="border:none; border-top:1px solid #e2e8f0; margin:1.5rem 0;">
+        <div style="font-size:0.95rem;">${content}</div>
+      </body>
+      </html>
+    `);
+    previewWin.document.close();
+  }
+}
+
+/* ==========================================================================
+   11. ADMIN TWO-FACTOR AUTHENTICATION (TOTP / RFC 6238)
+   ========================================================================== */
+let activeMfaSecret = '';
+let activeMfaRecoveryCodes = [];
+
+async function load2FaStatus() {
+  try {
+    const res = await fetch('/api/admin/2fa/status', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      const badge = document.getElementById('mfaStatusBadge');
+      const text = document.getElementById('mfaUpdatedText');
+      const container = document.getElementById('mfaActionsContainer');
+
+      if (badge && text && container) {
+        if (data.enabled) {
+          badge.textContent = 'MFA Active & Protected';
+          badge.style.background = '#16a34a';
+          text.textContent = `Authenticator linked and active (Last verified: ${new Date(data.updated_at).toLocaleDateString()})`;
+          container.innerHTML = `
+            <button class="btn btn-danger" onclick="disable2FaPrompt()" style="width:100%; padding:0.6rem; font-weight:700;">
+              <i class="fas fa-lock-open"></i> Disable Two-Factor Authentication
+            </button>
+          `;
+        } else {
+          badge.textContent = 'MFA Disabled';
+          badge.style.background = '#ef4444';
+          text.textContent = 'No authenticator app currently linked to this admin account.';
+          container.innerHTML = `
+            <button class="btn btn-primary" onclick="startTotpEnrollment()" style="width:100%; padding:0.7rem; font-weight:700;">
+              <i class="fas fa-qrcode"></i> Setup Two-Factor Authentication
+            </button>
+          `;
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load 2FA status:', err);
+  }
+}
+
+async function startTotpEnrollment() {
+  try {
+    const res = await fetch('/api/admin/2fa/setup', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      activeMfaSecret = data.secret;
+      activeMfaRecoveryCodes = data.recoveryCodes || [];
+
+      document.getElementById('mfaQrImage').src = data.qrCode;
+      document.getElementById('mfaSecretText').textContent = data.secret;
+      document.getElementById('mfaVerificationCode').value = '';
+      document.getElementById('mfaEnrollmentBox').style.display = 'block';
+      document.getElementById('mfaRecoveryCodesBox').style.display = 'none';
+      document.getElementById('mfaVerificationCode').focus();
+    } else {
+      showToast(data.message || 'Failed to initiate 2FA setup', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to start 2FA: ' + err.message, 'error');
+  }
+}
+
+function cancelTotpEnrollment() {
+  const box = document.getElementById('mfaEnrollmentBox');
+  if (box) box.style.display = 'none';
+  activeMfaSecret = '';
+  activeMfaRecoveryCodes = [];
+}
+
+async function handleMfaVerify(e) {
+  e.preventDefault();
+  const code = document.getElementById('mfaVerificationCode').value.trim();
+  if (code.length !== 6) {
+    showToast('Please enter a 6-digit code from your authenticator app', 'warning');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/admin/2fa/verify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        secret: activeMfaSecret,
+        token: code,
+        recoveryCodes: activeMfaRecoveryCodes
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Two-factor authentication successfully enabled!', 'success');
+      const list = document.getElementById('mfaRecoveryCodesList');
+      if (list) list.innerHTML = activeMfaRecoveryCodes.map(c => `<code>${c}</code>`).join('');
+      const recBox = document.getElementById('mfaRecoveryCodesBox');
+      if (recBox) recBox.style.display = 'block';
+      load2FaStatus();
+    } else {
+      showToast(data.message || 'Invalid verification code', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to verify code: ' + err.message, 'error');
+  }
+}
+
+function copyRecoveryCodes() {
+  if (activeMfaRecoveryCodes.length > 0) {
+    navigator.clipboard.writeText(activeMfaRecoveryCodes.join('\n'));
+    showToast('Recovery codes copied to clipboard!', 'success');
+  }
+}
+
+async function disable2FaPrompt() {
+  const pwd = prompt('Enter your admin account password to disable Two-Factor Authentication:');
+  if (!pwd) return;
+
+  try {
+    const res = await fetch('/api/admin/2fa/disable', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ password: pwd })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Two-factor authentication disabled', 'info');
+      load2FaStatus();
+    } else {
+      showToast(data.message || 'Failed to disable 2FA', 'error');
+    }
+  } catch (err) {
+    showToast('Error disabling 2FA: ' + err.message, 'error');
+  }
+}
+
+/* ==========================================================================
+   12. ADMIN STAFF & SCOPED ROLES MANAGEMENT
+   ========================================================================== */
+let allStaffMembers = [];
+
+async function loadAdminStaff() {
+  try {
+    const res = await fetch('/api/admin/staff', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      allStaffMembers = data.staff || [];
+      const tbody = document.querySelector('#adminStaffTable tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (allStaffMembers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-light); padding:2rem;">No additional staff members created yet. Click "Add Staff Member" to delegate roles.</td></tr>';
+        return;
+      }
+
+      allStaffMembers.forEach(s => {
+        let perms = [];
+        try { perms = JSON.parse(s.permissions || '[]'); } catch (e) { perms = [s.permissions]; }
+
+        const validity = (s.valid_from || s.valid_until) 
+          ? `${s.valid_from || 'Always'} to ${s.valid_until || 'Indefinite'}`
+          : 'Permanent Active';
+
+        tbody.innerHTML += `
+          <tr>
+            <td>
+              <strong>${escapeHTML(s.name)}</strong><br>
+              <span style="font-size:0.75rem; color:#64748b;">${escapeHTML(s.email)}</span>
+            </td>
+            <td>
+              <strong>${escapeHTML(s.role_title)}</strong><br>
+              <span style="font-size:0.75rem; color:#64748b;">${escapeHTML(s.department)}</span>
+            </td>
+            <td>
+              <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                ${perms.map(p => `<span style="background:#f1f5f9; color:#334155; font-size:0.7rem; padding:2px 6px; border-radius:4px;">${escapeHTML(p.replace('_write', ' (Write)').replace('_read', ' (Read)'))}</span>`).join('')}
+              </div>
+            </td>
+            <td style="font-size:0.8rem; color:#475569;">${escapeHTML(validity)}</td>
+            <td>
+              <div style="display:flex; gap:6px;">
+                <button class="btn" onclick="openStaffModal(${s.id})" style="padding:0.25rem 0.6rem; font-size:0.75rem; background:#fff; border:1px solid #cbd5e1;">Edit</button>
+                <button class="btn btn-danger" onclick="deleteStaffUser(${s.id})" style="padding:0.25rem 0.6rem; font-size:0.75rem;">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+    }
+  } catch (err) {
+    showToast('Failed to load staff members', 'error');
+  }
+}
+
+function openStaffModal(id = null) {
+  const form = document.getElementById('adminStaffForm');
+  if (form) form.reset();
+  const editIdInput = document.getElementById('staffEditId');
+  if (editIdInput) editIdInput.value = id ? String(id) : '';
+
+  if (id) {
+    const s = allStaffMembers.find(m => m.id === id);
+    if (s) {
+      document.getElementById('staffModalTitle').textContent = 'Edit Staff Member';
+      document.getElementById('staffName').value = s.name;
+      document.getElementById('staffEmail').value = s.email;
+      document.getElementById('staffEmail').disabled = true;
+      document.getElementById('staffDepartment').value = s.department || 'Fashion & Merchandising';
+      document.getElementById('staffRoleTitle').value = s.role_title || 'Catalog Merchandiser';
+      document.getElementById('staffValidFrom').value = s.valid_from || '';
+      document.getElementById('staffValidUntil').value = s.valid_until || '';
+      document.getElementById('staffPwdHelp').textContent = '(Leave blank to keep unchanged)';
+
+      let perms = [];
+      try { perms = JSON.parse(s.permissions || '[]'); } catch (e) { perms = [s.permissions]; }
+      document.querySelectorAll('input[name="staffPerm"]').forEach(cb => {
+        cb.checked = perms.includes(cb.value);
+      });
+    }
+  } else {
+    document.getElementById('staffModalTitle').textContent = 'Add Staff Member';
+    document.getElementById('staffEmail').disabled = false;
+    document.getElementById('staffPwdHelp').textContent = '(Required for new staff)';
+    document.querySelectorAll('input[name="staffPerm"]').forEach(cb => cb.checked = true);
+  }
+
+  document.getElementById('staffModal').style.display = 'flex';
+}
+
+function closeStaffModal() {
+  document.getElementById('staffModal').style.display = 'none';
+  const form = document.getElementById('adminStaffForm');
+  if (form) form.reset();
+  const emailInput = document.getElementById('staffEmail');
+  if (emailInput) emailInput.disabled = false;
+}
+
+async function handleStaffFormSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('staffEditId').value;
+  const name = document.getElementById('staffName').value.trim();
+  const email = document.getElementById('staffEmail').value.trim();
+  const password = document.getElementById('staffPassword').value;
+  const department = document.getElementById('staffDepartment').value;
+  const role_title = document.getElementById('staffRoleTitle').value.trim();
+  const valid_from = document.getElementById('staffValidFrom').value || null;
+  const valid_until = document.getElementById('staffValidUntil').value || null;
+
+  const permissions = Array.from(document.querySelectorAll('input[name="staffPerm"]:checked')).map(cb => cb.value);
+
+  const payload = { name, email, department, role_title, permissions, valid_from, valid_until };
+  if (password && password.trim() !== '') payload.password = password;
+
+  const url = id ? `/api/admin/staff/${id}` : '/api/admin/staff';
+  const method = id ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || 'Staff member saved!', 'success');
+      closeStaffModal();
+      loadAdminStaff();
+    } else {
+      showToast(data.message || 'Failed to save staff member', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to save staff: ' + err.message, 'error');
+  }
+}
+
+async function deleteStaffUser(id) {
+  if (!confirm('Are you sure you want to permanently remove this staff member?')) return;
+  try {
+    const res = await fetch(`/api/admin/staff/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Staff member removed successfully');
+      loadAdminStaff();
+    } else {
+      showToast(data.message || 'Failed to delete staff member', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to delete staff: ' + err.message, 'error');
   }
 }

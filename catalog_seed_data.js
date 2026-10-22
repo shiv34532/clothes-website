@@ -1,0 +1,497 @@
+// Authentic Indian Family Fashion Catalog Seed Data
+// Aligned with existing photography in public/images/products/
+
+module.exports = [
+  {
+    name: "Emerald Floral Anarkali Kurta",
+    category: "Women",
+    subcategory: "Ethnic",
+    price: 1899.00,
+    discount_price: 1399.00,
+    stock: 45,
+    description: "Exquisite hand-block printed emerald green floral cotton Anarkali Kurta with delicate gota patti trim and sweetheart neckline. Tailored for family celebrations and festive gatherings.",
+    size_variants: "XS,S,M,L,XL,XXL",
+    image_urls: JSON.stringify([
+      "images/products/Green_Floral_Womens_Kurta/front.png",
+      "images/products/Green_Floral_Womens_Kurta/model_pose.png",
+      "images/products/Green_Floral_Womens_Kurta/back.png",
+      "images/products/Green_Floral_Womens_Kurta/angle_left_45.png",
+      "images/products/Green_Floral_Womens_Kurta/angle_right_45.png",
+      "images/products/Green_Floral_Womens_Kurta/left.png",
+      "images/products/Green_Floral_Womens_Kurta/right.png"
+    ]),
+    rating: 4.9,
+    fabric: "Pure Cotton",
+    color: "Emerald",
+    style: "Ethnic",
+    gender: "Women",
+    return_window_days: 7
+  },
+  {
+    name: "Beige Meadow Organic Cotton Kids Play Set",
+    category: "Kids",
+    subcategory: "Boys",
+    price: 899.00,
+    discount_price: 649.00,
+    stock: 50,
+    description: "Super-soft organic combed cotton two-piece singlet and shorts set with breathable knit construction, child-safe dyes, and elasticated comfort waistband.",
+    size_variants: "2T,3T,4T,5T",
+    image_urls: JSON.stringify([
+      "images/products/Beige_Rabbit_Kids_Set/front.png",
+      "images/products/Beige_Rabbit_Kids_Set/model_pose.png",
+      "images/products/Beige_Rabbit_Kids_Set/back.png",
+      "images/products/Beige_Rabbit_Kids_Set/angle_left_45.png",
+      "images/products/Beige_Rabbit_Kids_Set/angle_right_45.png"
+    ]),
+    rating: 4.8,
+    fabric: "Cotton",
+    color: "Beige",
+    style: "Casual",
+    gender: "Kids",
+    return_window_days: 7
+  },
+  {
+    name: "Active Hero Cotton Kids Summer Set",
+    category: "Kids",
+    subcategory: "Boys",
+    price: 799.00,
+    discount_price: 549.00,
+    stock: 35,
+    description: "Vibrant emerald green cotton tank and lightweight shorts set for boys. Breathable, durable reinforced stitching for playtime and outings.",
+    size_variants: "2T,3T,4T,5T",
+    image_urls: JSON.stringify([
+      "images/products/Green_Spiderman_Kids_Set/front.png",
+      "images/products/Green_Spiderman_Kids_Set/model_pose.png",
+      "images/products/Green_Spiderman_Kids_Set/back.png",
+      "images/products/Green_Spiderman_Kids_Set/angle_left_45.png",
+      "images/products/Green_Spiderman_Kids_Set/angle_right_45.png"
+    ]),
+    rating: 4.7,
+    fabric: "Cotton",
+    color: "Emerald",
+    style: "Casual",
+    gender: "Kids",
+    return_window_days: 7
+  },
+  {
+    name: "Fuchsia Bloom Festive Girl's Tunic Set",
+    category: "Kids",
+    subcategory: "Girls",
+    price: 999.00,
+    discount_price: 699.00,
+    stock: 40,
+    description: "Festive fuchsia twin set featuring playful graphic motifs and airy cotton shorts. Ideal for Raksha Bandhan and family functions.",
+    size_variants: "2T,3T,4T,5T",
+    image_urls: JSON.stringify([
+      "images/products/Product_11/angle_left_45.png",
+      "images/products/Product_11/angle_right_45.png",
+      "images/products/Product_11/back.png",
+      "images/products/Product_11/front.png"
+    ]),
+    rating: 4.8,
+    fabric: "Cotton",
+    color: "Pink",
+    style: "Ethnic",
+    gender: "Kids",
+    return_window_days: 7
+  },
+  {
+    name: "Heritage Royal Saffron Men's Kurta",
+    category: "Men",
+    subcategory: "Ethnic",
+    price: 2199.00,
+    discount_price: 1599.00,
+    stock: 30,
+    description: "Classic royal saffron festive Kurta crafted from fine slub cotton with embroidered mandarin collar and concealed placket. Perfect for Diwali and weddings.",
+    size_variants: "S,M,L,XL,XXL",
+    image_urls: JSON.stringify([
+      "images/products/Product_12/front.png",
+      "images/products/Product_12/top.png",
+      "images/products/Product_12/bottom.png"
+    ]),
+    rating: 4.9,
+    fabric: "Cotton",
+    color: "Saffron",
+    style: "Ethnic",
+    gender: "Men",
+    return_window_days: 7
+  },
+  {
+    name: "Deep Burgundy Chanderi Silk Kurta Set",
+    category: "Men",
+    subcategory: "Ethnic",
+    price: 2799.00,
+    discount_price: 1999.00,
+    stock: 25,
+    description: "Rich maroon burgundy Chanderi festive Kurta paired with tapered churidar pants. Features zari thread work along the neckline and cuffs.",
+    size_variants: "M,L,XL,XXL",
+    image_urls: JSON.stringify([
+      "images/products/Product_13/front.png",
+      "images/products/Product_13/top.png",
+      "images/products/Product_13/bottom.png"
+    ]),
+    rating: 4.9,
+    fabric: "Silk",
+    color: "Red",
+    style: "Ethnic",
+    gender: "Men",
+    return_window_days: 7
+  },
+  {
+    name: "Ivory Gold Family Festive Kurta",
+    category: "Men",
+    subcategory: "Ethnic",
+    price: 2499.00,
+    discount_price: 1799.00,
+    stock: 32,
+    description: "Pristine warm ivory cotton-silk Kurta featuring antique gold button accents. Coordinates seamlessly with our women's and kids' festival collections.",
+    size_variants: "S,M,L,XL,XXL",
+    image_urls: JSON.stringify([
+      "images/products/Product_14/front.png",
+      "images/products/Product_14/top.png",
+      "images/products/Product_14/bottom.png"
+    ]),
+    rating: 4.8,
+    fabric: "Silk",
+    color: "Saffron",
+    style: "Ethnic",
+    gender: "Men",
+    return_window_days: 7
+  },
+  {
+    name: "Royal Indigo Handloom Silk Saree",
+    category: "Women",
+    subcategory: "Ethnic",
+    price: 3499.00,
+    discount_price: 2499.00,
+    stock: 20,
+    description: "Artisan-woven royal indigo silk saree with gold zari border, contrasting pallu, and matching unstitched blouse piece. Ideal for festive occasions.",
+    size_variants: "Free Size",
+    image_urls: JSON.stringify([
+      "images/products/Product_15/front.png",
+      "images/products/Product_15/top.png",
+      "images/products/Product_15/bottom.png"
+    ]),
+    rating: 4.9,
+    fabric: "Silk",
+    color: "Indigo",
+    style: "Ethnic",
+    gender: "Women",
+    return_window_days: 7
+  },
+  {
+    name: "Maroon & Antique Gold Festive Lehenga",
+    category: "Women",
+    subcategory: "Ethnic",
+    price: 4999.00,
+    discount_price: 3499.00,
+    stock: 15,
+    description: "Deep wine maroon festive lehenga with intricate golden sequins and mirror-work border, paired with an embellished choli and net dupatta.",
+    size_variants: "S,M,L,XL",
+    image_urls: JSON.stringify([
+      "images/products/Product_16/front.png",
+      "images/products/Product_16/top.png",
+      "images/products/Product_16/bottom.png"
+    ]),
+    rating: 5.0,
+    fabric: "Georgette",
+    color: "Red",
+    style: "Ethnic",
+    gender: "Women",
+    return_window_days: 7
+  },
+  {
+    name: "Pastel Mint Embroidered Kurti",
+    category: "Women",
+    subcategory: "Ethnic",
+    price: 1499.00,
+    discount_price: 1099.00,
+    stock: 40,
+    description: "Breathable pastel mint straight-cut cotton kurti with Lucknowi chikankari floral hand embroidery and scalloped hems.",
+    size_variants: "S,M,L,XL,XXL",
+    image_urls: JSON.stringify([
+      "images/products/Product_17/front.png",
+      "images/products/Product_17/top.png",
+      "images/products/Product_17/bottom.png"
+    ]),
+    rating: 4.7,
+    fabric: "Cotton",
+    color: "Emerald",
+    style: "Ethnic",
+    gender: "Women",
+    return_window_days: 7
+  },
+  {
+    name: "Sunshine Yellow Brocade Kids Kurta Pyjama",
+    category: "Kids",
+    subcategory: "Boys",
+    price: 1199.00,
+    discount_price: 849.00,
+    stock: 30,
+    description: "Festive yellow jacquard brocade boy's Kurta with soft cotton inner lining and elasticated white churidar.",
+    size_variants: "2T,3T,4T,5T,6T",
+    image_urls: JSON.stringify([
+      "images/products/Product_18/front.png",
+      "images/products/Product_18/top.png",
+      "images/products/Product_18/bottom.png"
+    ]),
+    rating: 4.8,
+    fabric: "Silk",
+    color: "Saffron",
+    style: "Ethnic",
+    gender: "Kids",
+    return_window_days: 7
+  },
+  {
+    name: "Peacock Blue Silk Anarkali Gown",
+    category: "Women",
+    subcategory: "Ethnic",
+    price: 2999.00,
+    discount_price: 2199.00,
+    stock: 22,
+    description: "Floor-length peacock blue silk anarkali with flared kalis, golden thread work on the yoke, and a sheer organza dupatta.",
+    size_variants: "S,M,L,XL",
+    image_urls: JSON.stringify([
+      "images/products/Product_19/front.png",
+      "images/products/Product_19/top.png",
+      "images/products/Product_19/bottom.png"
+    ]),
+    rating: 4.9,
+    fabric: "Silk",
+    color: "Blue",
+    style: "Ethnic",
+    gender: "Women",
+    return_window_days: 7
+  },
+  {
+    name: "Classic Olive Linen Casual Shirt",
+    category: "Men",
+    subcategory: "Western",
+    price: 1599.00,
+    discount_price: 1199.00,
+    stock: 35,
+    description: "Premium 100% pure linen casual shirt with spread collar and mother-of-pearl buttons. Cool, breathable everyday luxury.",
+    size_variants: "M,L,XL,XXL",
+    image_urls: JSON.stringify([
+      "images/products/Product_20/front.png",
+      "images/products/Product_20/top.png",
+      "images/products/Product_20/bottom.png"
+    ]),
+    rating: 4.6,
+    fabric: "Cotton",
+    color: "Emerald",
+    style: "Western",
+    gender: "Men",
+    return_window_days: 7
+  },
+  {
+    name: "Blush Pink Floral Tiered Dress",
+    category: "Women",
+    subcategory: "Western",
+    price: 1799.00,
+    discount_price: 1299.00,
+    stock: 28,
+    description: "Flattering blush pink floral tiered midi dress with smocked waist, flutter sleeves, and breathable cotton lining.",
+    size_variants: "XS,S,M,L,XL",
+    image_urls: JSON.stringify([
+      "images/products/Product_21/front.png",
+      "images/products/Product_21/top.png",
+      "images/products/Product_21/bottom.png"
+    ]),
+    rating: 4.8,
+    fabric: "Cotton",
+    color: "Pink",
+    style: "Western",
+    gender: "Women",
+    return_window_days: 7
+  },
+  {
+    name: "Navy Blue Denim Stretch Jeans",
+    category: "Men",
+    subcategory: "Western",
+    price: 1999.00,
+    discount_price: 1499.00,
+    stock: 40,
+    description: "Slim-fit dark indigo washed stretch denim with reinforced rivets, antique brass hardware, and flexible all-day stretch.",
+    size_variants: "30,32,34,36,38",
+    image_urls: JSON.stringify([
+      "images/products/Product_22/front.png",
+      "images/products/Product_22/top.png",
+      "images/products/Product_22/bottom.png"
+    ]),
+    rating: 4.7,
+    fabric: "Semi Cotton",
+    color: "Indigo",
+    style: "Western",
+    gender: "Men",
+    return_window_days: 7
+  },
+  {
+    name: "Embroidered Velvet Festive Mojaris",
+    category: "Accessories",
+    subcategory: "Footwear",
+    price: 1299.00,
+    discount_price: 899.00,
+    stock: 30,
+    description: "Handcrafted dark maroon velvet juttis / mojaris with golden zardozi embroidery, padded memory-foam insole, and genuine leather sole.",
+    size_variants: "7,8,9,10,11",
+    image_urls: JSON.stringify([
+      "images/products/Product_23/front.png",
+      "images/products/Product_23/top.png",
+      "images/products/Product_23/bottom.png"
+    ]),
+    rating: 4.8,
+    fabric: "Silk",
+    color: "Red",
+    style: "Ethnic",
+    gender: "Men",
+    return_window_days: 7
+  },
+  {
+    name: "Grey Urban Cartoon Vehicle Singlet",
+    category: "Kids",
+    subcategory: "Boys",
+    price: 499.00,
+    discount_price: 349.00,
+    stock: 25,
+    description: "Light grey heather cotton singlet with playful animated vehicle motifs. Quick dry and anti-pilling fabric.",
+    size_variants: "2T,3T,4T",
+    image_urls: JSON.stringify([
+      "images/products/Product_5/front.png",
+      "images/products/Product_5/top.png",
+      "images/products/Product_5/bottom.png"
+    ]),
+    rating: 4.5,
+    fabric: "Cotton",
+    color: "Indigo",
+    style: "Casual",
+    gender: "Kids",
+    return_window_days: 7
+  },
+  {
+    name: "Candy Pink Play Singlet & Shorts Set",
+    category: "Kids",
+    subcategory: "Girls",
+    price: 799.00,
+    discount_price: 599.00,
+    stock: 30,
+    description: "Playful candy pink 2-piece lounge set with soft tagless labels for sensitive toddler skin.",
+    size_variants: "2T,3T,4T",
+    image_urls: JSON.stringify([
+      "images/products/Product_6/front.png",
+      "images/products/Product_6/top.png",
+      "images/products/Product_6/bottom.png"
+    ]),
+    rating: 4.6,
+    fabric: "Cotton",
+    color: "Pink",
+    style: "Casual",
+    gender: "Kids",
+    return_window_days: 7
+  },
+  {
+    name: "Sky Blue Cotton Summer Coordinates",
+    category: "Kids",
+    subcategory: "Boys",
+    price: 699.00,
+    discount_price: 499.00,
+    stock: 35,
+    description: "Airy sky blue cotton shorts set with cartoon animal prints. Built for comfortable warm-weather playtime.",
+    size_variants: "2T,3T,4T,5T",
+    image_urls: JSON.stringify([
+      "images/products/Product_7/front.png",
+      "images/products/Product_7/top.png",
+      "images/products/Product_7/bottom.png"
+    ]),
+    rating: 4.6,
+    fabric: "Cotton",
+    color: "Blue",
+    style: "Casual",
+    gender: "Kids",
+    return_window_days: 7
+  },
+  {
+    name: "Coral Sunset Toddler Romper",
+    category: "Kids",
+    subcategory: "Girls",
+    price: 649.00,
+    discount_price: 449.00,
+    stock: 28,
+    description: "Vibrant coral orange breathable knit outfit with nickel-free snaps for effortless diaper changes.",
+    size_variants: "0-6M,6-12M,12-18M",
+    image_urls: JSON.stringify([
+      "images/products/Product_8/front.png",
+      "images/products/Product_8/top.png",
+      "images/products/Product_8/bottom.png"
+    ]),
+    rating: 4.7,
+    fabric: "Cotton",
+    color: "Saffron",
+    style: "Casual",
+    gender: "Kids",
+    return_window_days: 7
+  },
+  {
+    name: "Mint Breeze Infant Loungewear",
+    category: "Kids",
+    subcategory: "Boys",
+    price: 599.00,
+    discount_price: 399.00,
+    stock: 30,
+    description: "Gentle mint green cotton lounge set crafted from hypoallergenic combed fibers for maximum softness.",
+    size_variants: "6-12M,12-18M,2T",
+    image_urls: JSON.stringify([
+      "images/products/Product_9/front.png",
+      "images/products/Product_9/top.png",
+      "images/products/Product_9/bottom.png"
+    ]),
+    rating: 4.8,
+    fabric: "Cotton",
+    color: "Emerald",
+    style: "Casual",
+    gender: "Kids",
+    return_window_days: 7
+  },
+  {
+    name: "Diwali Parivaar Matching Silk Kurta Set (Family Combo)",
+    category: "Men",
+    subcategory: "Family Sets",
+    price: 4599.00,
+    discount_price: 3499.00,
+    stock: 18,
+    description: "Coordinated family festive twinning collection in deep festive burgundy silk with gold zari border. Includes matching Kurta sets for Men and Boys with complimentary dupatta pairing.",
+    size_variants: "Men: M/L/XL | Kids: 2T-5T",
+    image_urls: JSON.stringify([
+      "images/products/Product_13/front.png",
+      "images/products/Product_16/front.png",
+      "images/products/Product_18/front.png"
+    ]),
+    rating: 5.0,
+    fabric: "Silk",
+    color: "Red",
+    style: "Ethnic",
+    gender: "Men",
+    return_window_days: 7
+  },
+  {
+    name: "Vasant Utsav Family Matching Twinning Outfits",
+    category: "Women",
+    subcategory: "Family Sets",
+    price: 3999.00,
+    discount_price: 2999.00,
+    stock: 20,
+    description: "Sunshine yellow and festive emerald coordinated ethnic sets for Mother, Father, and Child. Made from breathable handloom cotton-silk.",
+    size_variants: "Women: S-XL | Men: M-XXL | Kids: 2T-4T",
+    image_urls: JSON.stringify([
+      "images/products/Green_Floral_Womens_Kurta/front.png",
+      "images/products/Product_14/front.png",
+      "images/products/Beige_Rabbit_Kids_Set/front.png"
+    ]),
+    rating: 4.9,
+    fabric: "Cotton",
+    color: "Saffron",
+    style: "Ethnic",
+    gender: "Women",
+    return_window_days: 7
+  }
+];

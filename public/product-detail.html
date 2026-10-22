@@ -105,7 +105,12 @@
 
       <!-- Sizing Options -->
       <div class="detail-variants">
-        <h4>Select Size:</h4>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem">
+          <h4>Select Size:</h4>
+          <a href="javascript:void(0)" onclick="openSizeAdvisorModal(activeProduct ? activeProduct.category : 'Women')" style="font-size:0.82rem; color:var(--marigold-dark); font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:4px">
+            <i class="fas fa-ruler-combined"></i> Size Guide & Fit Advisor
+          </a>
+        </div>
         <div class="size-selector" id="sizeOptionsContainer">
           <!-- Injected size chips -->
         </div>
@@ -113,9 +118,11 @@
 
       <!-- Color Options -->
       <div class="detail-variants" id="colorVariantsSection" style="margin-top: 1rem; display: none;">
-        <h4>Select Color:</h4>
-        <div class="color-selector" id="colorOptionsContainer" style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <!-- Injected color chips -->
+        <h4 style="display:flex; align-items:center; gap:8px;">
+          Select Color: <span id="selectedColorLabel" style="color:var(--primary); font-weight:800; text-transform:capitalize"></span>
+        </h4>
+        <div class="color-selector" id="colorOptionsContainer" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 0.5rem;">
+          <!-- Injected color swatches -->
         </div>
       </div>
 
@@ -431,51 +438,227 @@
         `;
       });
 
-      // Color Variants
-      const colorsContainer = document.getElementById('colorOptionsContainer');
-      const colorsSection = document.getElementById('colorVariantsSection');
-      colorsContainer.innerHTML = '';
-      
-      if (p.color && p.color.trim()) {
-        const colors = p.color.split(',').map(c => c.trim()).filter(Boolean);
-        if (colors.length > 0) {
-          colorsSection.style.display = 'block';
-          colors.forEach((col, idx) => {
-            if (idx === 0) selectedColor = col;
-            colorsContainer.innerHTML += `
-              <span class="color-option ${idx === 0 ? 'active' : ''}" onclick="selectColor(this, '${col}')" style="display:inline-block; padding: 0.4rem 1.2rem; border: 1px solid var(--border-color); border-radius: 50px; font-size: 0.85rem; font-weight: 700; cursor: pointer; text-transform: capitalize;">${col}</span>
-            `;
-          });
-        } else {
-          colorsSection.style.display = 'none';
-          selectedColor = 'Default';
-        }
-      } else {
-        colorsSection.style.display = 'none';
-        selectedColor = 'Default';
-      }
-
-      // Rating Stars
-      const starWrapper = document.getElementById('detailRatingStars');
-      starWrapper.innerHTML = '';
-      const floorRating = Math.floor(p.rating || 0);
-      for (let i = 1; i <= 5; i++) {
-        if (i <= floorRating) {
-          starWrapper.innerHTML += '<i class="fas fa-star" style="font-size:1.2rem; color:#f59e0b"></i>';
-        } else if (i - 0.5 <= (p.rating || 0)) {
-          starWrapper.innerHTML += '<i class="fas fa-star-half-alt" style="font-size:1.2rem; color:#f59e0b"></i>';
-        } else {
-          starWrapper.innerHTML += '<i class="far fa-star" style="font-size:1.2rem; color:#f59e0b"></i>';
-        }
-      }
-      starWrapper.innerHTML += `<span class="rating-num" style="font-size:0.95rem; font-weight:700">(${p.rating || '5.0'})</span>`;
-
       // Wishlist active styling
       const wishlist = getLocalWishlist();
       const isWish = wishlist.includes(p.id);
       const wishBtn = document.getElementById('detailWishlistBtn');
       if (isWish) {
         wishBtn.innerHTML = '<i class="fas fa-heart" style="color:var(--danger)"></i> Wishlisted';
+      }
+
+      // Initialize Multi-Color Variants & Galleries
+      initProductVariants(p);
+    }
+
+    let activeVariant = null;
+    let selectedColor = 'Default';
+
+    function initProductVariants(p) {
+      const colorsContainer = document.getElementById('colorOptionsContainer');
+      const colorsSection = document.getElementById('colorVariantsSection');
+      const colorLabel = document.getElementById('selectedColorLabel');
+      colorsContainer.innerHTML = '';
+
+      let variantsList = [];
+      if (Array.isArray(p.variants) && p.variants.length > 0) {
+        variantsList = p.variants;
+      } else if (Array.isArray(p.color_variants) && p.color_variants.length > 0) {
+        variantsList = p.color_variants;
+      } else if (typeof p.color_variants === 'string') {
+        try { variantsList = JSON.parse(p.color_variants); } catch (e) {}
+      }
+
+      // Fallback: If legacy comma-separated colors exist without structured variants
+      if (variantsList.length === 0 && p.color && p.color.trim()) {
+        const legacyColors = p.color.split(',').map(c => c.trim()).filter(Boolean);
+        variantsList = legacyColors.map((c, i) => ({
+          id: `legacy-${i}`,
+          color_name: c,
+          color_code: '#800020',
+          sku: `L2L-${p.id}-${c.toUpperCase().slice(0, 4)}`,
+          stock: p.stock,
+          size_variants: p.size_variants,
+          image_urls: JSON.parse(p.image_urls || '[]')
+        }));
+      }
+
+      if (variantsList.length > 0) {
+        colorsSection.style.display = 'block';
+
+        // Check URL parameter for pre-selected color (?color=Red)
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlColor = urlParams.get('color');
+        let matched = null;
+        if (urlColor) {
+          matched = variantsList.find(v => (v.color_name || '').toLowerCase() === urlColor.toLowerCase());
+        }
+        if (!matched) {
+          matched = variantsList.find(v => v.is_default) || variantsList[0];
+        }
+
+        activeVariant = matched;
+        selectedColor = matched.color_name;
+        if (colorLabel) colorLabel.textContent = selectedColor;
+
+        // Render Swatch Chips
+        variantsList.forEach((v, idx) => {
+          const isCurrent = (v === activeVariant);
+          const colorCode = v.color_code || '#800020';
+          const swatch = document.createElement('div');
+          swatch.className = `color-swatch-item ${isCurrent ? 'active' : ''}`;
+          swatch.setAttribute('data-color', v.color_name);
+          swatch.style.cssText = `
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border: 2px solid ${isCurrent ? 'var(--primary)' : 'var(--border-color)'};
+            border-radius: 50px;
+            cursor: pointer;
+            background: ${isCurrent ? '#fff5f2' : '#ffffff'};
+            box-shadow: ${isCurrent ? '0 2px 6px rgba(128,0,32,0.15)' : 'none'};
+            transition: all 0.2s ease;
+          `;
+          swatch.innerHTML = `
+            <span style="width: 18px; height: 18px; border-radius: 50%; background-color: ${colorCode}; border: 1px solid rgba(0,0,0,0.2); display: inline-block;"></span>
+            <span style="font-size: 0.88rem; font-weight: ${isCurrent ? '800' : '600'}; color: ${isCurrent ? 'var(--primary)' : '#3f3f46'}; text-transform: capitalize;">${escapeHTML(v.color_name)}</span>
+          `;
+          swatch.onclick = () => selectColorVariant(v, p);
+          colorsContainer.appendChild(swatch);
+        });
+
+        applyVariantToUI(activeVariant, p, false);
+      } else {
+        colorsSection.style.display = 'none';
+        selectedColor = 'Default';
+        activeVariant = null;
+        renderSizeOptions(p.size_variants ? p.size_variants.split(',') : ['M'], null);
+      }
+    }
+
+    function selectColorVariant(variant, p) {
+      activeVariant = variant;
+      selectedColor = variant.color_name;
+
+      const colorLabel = document.getElementById('selectedColorLabel');
+      if (colorLabel) colorLabel.textContent = selectedColor;
+
+      // Update swatch highlight styling
+      document.querySelectorAll('#colorOptionsContainer .color-swatch-item').forEach(sw => {
+        const isMatch = sw.getAttribute('data-color') === variant.color_name;
+        sw.style.borderColor = isMatch ? 'var(--primary)' : 'var(--border-color)';
+        sw.style.background = isMatch ? '#fff5f2' : '#ffffff';
+        sw.style.boxShadow = isMatch ? '0 2px 6px rgba(128,0,32,0.15)' : 'none';
+        const txt = sw.querySelector('span:last-child');
+        if (txt) {
+          txt.style.fontWeight = isMatch ? '800' : '600';
+          txt.style.color = isMatch ? 'var(--primary)' : '#3f3f46';
+        }
+      });
+
+      applyVariantToUI(variant, p, true);
+    }
+
+    function applyVariantToUI(variant, p, updateUrl = true) {
+      // 1. Swap Image Gallery to this Color Variant's Photos
+      let variantImgs = [];
+      if (Array.isArray(variant.image_urls) && variant.image_urls.length > 0) {
+        variantImgs = variant.image_urls;
+      } else if (typeof variant.image_urls === 'string') {
+        try { variantImgs = JSON.parse(variant.image_urls); } catch (e) {}
+      }
+
+      if (!variantImgs || variantImgs.length === 0) {
+        try { variantImgs = JSON.parse(p.image_urls || '[]'); } catch (e) { variantImgs = []; }
+      }
+
+      if (variantImgs.length > 0) {
+        const first = formatLocalPath(variantImgs[0]);
+        const mainImg = document.getElementById('mainProdImage');
+        mainImg.src = first;
+
+        const thumbList = document.getElementById('thumbnailsContainer');
+        thumbList.innerHTML = '';
+        variantImgs.forEach((img, idx) => {
+          const formatted = formatLocalPath(img);
+          thumbList.innerHTML += `
+            <div class="thumb ${idx === 0 ? 'active' : ''}" onclick="changeMainImage(this, '${formatted}')">
+              <img src="${formatted}" alt="${escapeHTML(p.name)} - ${escapeHTML(variant.color_name)}" onerror="this.src='/images/products/placeholder.jpg'">
+            </div>
+          `;
+        });
+
+        const img360 = document.getElementById('image360');
+        if (img360) img360.src = first;
+      }
+
+      // 2. Update Pricing if Variant overrides parent price
+      const priceVal = (variant.discount_price || variant.price) || (p.discount_price || p.price);
+      document.getElementById('detailPrice').textContent = `₹${priceVal}`;
+      if (variant.discount_price || p.discount_price) {
+        const mrp = variant.price || p.price;
+        document.getElementById('detailOldPrice').textContent = `₹${mrp}`;
+        document.getElementById('detailDiscount').textContent = `${Math.round(((mrp - priceVal) / mrp) * 100)}% OFF`;
+      } else {
+        document.getElementById('detailOldPrice').textContent = '';
+        document.getElementById('detailDiscount').textContent = '';
+      }
+
+      // 3. Update Available Sizes & SKU-level inventory
+      const sizesList = (variant.size_variants || p.size_variants || 'M').split(',').map(s => s.trim()).filter(Boolean);
+      renderSizeOptions(sizesList, variant.sizes_stock);
+
+      // 4. Update Stock Indicator
+      const stockEl = document.getElementById('stockDisplay');
+      const vStock = variant.stock !== undefined ? parseInt(variant.stock) : p.stock;
+      if (vStock <= 0) {
+        stockEl.textContent = `Out of Stock in ${variant.color_name}`;
+        stockEl.style.color = 'var(--danger)';
+      } else if (vStock < 10) {
+        stockEl.textContent = `Only ${vStock} units left in ${variant.color_name}!`;
+        stockEl.style.color = 'var(--danger)';
+      } else {
+        stockEl.textContent = `In Stock (${variant.color_name} - Ready to Ship)`;
+        stockEl.style.color = 'var(--success)';
+      }
+
+      // 5. Update URL Parameter without page reload for sharing specific color
+      if (updateUrl && window.history && window.history.replaceState) {
+        const url = new URL(window.location);
+        url.searchParams.set('color', variant.color_name);
+        window.history.replaceState({}, '', url);
+      }
+    }
+
+    function renderSizeOptions(sizes, sizesStock) {
+      const sizesContainer = document.getElementById('sizeOptionsContainer');
+      sizesContainer.innerHTML = '';
+
+      let firstAvailableSize = null;
+      sizes.forEach((sz, idx) => {
+        const stockForSize = (sizesStock && sizesStock[sz] !== undefined) ? parseInt(sizesStock[sz]) : null;
+        const isOutOfStock = stockForSize !== null && stockForSize <= 0;
+
+        if (!isOutOfStock && !firstAvailableSize) {
+          firstAvailableSize = sz;
+        }
+
+        const isCurrentActive = (sz === selectedSize && !isOutOfStock) || (!selectedSize && sz === firstAvailableSize);
+
+        const chip = document.createElement('span');
+        chip.className = `size-option ${isCurrentActive ? 'active' : ''}`;
+        if (isOutOfStock) {
+          chip.style.cssText = 'opacity: 0.4; text-decoration: line-through; pointer-events: none; cursor: not-allowed; background: #f4f4f5;';
+          chip.title = `${sz} is Out of Stock in this color`;
+        } else {
+          chip.onclick = () => selectSize(chip, sz);
+        }
+        chip.textContent = sz;
+        sizesContainer.appendChild(chip);
+      });
+
+      if (firstAvailableSize && (!selectedSize || sizes.indexOf(selectedSize) === -1)) {
+        selectedSize = firstAvailableSize;
       }
     }
 
@@ -489,14 +672,6 @@
       document.querySelectorAll('.size-option').forEach(s => s.classList.remove('active'));
       el.classList.add('active');
       selectedSize = size;
-    }
-
-    let selectedColor = 'Default';
-
-    function selectColor(el, color) {
-      document.querySelectorAll('.color-option').forEach(c => c.classList.remove('active'));
-      el.classList.add('active');
-      selectedColor = color;
     }
 
     function changeQty(diff) {
@@ -566,8 +741,10 @@
     // Cart Placement
     async function handleAddClick() {
       if (!activeProduct) return;
-      if (activeProduct.stock <= 0) {
-        showToast('Sorry, this product is currently out of stock!', 'error');
+
+      const currentStock = activeVariant && activeVariant.stock !== undefined ? parseInt(activeVariant.stock) : activeProduct.stock;
+      if (currentStock <= 0) {
+        showToast(`Sorry, this outfit is currently out of stock in ${selectedColor}!`, 'error');
         return;
       }
       
@@ -576,7 +753,7 @@
       
       const addPromise = new Promise((resolve) => {
         setTimeout(() => {
-          addToCart(activeProduct, selectedSize, selectedQty, selectedColor);
+          addToCart(activeProduct, selectedSize, selectedQty, selectedColor, activeVariant);
           if (img) {
             animateFlyToCart(img);
           }
@@ -757,42 +934,49 @@
     }
 
     async function loadRecommendations(prodId) {
+      const grid = document.getElementById('recommendationsGrid');
+      if (!grid) return;
+
       try {
-        const res = await fetch(`/api/products/${prodId}/recommendations`);
+        // Fetch ML-powered similar products
+        const res = await fetch(`/api/ml/recommend/${prodId}?limit=4&type=similar`);
         const data = await res.json();
-        const grid = document.getElementById('recommendationsGrid');
-        if (data.success && data.products && data.products.length > 0) {
-          if (data.isFamilyMatch) {
-            document.querySelector('.section-title h2').innerHTML = '✨ Family Matching Outfits';
-            document.querySelector('.section-title p').innerHTML = 'Perfect matching styles for the whole family';
-          }
-          grid.innerHTML = '';
-          data.products.forEach(p => {
-            const images = JSON.parse(p.image_urls || '[]');
-            const mainImg = images[0] || 'images/products/placeholder.jpg';
+        const prods = (data.success && data.recommendations && data.recommendations.length > 0) 
+                      ? data.recommendations 
+                      : [];
+
+        if (prods.length > 0) {
+          grid.innerHTML = prods.map(p => {
+            const images = Array.isArray(p.image_urls) ? p.image_urls : JSON.parse(p.image_urls || '[]');
+            const mainImg = formatLocalPath(images[0] || 'images/products/placeholder.jpg');
             const priceVal = p.discount_price || p.price;
-            
-            grid.innerHTML += `
-              <div class="product-card" style="box-shadow:var(--shadow-sm); border:1px solid var(--border-color); border-radius:var(--radius-lg); overflow:hidden; background-color:#fff">
+            const oldPriceHtml = p.discount_price ? `<span class="old-price" style="font-size:0.8rem; text-decoration:line-through; color:var(--text-light); margin-left:6px">₹${p.price}</span>` : '';
+            const matchScore = p.similarity_score ? `<span style="font-size:0.72rem; background:hsl(40, 35%, 94%); color:var(--primary); font-weight:700; padding:2px 6px; border-radius:4px; margin-left:auto">${Math.round(p.similarity_score * 100)}% Match</span>` : '';
+
+            return `
+              <div class="product-card" style="box-shadow:var(--shadow-sm); border:1px solid var(--border-color); border-radius:var(--radius-lg); overflow:hidden; background-color:#fff; transition:var(--transition);">
                 <div class="product-img-wrapper" onclick="window.location.href='/product-detail?id=${p.id}'" style="cursor:pointer; position:relative; padding-bottom:125%; background:#fcfcfc">
                   <img src="${mainImg}" alt="${p.name}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover" onerror="this.src='/images/products/placeholder.jpg'">
                 </div>
-                <div class="product-details" style="padding:1rem">
-                  <span class="product-cat" style="font-size:0.75rem; text-transform:uppercase; color:var(--text-light); font-weight:700">${p.category} | ${p.subcategory}</span>
-                  <a href="/product-detail?id=${p.id}" class="product-name" style="font-weight:700; color:var(--primary); font-size:0.9rem; margin-top:0.4rem; display:block">${p.name}</a>
-                  <div class="product-pricing" style="margin-top:0.8rem; font-weight:800; color:var(--accent)">
-                    ₹${priceVal}
+                <div class="product-details" style="padding:1.1rem">
+                  <div style="display:flex; align-items:center; justify-content:space-between">
+                    <span class="product-cat" style="font-size:0.75rem; text-transform:uppercase; color:var(--text-light); font-weight:700">${p.category} &bull; ${p.fabric || p.subcategory || 'Festive'}</span>
+                    ${matchScore}
+                  </div>
+                  <a href="/product-detail?id=${p.id}" class="product-name" style="font-weight:700; color:var(--primary); font-size:0.92rem; margin-top:0.4rem; display:block; line-height:1.3">${p.name}</a>
+                  <div class="product-pricing" style="margin-top:0.8rem; font-weight:800; color:var(--marigold-dark); font-size:1.05rem">
+                    ₹${priceVal} ${oldPriceHtml}
                   </div>
                 </div>
               </div>
             `;
-          });
+          }).join('');
         } else {
-          grid.innerHTML = '<div style="grid-column: 1/-1; color:var(--text-light); text-align:center">No similar style matches found in inventory.</div>';
+          grid.innerHTML = '<div style="grid-column: 1/-1; color:var(--text-light); text-align:center; padding:2rem">Explore more styles in our complete catalog.</div>';
         }
       } catch (err) {
-        console.error('Failed to load style recommendations:', err);
-        document.getElementById('recommendationsGrid').innerHTML = '<div style="grid-column: 1/-1; color:var(--text-light); text-align:center">Failed to connect to recommendation engine.</div>';
+        console.error('Failed to load ML recommendations:', err);
+        grid.innerHTML = '<div style="grid-column: 1/-1; color:var(--text-light); text-align:center">Explore more styles in our store catalog.</div>';
       }
     }
   </script>

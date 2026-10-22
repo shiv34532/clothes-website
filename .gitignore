@@ -4,3 +4,19 @@ node_modules
 database.sqlite
 little_to_large.db
 *.log
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Temporary user test uploads
+public/images/uploads/ai_upload_*
+

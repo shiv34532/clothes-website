@@ -5,25 +5,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
 
 :root {
-  /* Dynamic Palette */
-  --primary: hsl(243, 75%, 19%);       /* Royal Indigo Blue */
-  --primary-light: hsl(243, 60%, 35%);
-  --marigold: hsl(38, 92%, 50%);       /* Joyful Marigold Yellow */
-  --marigold-dark: hsl(38, 95%, 42%);
-  --accent: hsl(16, 96%, 53%);         /* Saffron Coral */
-  --accent-light: hsl(16, 96%, 63%);
-  --success: hsl(162, 72%, 41%);        /* Emerald Green */
-  --success-light: hsl(162, 72%, 95%);
-  --danger: hsl(354, 78%, 57%);
+  /* Premium Festive Indian Family Fashion Palette */
+  --primary: hsl(348, 75%, 26%);       /* Deep Royal Maroon / Burgundy */
+  --primary-light: hsl(348, 62%, 36%); /* Rich Crimson */
+  --primary-dark: hsl(348, 80%, 18%);  /* Velvet Wine */
+  --marigold: hsl(42, 78%, 52%);       /* Restrained Antique Zari Gold */
+  --marigold-dark: hsl(42, 85%, 40%);  /* Deep Antique Gold */
+  --accent: hsl(42, 78%, 50%);         /* Antique Gold Accent */
+  --accent-light: hsl(42, 85%, 62%);   /* Luminous Gold */
+  --success: hsl(158, 65%, 36%);       /* Royal Emerald */
+  --success-light: hsl(158, 55%, 95%);
+  --danger: hsl(354, 75%, 52%);
   
-  --bg-main: hsl(38, 40%, 98%);        /* Warm cream background */
-  --bg-card: hsl(0, 0%, 100%);
-  --text-dark: hsl(243, 40%, 12%);
-  --text-light: hsl(243, 10%, 45%);
-  --border-color: hsl(243, 20%, 90%);
-  --shadow-sm: 0 2px 4px rgba(30, 27, 75, 0.05);
-  --shadow-md: 0 8px 16px rgba(30, 27, 75, 0.08);
-  --shadow-lg: 0 16px 32px rgba(30, 27, 75, 0.12);
+  --bg-main: hsl(40, 35%, 98%);        /* Warm Ivory / Cream */
+  --bg-card: #ffffff;
+  --text-dark: hsl(20, 15%, 15%);      /* Warm Charcoal */
+  --text-light: hsl(20, 10%, 48%);     /* Muted Charcoal */
+  --border-color: hsl(40, 20%, 90%);   /* Subtle Cream Border */
+  --shadow-sm: 0 2px 4px rgba(74, 17, 39, 0.04);
+  --shadow-md: 0 8px 18px rgba(74, 17, 39, 0.07);
+  --shadow-lg: 0 16px 36px rgba(74, 17, 39, 0.11);
   
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --radius: 12px;
@@ -2341,4 +2342,50 @@ footer {
     pointer-events: auto !important;
     visibility: visible !important;
   }
+}
+
+/* ==========================================================================
+   CROSS-DEVICE RESPONSIVE ENHANCEMENTS (Mobile, Tablet, Laptop, PC)
+   ========================================================================== */
+/* Tablet & Medium Screens (601px - 1024px) */
+@media (min-width: 601px) and (max-width: 1024px) {
+  .footer-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 2.5rem !important;
+  }
+  .admin-table-card, .modal-content {
+    max-width: 95vw !important;
+    overflow-x: auto !important;
+  }
+}
+
+/* Mobile Screens (up to 600px) */
+@media (max-width: 600px) {
+  footer {
+    padding: 3rem 1.25rem calc(4rem + env(safe-area-inset-bottom, 0px)) 1.25rem !important;
+    margin-top: 2.5rem !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+  }
+  .footer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
+    text-align: left !important;
+  }
+  .footer-col {
+    width: 100% !important;
+  }
+  .footer-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  }
+  .modal-content {
+    width: 98vw !important;
+    padding: 1.2rem !important;
+    max-height: 92vh !important;
+  }
+}
+
+/* Base Footer Safe Area Protection for all modern devices */
+footer {
+  padding-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px)) !important;
 }
