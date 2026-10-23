@@ -304,25 +304,29 @@ function initInteractiveShopperGuide() {
     return;
   }
 
+  const isMobile = window.innerWidth <= 768;
+
   const guideBtn = document.createElement('div');
   guideBtn.id = 'shopperGuideBtn';
+  guideBtn.className = 'shopper-guide-btn';
   guideBtn.innerHTML = `<i class="fas fa-lightbulb"></i> Guide`;
   guideBtn.style.cssText = `
     position: fixed;
-    bottom: 85px;
-    right: 20px;
+    bottom: ${isMobile ? '16px' : '85px'};
+    left: ${isMobile ? '14px' : 'auto'};
+    right: ${isMobile ? 'auto' : '20px'};
     background: linear-gradient(135deg, var(--marigold), #f59e0b);
     color: var(--primary);
-    padding: 10px 18px;
+    padding: ${isMobile ? '6px 14px' : '10px 18px'};
     border-radius: 50px;
     font-weight: 800;
-    font-size: 0.85rem;
+    font-size: ${isMobile ? '0.75rem' : '0.85rem'};
     box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
     cursor: pointer;
-    z-index: 9999;
+    z-index: 999;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid rgba(255,255,255,0.2);
   `;
@@ -331,17 +335,19 @@ function initInteractiveShopperGuide() {
   guideCard.id = 'shopperGuideCard';
   guideCard.style.cssText = `
     position: fixed;
-    bottom: 145px;
-    right: -400px;
-    width: 320px;
+    bottom: ${isMobile ? '60px' : '145px'};
+    right: ${isMobile ? 'auto' : '-400px'};
+    left: ${isMobile ? '-420px' : 'auto'};
+    width: ${isMobile ? 'calc(100vw - 24px)' : '320px'};
+    max-width: 320px;
     background: #ffffff;
     border-radius: 16px;
     box-shadow: 0 10px 25px rgba(30, 27, 75, 0.15);
     border: 1px solid var(--border-color);
     padding: 18px;
-    z-index: 9999;
+    z-index: 995;
     font-family: inherit;
-    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   `;
   
   guideCard.innerHTML = `

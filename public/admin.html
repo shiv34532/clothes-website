@@ -6,6 +6,7 @@
   <title>Admin Dashboard & Operations | Little to Large</title>
   <meta name="description" content="Little to Large Admin Management Console for products, orders, inventory, promotions, and customer support.">
   <meta name="robots" content="noindex, nofollow">
+  <link rel="canonical" href="https://littletolargee.com/admin">
   <link rel="stylesheet" href="css/style.css?v=13">
   <link rel="icon" type="image/png" href="/favicon.png?v=4">
   <link rel="shortcut icon" href="/favicon.ico?v=4">
@@ -105,7 +106,9 @@
       <li><a href="#" data-section="aiAssistantsSection"><i class="fas fa-robot"></i> AI Assistants</a></li>
       <li><a href="#" data-section="mediaStudioSection"><i class="fas fa-photo-video"></i> Image & Video Studio</a></li>
       <li><a href="#" data-section="ordersSection"><i class="fas fa-shipping-fast"></i> Order Fulfillment</a></li>
-      <li><a href="#" data-section="promotionsSection"><i class="fas fa-ad"></i> Promotions & Hero</a></li>
+      <li><a href="#" data-section="promotionsSection"><i class="fas fa-ad"></i> Promotions & Deals</a></li>
+      <li><a href="#" data-section="heroBannersSection"><i class="fas fa-images"></i> Hero Banners</a></li>
+      <li><a href="#" data-section="errorSection"><i class="fas fa-bug"></i> Error Tracking</a></li>
       <li><a href="#" data-section="inquiriesSection"><i class="far fa-envelope-open"></i> Customer Inquiries</a></li>
       <li><a href="#" data-section="intelligenceSection"><i class="fas fa-brain"></i> Merchant Intelligence</a></li>
       <li><a href="#" data-section="lookbookSection"><i class="fas fa-book-open"></i> Lookbook Manager</a></li>
@@ -881,6 +884,7 @@
                 <tr>
                   <th>OrderID</th>
                   <th>Customer Info</th>
+                  <th>Products Ordered</th>
                   <th>Order Date</th>
                   <th>Total Amount</th>
                   <th>Payment Status</th>
@@ -1022,13 +1026,13 @@
               </div>
               <div style="display:flex; gap:1rem; align-items:center">
                 <div class="form-group" style="flex:1">
-                  <label style="font-weight:700; font-size:0.8rem">Upload Banner Image (JPG/PNG)</label>
-                  <input type="file" id="promoFile" accept="image/*" class="form-input" style="padding:0.4rem">
+                  <label style="font-weight:700; font-size:0.8rem">🎬 Upload Banner Image / Video (MP4/WebM/JPG/PNG)</label>
+                  <input type="file" id="promoFile" accept="image/*,video/*" class="form-input" style="padding:0.4rem">
                 </div>
                 <div style="font-size:0.8rem; font-weight:700; color:var(--text-light); margin-top:1.2rem">OR</div>
                 <div class="form-group" style="flex:1.2">
-                  <label style="font-weight:700; font-size:0.8rem">Paste Image URL / Path</label>
-                  <input type="text" id="promoMediaUrl" class="form-input" placeholder="e.g. images/hero_ethnic.png">
+                  <label style="font-weight:700; font-size:0.8rem">Paste Image / Video URL</label>
+                  <input type="text" id="promoMediaUrl" class="form-input" placeholder="e.g. images/hero_ethnic.png or https://example.com/video.mp4">
                 </div>
               </div>
 
@@ -1153,6 +1157,112 @@
         </div>
       </section>
 
+      <!-- HERO BANNERS SLIDER MANAGER SECTION -->
+      <section id="heroBannersSection" style="display: none;">
+        <div style="background-color:#fff; padding:2rem; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); margin-bottom:2rem">
+          <h2 style="font-size:1.3rem; color:var(--primary); font-weight:800; border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-bottom:1.5rem">
+            🖼️ Homepage Multiple Hero Banners Manager
+          </h2>
+          <p style="font-size:0.85rem; color:var(--text-light); margin-bottom:1.5rem">
+            Add, update, or remove homepage slider banners. Active banners will auto-play on your store homepage.
+          </p>
+
+          <!-- Banner Creation Form -->
+          <form id="heroBannerForm" onsubmit="handleHeroBannerSubmit(event)" style="display:flex; flex-direction:column; gap:1rem; background:#fafafa; padding:1.5rem; border-radius:8px; border:1px solid var(--border-color); margin-bottom:2rem">
+            <input type="hidden" id="heroBannerId">
+            <div style="display:flex; gap:1rem; flex-wrap:wrap">
+              <div class="form-group" style="flex:1.5; min-width:200px">
+                <label style="font-weight:700; font-size:0.8rem">Banner Title</label>
+                <input type="text" id="heroBannerTitle" class="form-input" placeholder="e.g. Grand Festive Diwali Sale" required>
+              </div>
+              <div class="form-group" style="flex:1; min-width:150px">
+                <label style="font-weight:700; font-size:0.8rem">Button Text (CTA)</label>
+                <input type="text" id="heroBannerCta" class="form-input" placeholder="Shop Collection" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label style="font-weight:700; font-size:0.8rem">Subtitle Description</label>
+              <input type="text" id="heroBannerSubtitle" class="form-input" placeholder="Discover premium matching vacation outfits for the whole family.">
+            </div>
+
+            <div style="background:#eef2ff; border:1px solid var(--primary-light); padding:1rem; border-radius:10px; margin-bottom:10px">
+              <label style="font-weight:800; font-size:0.85rem; color:var(--primary); display:block; margin-bottom:8px">
+                Choose Banner Media Format:
+              </label>
+              <div style="display:flex; gap:20px; flex-wrap:wrap">
+                <label style="font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; gap:6px">
+                  <input type="radio" name="heroMediaTypeRadio" value="image" checked onchange="switchHeroMediaType('image')">
+                  📷 Image Banner (JPG / PNG / WebP)
+                </label>
+                <label style="font-weight:700; font-size:0.85rem; cursor:pointer; color:var(--accent); display:flex; align-items:center; gap:6px">
+                  <input type="radio" name="heroMediaTypeRadio" value="video" onchange="switchHeroMediaType('video')">
+                  🎥 Video Banner (MP4 / WebM HD)
+                </label>
+              </div>
+            </div>
+
+            <!-- Image Input Container -->
+            <div id="heroImageInputContainer" style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap">
+              <div class="form-group" style="flex:1; min-width:180px">
+                <label style="font-weight:700; font-size:0.8rem">📷 Select Image File</label>
+                <input type="file" id="heroBannerFile" accept="image/*" class="form-input" style="padding:0.4rem">
+              </div>
+              <div style="font-size:0.8rem; font-weight:700; color:var(--text-light); margin-top:1.2rem">OR</div>
+              <div class="form-group" style="flex:1.2; min-width:180px">
+                <label style="font-weight:700; font-size:0.8rem">Paste Image URL</label>
+                <input type="text" id="heroBannerMediaUrl" class="form-input" placeholder="e.g. images/hero_vacation.png">
+              </div>
+            </div>
+
+            <!-- Video Input Container -->
+            <div id="heroVideoInputContainer" style="display:none; gap:1rem; align-items:center; flex-wrap:wrap; background:#fff1f2; padding:12px; border-radius:8px; border:1px solid #fecdd3">
+              <div class="form-group" style="flex:1; min-width:180px">
+                <label style="font-weight:800; font-size:0.8rem; color:#be123c">🎥 Select MP4 / WebM Video File (Up to 100MB)</label>
+                <input type="file" id="heroBannerVideoFile" accept="video/mp4,video/webm,video/mov,video/*" class="form-input" style="padding:0.4rem; background:#fff">
+              </div>
+              <div style="font-size:0.8rem; font-weight:700; color:var(--text-light); margin-top:1.2rem">OR</div>
+              <div class="form-group" style="flex:1.2; min-width:180px">
+                <label style="font-weight:800; font-size:0.8rem; color:#be123c">Paste Video URL</label>
+                <input type="text" id="heroBannerVideoUrl" class="form-input" placeholder="e.g. https://example.com/video.mp4" style="background:#fff">
+              </div>
+            </div>
+
+            <div style="display:flex; gap:1rem; flex-wrap:wrap">
+              <div class="form-group" style="flex:1">
+                <label style="font-weight:700; font-size:0.8rem">Redirect Link URL</label>
+                <input type="text" id="heroBannerLinkUrl" class="form-input" placeholder="products.html?category=Women">
+              </div>
+              <div class="form-group" style="flex:0.5; min-width:100px">
+                <label style="font-weight:700; font-size:0.8rem">Priority Order</label>
+                <input type="number" id="heroBannerPriority" class="form-input" value="1">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="padding:0.75rem; font-weight:700; font-size:0.9rem">Save Hero Banner</button>
+          </form>
+
+          <!-- Banners List Table -->
+          <h3 style="font-size:1rem; font-weight:800; color:var(--primary); margin-bottom:1rem">Active Homepage Banners</h3>
+          <div style="overflow-x:auto">
+            <table class="admin-table" id="adminHeroBannersTable">
+              <thead>
+                <tr>
+                  <th>Priority</th>
+                  <th>Media Preview</th>
+                  <th>Title & Subtitle</th>
+                  <th>Link & CTA</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Dynamically loaded hero banners -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <!-- 6. ERROR MONITORING SECTION -->
       <section id="errorSection" style="display: none;">
         <div class="admin-table-card">
@@ -1237,6 +1347,58 @@
               💾 Save Shipping Settings
             </button>
           </form>
+        </div>
+
+        <div style="background-color:#fff; padding:2.5rem; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); max-width:650px; margin: 2rem auto 0 auto;">
+          <h2 style="font-size:1.5rem; color:var(--primary); font-weight:800; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:1.5rem; display:flex; align-items:center; gap:10px">
+            📍 Delivery PIN Code Management (Order Pincode Control)
+          </h2>
+          <p style="font-size:0.85rem; color:var(--text-light); margin-bottom:1.5rem; line-height:1.6">
+            Control which PIN codes or regions are allowed for placing orders on your store. You can specify state/city PIN prefixes (e.g. <code>38, 39</code>), exact 6-digit PIN codes (e.g. <code>380001, 380002</code>), or set to <code>ALL</code> for Pan-India delivery.
+          </p>
+
+          <!-- Quick Presets -->
+          <div style="margin-bottom: 1.5rem; background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px dashed var(--border-color);">
+            <label style="font-size:0.8rem; font-weight:800; color:var(--primary); display:block; margin-bottom:0.5rem">⚡ Quick Preset Templates:</label>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+              <button type="button" onclick="setAdminPincodePreset('ALL')" class="btn btn-secondary" style="padding:0.35rem 0.8rem; font-size:0.78rem;">🇮🇳 Allow Pan-India (ALL)</button>
+              <button type="button" onclick="setAdminPincodePreset('GUJARAT')" class="btn btn-secondary" style="padding:0.35rem 0.8rem; font-size:0.78rem;">🌄 Gujarat Only (36, 37, 38, 39)</button>
+              <button type="button" onclick="setAdminPincodePreset('MH')" class="btn btn-secondary" style="padding:0.35rem 0.8rem; font-size:0.78rem;">🏙️ Mumbai/MH (40, 41, 42, 43, 44)</button>
+              <button type="button" onclick="setAdminPincodePreset('DELHI')" class="btn btn-secondary" style="padding:0.35rem 0.8rem; font-size:0.78rem;">🏛️ Delhi NCR (11, 12, 20)</button>
+            </div>
+          </div>
+
+          <form id="pincodeSettingsForm" onsubmit="saveAdminPincodeSettings(event)" style="display:flex; flex-direction:column; gap:1.5rem">
+            <div class="form-group">
+              <label style="font-size:0.85rem; font-weight:800; color:var(--primary); display:block; margin-bottom:0.4rem">Allowed PIN Codes / Prefixes</label>
+              <textarea id="settingAllowedPincodes" class="form-input" rows="4" required placeholder="e.g. 36, 37, 38, 39 OR 380001, 380002 OR ALL" style="width:100%; box-sizing:border-box; font-family:monospace; font-size:0.9rem; resize:vertical;"></textarea>
+              <small style="color:var(--text-light); font-size:0.75rem; display:block; margin-top:4px">
+                Enter 2-digit/3-digit prefixes or 6-digit PIN codes separated by commas or new lines. Type <strong>ALL</strong> or <strong>*</strong> to enable ordering for all PIN codes across India.
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label style="font-size:0.85rem; font-weight:800; color:var(--primary); display:block; margin-bottom:0.4rem">Custom Error Message for Non-Deliverable PINs</label>
+              <input type="text" id="settingPincodeErrMsg" class="form-input" required placeholder="e.g. Delivery is currently unavailable to this PIN Code." style="width:100%; box-sizing:border-box">
+              <small style="color:var(--text-light); font-size:0.75rem; display:block; margin-top:4px">This message will be shown to customers on product pages and checkout if their PIN code is not allowed.</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="padding:0.8rem 2rem; font-size:0.9rem; font-weight:700; width:100%; cursor:pointer">
+              💾 Save Delivery PIN Code Settings
+            </button>
+          </form>
+
+          <!-- Live PIN Code Tester -->
+          <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+            <h3 style="font-size:1.1rem; color:var(--primary); font-weight:800; margin-bottom:0.8rem; display:flex; align-items:center; gap:6px;">
+              🧪 Live PIN Code Serviceability Tester
+            </h3>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <input type="text" id="adminTestPincodeInput" class="form-input" maxlength="6" placeholder="Enter 6-digit PIN (e.g. 380001)" style="flex:1;">
+              <button type="button" onclick="testAdminPincode()" class="btn btn-accent" style="padding:0.65rem 1.2rem; font-size:0.85rem;">Test PIN</button>
+            </div>
+            <div id="adminTestPincodeResult" style="margin-top:0.8rem; display:none; padding:0.8rem; border-radius:6px; font-size:0.85rem; font-weight:600;"></div>
+          </div>
         </div>
 
         <div style="background-color:#fff; padding:2.5rem; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); max-width:650px; margin: 2rem auto 0 auto;">
@@ -1640,7 +1802,18 @@
           <div id="mainProdColorChips" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
         </div>
 
-        <div class="form-group">
+        <div style="display:flex; gap:1rem; margin-top:1rem;">
+          <div class="form-group" style="flex:1">
+            <label style="font-weight:700; font-size:0.82rem;">🎨 Color Variants (Comma separated)</label>
+            <input type="text" id="prodColorVariants" name="color_variants" class="form-input" placeholder="Lime Green, Red, Maroon, Navy Blue" style="width:100%;">
+          </div>
+          <div class="form-group" style="flex:1">
+            <label style="font-weight:700; font-size:0.82rem;">📷 Color Photos Mapping (Optional)</label>
+            <input type="text" id="prodColorImages" name="color_images" class="form-input" placeholder="e.g. Red: https://.../red.jpg, Lime Green: https://.../lime.jpg" style="width:100%;">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:0.8rem;">
           <label style="font-weight:700; font-size:0.82rem;">Product Description &amp; Fabric Details</label>
           <textarea id="prodDesc" name="description" rows="3" class="form-input" placeholder="Garment weave, festive embroidery, styling recommendations, wash care..." style="font-family:inherit; width:100%;" required></textarea>
         </div>
@@ -1648,17 +1821,36 @@
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; align-items:center;">
           <div class="form-group">
             <label style="font-weight:700; font-size:0.82rem;">Upload Garment Photos (Multiple)</label>
-            <input type="file" id="prodImages" name="images" multiple accept="image/*" class="form-input" style="padding:0.4rem; width:100%;">
+            <input type="file" id="prodImages" name="images" multiple accept="image/*" class="form-input" style="padding:0.4rem; width:100%;" onchange="if(window.updateProductVideoPhotoStatus) updateProductVideoPhotoStatus();">
           </div>
           <div class="form-group">
-            <label style="font-weight:700; font-size:0.82rem;">Product Walkthrough Video (Optional URL or File)</label>
-            <input type="text" id="prodVideoUrl" name="video_url" class="form-input" placeholder="https://example.com/walkthrough.mp4" style="width:100%;">
-            <input type="file" id="prodVideoFile" name="video" accept="video/*" class="form-input" style="padding:0.3rem; margin-top:4px; width:100%;">
+            <label style="font-weight:700; font-size:0.82rem;">🎬 Upload Product Video (MP4)</label>
+            <input type="file" id="prodVideo" name="video" accept="video/*" class="form-input" style="padding:0.3rem; width:100%;" onchange="uploadProductVideoDirectly(this)">
+            <input type="text" id="prodVideoUrl" name="video_url" class="form-input" placeholder="e.g. https://example.com/walkthrough.mp4" style="margin-top:4px; width:100%;">
+          </div>
+        </div>
+
+        <!-- Product Media Delete Preview Gallery -->
+        <div id="productMediaPreviewContainer" style="margin: 10px 0; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+          <label style="font-weight:700; font-size:0.8rem; color:#334155; display:block; margin-bottom:6px;">🖼️ Existing Photos & Videos (Click ✕ to Delete):</label>
+          <div id="productMediaPreviewList" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+            <span style="font-size:0.75rem; color:#94a3b8">No media uploaded yet.</span>
+          </div>
+        </div>
+
+        <!-- Video Upload Progress Bar -->
+        <div id="videoUploadProgressWrapper" style="display:none; margin-top:-5px; margin-bottom:15px; padding:10px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px">
+          <div style="display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700; color:#334155; margin-bottom:4px">
+            <span id="videoUploadStatusText">🎬 Uploading Video...</span>
+            <span id="videoUploadPercentText">0%</span>
+          </div>
+          <div style="width:100%; height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden">
+            <div id="videoUploadProgressBar" style="width:0%; height:100%; background:linear-gradient(90deg, #6366f1, #10b981); transition:width 0.2s ease"></div>
           </div>
         </div>
 
         <!-- AI Image Generator for Product -->
-        <div style="background: hsl(243, 75%, 97%); border: 1px dashed var(--primary); padding: 12px; border-radius: 8px;">
+        <div style="background: hsl(243, 75%, 97%); border: 1px dashed var(--primary); padding: 12px; border-radius: 8px; margin-top:8px;">
           <label style="font-weight:700; font-size:0.8rem; color:var(--primary); display:block; margin-bottom:5px;">✨ Generate Product Image with AI</label>
           <div style="display:flex; gap:8px;">
             <input type="text" id="productAiPrompt" class="form-input" placeholder="e.g. Saffron yellow silk kurta, high quality studio photo, solid background" style="flex:1; font-size:0.8rem;">
@@ -1670,9 +1862,39 @@
           </div>
         </div>
 
-        <!-- ==========================================================
-             PRODUCT VARIANTS — COLORS, SIZES, IMAGES AND PRICING
-             ========================================================== -->
+        <!-- AI Video Generator for Product (From Product Photo) -->
+        <div style="background: hsl(265, 85%, 98%); border: 1px dashed #7c3aed; padding: 14px; border-radius: 8px; margin-top: 10px; width: 100%;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="font-weight:700; font-size:0.85rem; color:#6d28d9; display:flex; align-items:center; gap:6px; margin:0;">
+              <i class="fas fa-video"></i> 🎥 Generate Video from Product Photo
+            </label>
+            <span id="productVideoPhotoStatus" style="font-size:0.72rem; color:#6d28d9; background:#ede9fe; padding:2px 8px; border-radius:12px; font-weight:600;">
+              <i class="fas fa-camera"></i> Uses Uploaded Photo
+            </span>
+          </div>
+          <p style="font-size:0.75rem; color:#64748b; margin-top:0; margin-bottom:8px;">
+            Automatically transforms your product photo into a smooth 4K-style animated showcase video with fabric zoom, lighting sweep, and branding.
+          </p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <select id="productVideoAiStyle" class="form-input" style="flex:1; min-width:180px; font-size:0.8rem; padding:0.45rem; cursor:pointer;">
+              <option value="zoom_pan">🎬 Cinematic Zoom & Pan (Fabric Detail)</option>
+              <option value="turntable_3d">🔄 3D Floating Perspective (Turntable)</option>
+              <option value="spotlight_sheen">✨ Studio Spotlight & Shimmer Sweep</option>
+              <option value="story_reel">📱 Mobile Fashion Story Reel</option>
+            </select>
+            <button type="button" id="btnGenerateProductVideo" onclick="generateProductVideo()" class="btn" style="background:#7c3aed; color:#fff; padding:0.45rem 1.2rem; font-size:0.8rem; white-space:nowrap; cursor:pointer; border:none; border-radius:6px; font-weight:600; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-magic"></i> Generate Video from Photo
+            </button>
+          </div>
+          <div id="productVideoAiPreviewArea" style="display:none; margin-top:12px; text-align:center;">
+            <video id="productVideoAiPreview" src="" controls playsinline loop style="max-height:180px; max-width:100%; border-radius:8px; border:1px solid #ddd6fe; box-shadow:0 3px 6px rgba(0,0,0,0.15); background:#000;"></video>
+            <div style="font-size:0.75rem; color:#059669; font-weight:700; margin-top:5px;">
+              <i class="fas fa-check-circle"></i> Video generated from your product photo and linked to Product Video URL!
+            </div>
+          </div>
+        </div>
+
+        <!-- PRODUCT VARIANTS — COLORS, SIZES, IMAGES AND PRICING -->
         <div style="border-top:2px dashed #cbd5e1; margin-top:1.5rem; padding-top:1.5rem; background:#f8fafc; border-radius:12px; padding:1.2rem; border:1px solid #e2e8f0;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
             <div>
@@ -1766,6 +1988,17 @@
           <button type="submit" class="btn btn-primary" style="padding:0.6rem 1.6rem; font-weight:700;">Save Staff Member</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ADMIN ORDER DETAILS MODAL -->
+  <div class="modal-backdrop" id="adminOrderModal" style="display: none;">
+    <div class="modal-content" style="max-width: 720px; width: 95%; padding: 2rem; max-height: 90vh; overflow-y: auto;">
+      <button class="modal-close" onclick="closeAdminOrderModal()"><i class="fas fa-times"></i></button>
+      <h3 style="font-size: 1.4rem; color: var(--primary); font-weight: 800; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem;" id="adminOrderModalTitle">Order Products & Details</h3>
+      <div id="adminOrderModalBody">
+        <!-- Rendered dynamically -->
+      </div>
     </div>
   </div>
 

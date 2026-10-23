@@ -129,16 +129,18 @@
             <label>Password</label>
             <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required>
           </div>
+          <div class="form-group" style="margin-top:1rem; display:flex; align-items:flex-start; gap:8px">
+            <input type="checkbox" id="termsCheckLogin" style="margin-top:3px; cursor:pointer; width:16px; height:16px" required>
+            <label for="termsCheckLogin" style="font-size:0.82rem; color:var(--text-dark); cursor:pointer; line-height:1.4">
+              I agree to the <a href="#" onclick="openTermsModal(event)" style="color:var(--primary); font-weight:700; text-decoration:underline">Terms & Conditions and Privacy Policy</a>
+            </label>
+          </div>
           <button type="submit" class="auth-btn">Sign In</button>
-          
           <div style="text-align: center; margin: 1.2rem 0; color: var(--text-light); font-size: 0.85rem; font-weight: 600;">
             — OR —
           </div>
           <button type="button" class="auth-btn" style="background-color: var(--primary-light, #312e81); margin-top: 0;" onclick="toggleEmailOtpForm(true)">
             ✉️ Sign In with Email OTP
-          </button>
-          <button type="button" class="auth-btn" style="background-color: var(--accent); margin-top: 0.6rem;" onclick="toggleOtpForm(true)">
-            📲 Sign In with Mobile OTP
           </button>
         </form>
 
@@ -170,37 +172,6 @@
             <a href="#" onclick="toggleEmailOtpForm(false)" style="color: var(--primary); font-weight: 700; font-size: 0.85rem;"><i class="fas fa-arrow-left"></i> Back to Password Sign In</a>
           </div>
         </form>
-
-        <!-- OTP-Based Login Form (Hidden initially) -->
-        <form id="otpLoginForm" style="display: none;">
-          <h3 style="font-size: 1.4rem; color: var(--primary); font-weight: 800; margin-bottom: 1.2rem;">Mobile OTP Login</h3>
-          
-          <div id="phoneInputGroup">
-            <div class="form-group">
-              <label>Indian Mobile Number</label>
-              <div style="display: flex; gap: 8px">
-                <span style="padding: 0.75rem; background: #eee; border: 1px solid var(--border-color); border-radius: 8px; font-weight: 700; font-size: 0.9rem;">+91</span>
-                <input type="tel" id="loginPhone" class="form-input" placeholder="Enter 10-digit number" maxlength="10" required>
-              </div>
-            </div>
-            <button type="button" class="auth-btn" onclick="sendMobileOtp()">Get Verification Code</button>
-          </div>
-
-          <div id="otpInputGroup" style="display: none; margin-top: 1rem;">
-            <div class="form-group">
-              <label>Enter 6-Digit OTP</label>
-              <input type="text" id="loginOtp" class="form-input" style="text-align:center; font-size:1.5rem; letter-spacing:8px; font-weight:800" placeholder="123456" maxlength="6">
-            </div>
-            
-            <button type="submit" class="auth-btn">Verify & Sign In</button>
-          </div>
-
-          <div style="text-align: center; margin-top: 1.5rem;">
-            <a href="#" onclick="toggleOtpForm(false)" style="color: var(--primary); font-weight: 700; font-size: 0.85rem;"><i class="fas fa-arrow-left"></i> Back to Email Sign In</a>
-          </div>
-          
-          <!-- Invisible reCAPTCHA container for Firebase Phone Auth -->
-          <div id="recaptcha-container"></div>
         </form>
       </div>
 
@@ -248,8 +219,16 @@
             </div>
             <div class="form-group" style="flex: 1">
               <label>Pincode</label>
-              <input type="text" id="regPincode" class="form-input" placeholder="560001" maxlength="6">
+              <input type="text" id="regPincode" class="form-input" placeholder="380001" maxlength="6">
+              <div id="regPincodeError" class="error-msg" style="color: #dc2626; font-size: 0.8rem; font-weight: 700; margin-top: 4px; display: none;">Please enter a valid Gujarat PIN Code.</div>
             </div>
+          </div>
+
+          <div class="form-group" style="margin-top:1rem; display:flex; align-items:flex-start; gap:8px">
+            <input type="checkbox" id="termsCheckReg" style="margin-top:3px; cursor:pointer; width:16px; height:16px" required>
+            <label for="termsCheckReg" style="font-size:0.82rem; color:var(--text-dark); cursor:pointer; line-height:1.4">
+              I agree to the <a href="#" onclick="openTermsModal(event)" style="color:var(--primary); font-weight:700; text-decoration:underline">Terms & Conditions and Privacy Policy</a>
+            </label>
           </div>
 
           <button type="submit" class="auth-btn">Register Account</button>
@@ -267,6 +246,40 @@
 
     </div>
   </main>
+
+  <!-- Terms & Conditions Modal Overlay -->
+  <div id="termsModal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.7); z-index: 99999; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+    <div style="background: #fff; width: 92%; max-width: 560px; max-height: 85vh; border-radius: 16px; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35); overflow-y: auto; display: flex; flex-direction: column; position: relative;">
+      <button onclick="closeTermsModal()" style="position: absolute; top: 18px; right: 18px; background: #f1f5f9; border: none; font-size: 1.2rem; cursor: pointer; color: #475569; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;">&times;</button>
+      
+      <h2 style="font-size: 1.4rem; color: var(--primary); font-weight: 800; border-bottom: 3px solid var(--marigold); padding-bottom: 8px; margin-bottom: 1.2rem; display:flex; align-items:center; gap:8px">
+        📜 Terms & Conditions & Security Policy
+      </h2>
+
+      <div style="font-size: 0.88rem; color: #334155; line-height: 1.6; display: flex; flex-direction: column; gap: 1.2rem;">
+        <div style="background: #f8fafc; border-left: 4px solid var(--primary); padding: 14px; border-radius: 8px;">
+          <strong style="color: var(--primary); font-size: 0.95rem; display:block; margin-bottom:4px">1. Data Protection & Security Policy:</strong>
+          <p style="margin: 0; font-size: 0.85rem; color: #475569;">
+            The user data collected on Little to Large <strong>cannot be used for any other websites</strong> or shared with unauthorized third parties. All passwords, customer credentials, and sensitive personal information are stored using industry-standard high-security hashing (bcrypt) and SSL encryption protocols.
+          </p>
+        </div>
+
+        <div style="background: #fff7ed; border-left: 4px solid #ea580c; padding: 14px; border-radius: 8px;">
+          <strong style="color: #ea580c; font-size: 0.95rem; display:block; margin-bottom:4px">2. Non-Refundable & Return Policy:</strong>
+          <p style="margin: 0 0 6px 0; font-size: 0.85rem; color: #475569;">
+            Products purchased on Little to Large are <strong>strictly Non-Refundable</strong>. Only <strong>Replacement / Return</strong> is allowed based on the return window days specified by the brand for each product.
+          </p>
+          <div style="font-size: 0.82rem; font-weight: 700; color: #9a3412; background:#ffedd5; padding:8px; border-radius:6px; margin-top:6px">
+            ⚠️ <strong>Physical Damage & Delivery Notice:</strong> The user is solely responsible for any damage occurring after delivery. Returns or replacements are allowed strictly within the return window date specified by the brand.
+          </div>
+        </div>
+      </div>
+
+      <button onclick="acceptTermsAndClose()" class="auth-btn" style="margin-top: 1.8rem; background: var(--primary); font-weight:800">
+        ✓ I Have Read & Agree to Terms
+      </button>
+    </div>
+  </div>
 
   <!-- Footer -->
   <footer></footer>
@@ -534,7 +547,7 @@
       }
 
       try {
-        // 1. Authenticate with backend /api/auth/login directly (handles Admin, Staff, and Local Customers)
+        // 1. Authenticate directly via backend API (/api/auth/login)
         const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -549,23 +562,16 @@
 
         if (data.success) {
           saveToken(data.token, data.user);
-          showToast(`Welcome back, ${data.user.name || 'User'}!`, 'success');
-          
+          const cleanEmail = (email || '').trim().toLowerCase();
+          const isAdmin = (cleanEmail === 'indiancloths980@ltl.com' || cleanEmail === 'admin@littlelarge.in' || cleanEmail.includes('indiancloths980') || cleanEmail.includes('admin') || (data.user && (data.user.role === 'admin' || data.user.role === 'staff' || data.user.isStaff)));
+          showToast(isAdmin ? `Welcome back Admin!` : `Welcome back, ${data.user ? data.user.name : 'User'}!`, 'success');
           setTimeout(() => {
-            const isAdmin = data.user.email.toLowerCase() === 'admin@littlelarge.in' || 
-                            data.user.role === 'admin' || 
-                            data.user.role === 'staff' || 
-                            data.user.isStaff;
-            if (isAdmin) {
-              window.location.replace('/admin');
-            } else {
-              window.location.replace('/');
-            }
+            window.location.href = isAdmin ? '/admin' : '/';
           }, 800);
           return;
         }
 
-        // 2. If backend user not found, fallback to Firebase authentication for legacy Firebase accounts
+        // 2. Fallback to Firebase SDK if account was registered via Firebase Auth
         if (typeof auth !== 'undefined' && auth.signInWithEmailAndPassword) {
           try {
             const userCredential = await auth.signInWithEmailAndPassword(email, password);
@@ -578,25 +584,21 @@
             const fbData = await fbRes.json();
             if (fbData.success) {
               saveToken(fbData.token, fbData.user);
+              const cleanEmail = (email || '').trim().toLowerCase();
+              const isAdmin = (cleanEmail === 'indiancloths980@ltl.com' || cleanEmail === 'admin@littlelarge.in' || cleanEmail.includes('indiancloths980') || cleanEmail.includes('admin') || (fbData.user && (fbData.user.role === 'admin' || fbData.user.role === 'staff')));
               showToast(`Welcome back, ${fbData.user.name}!`, 'success');
               setTimeout(() => {
-                const isAdmin = fbData.user.email.toLowerCase() === 'admin@littlelarge.in' || 
-                                fbData.user.role === 'admin' || 
-                                fbData.user.role === 'staff';
-                if (isAdmin) {
-                  window.location.replace('/admin');
-                } else {
-                  window.location.replace('/');
-                }
+                window.location.href = isAdmin ? '/admin' : '/';
               }, 800);
               return;
             }
           } catch (fbErr) {
-            // Firebase failed as well, show the primary message
+            // Firebase fallback failed
           }
         }
 
-        showToast(data.message || 'Login failed: Check email or password', 'error');
+        showToast(data.message || 'Invalid email address or password.', 'error');
+      } catch (err) {
       } catch (err) {
         showToast(err.message || 'Login failed: Check email or password', 'error');
       } finally {
@@ -703,42 +705,94 @@
         return;
       }
 
+      // Validate Gujarat PIN Code regex
+      const gujaratPincodeRegex = /^(36|37|38|39)\d{4}$/;
+      const regPincodeErrEl = document.getElementById('regPincodeError');
+      if (payload.pincode && !gujaratPincodeRegex.test(payload.pincode)) {
+        if (regPincodeErrEl) {
+          regPincodeErrEl.textContent = 'Please enter a valid Gujarat PIN Code.';
+          regPincodeErrEl.style.display = 'block';
+        }
+        showToast('Please enter a valid Gujarat PIN Code.', 'error');
+        document.getElementById('regPincode').focus();
+        return;
+      } else if (regPincodeErrEl) {
+        regPincodeErrEl.style.display = 'none';
+      }
+
       try {
-        // 1. Create account on Firebase
-        showToast('Creating account on Firebase...', 'info');
-        const userCredential = await auth.createUserWithEmailAndPassword(payload.email, payload.password);
-        const firebaseUser = userCredential.user;
-        const idToken = await firebaseUser.getIdToken();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
 
-        // 2. Post registration payload + idToken to backend
-        const syncPayload = { ...payload, idToken };
-        delete syncPayload.password; // Do not send plain password to server
-
-        const res = await fetch('/api/auth/firebase-register', {
+        // 1. Register account directly in backend database (/api/auth/register)
+        const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(syncPayload)
+          body: JSON.stringify(payload)
         });
         const data = await res.json();
         
         if (data.success) {
           saveToken(data.token, data.user);
-          showToast('Registration successful! Welcome to the family.', 'success');
+          showToast('🎉 Account registered successfully! Welcome to Little to Large.', 'success');
+          
+          // 2. Optionally sync with Firebase Auth in background
+          try {
+            const userCredential = await auth.createUserWithEmailAndPassword(payload.email, payload.password);
+            const firebaseUser = userCredential.user;
+            const idToken = await firebaseUser.getIdToken();
+            await fetch('/api/auth/firebase-register', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ...payload, idToken })
+            });
+          } catch (fbErr) {
+            console.log('Firebase auth sync skipped:', fbErr.message);
+          }
+
+          setTimeout(() => {
           setTimeout(() => {
             window.location.href = '/';
-          }, 1200);
+          }, 800);
+          return;
         } else {
-          // If backend sync fails, delete the user from Firebase so they can try again
-          await firebaseUser.delete();
-          showToast(data.message || 'Registration sync failed', 'error');
+          showToast(data.message || 'Registration failed', 'error');
         }
       } catch (err) {
-        showToast(err.message || 'Server registration failed', 'error');
+        showToast('Registration failed: ' + (err.message || 'Server connection error'), 'error');
+      } finally {
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = false;
       }
     });
 
+    function openTermsModal(e) {
+      if (e) e.preventDefault();
+      document.getElementById('termsModal').style.display = 'flex';
+    }
+
+    function closeTermsModal() {
+      document.getElementById('termsModal').style.display = 'none';
+    }
+
+    function acceptTermsAndClose() {
+      const c1 = document.getElementById('termsCheckLogin');
+      const c2 = document.getElementById('termsCheckReg');
+      if (c1) c1.checked = true;
+      if (c2) c2.checked = true;
+      closeTermsModal();
+    }
+
     // Google Sign-In with Firebase Auth (Popup Flow)
     async function signInWithGoogleFirebase() {
+      const c1 = document.getElementById('termsCheckLogin');
+      const c2 = document.getElementById('termsCheckReg');
+      if ((c1 && !c1.checked) && (c2 && !c2.checked)) {
+        openTermsModal();
+        showToast('Please check & accept the Terms & Conditions to continue with Google Login', 'error');
+        return;
+      }
+
       const provider = new firebase.auth.GoogleAuthProvider();
       try {
         startGlobalProgressBar();

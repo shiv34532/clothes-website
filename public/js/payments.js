@@ -293,10 +293,31 @@ async function processOrderSubmit(e) {
   const addressLine2 = document.getElementById('shippingAddressLine2').value.trim();
   const state = document.getElementById('shippingState').value;
   const pincode = document.getElementById('shippingPincode').value.trim();
+  const pincodeErrEl = document.getElementById('shippingPincodeError');
 
   if (!name || !phone || !address || !addressLine2 || !state || !pincode) {
     showToast('Please fill in all shipping details, including Landmark!', 'error');
     return;
+  }
+
+  // Validate PIN Code serviceability via API
+  try {
+    const pinRes = await fetch(`/api/pincode/check?pincode=${encodeURIComponent(pincode)}`);
+    const pinData = await pinRes.json();
+    if (!pinData.success) {
+      const errMsg = pinData.message || 'Delivery is currently unavailable to this PIN Code.';
+      if (pincodeErrEl) {
+        pincodeErrEl.textContent = errMsg;
+        pincodeErrEl.style.display = 'block';
+      }
+      showToast(errMsg, 'error');
+      document.getElementById('shippingPincode').focus();
+      return;
+    } else if (pincodeErrEl) {
+      pincodeErrEl.style.display = 'none';
+    }
+  } catch (err) {
+    console.warn('Pincode check error during checkout:', err);
   }
 
   // Calculate order amount

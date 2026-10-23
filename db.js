@@ -234,6 +234,9 @@ async function createTables() {
       color VARCHAR(100),
       style VARCHAR(100),
       gender VARCHAR(50),
+      return_window_days INTEGER DEFAULT 7,
+      color_variants ${textType},
+      color_images ${textType},
       created_at ${datetimeType} DEFAULT CURRENT_TIMESTAMP
     )
   `);
@@ -340,6 +343,22 @@ async function createTables() {
       festival_mode VARCHAR(50) DEFAULT 'none', -- 'none', 'diwali', 'christmas', etc.
       created_at ${datetimeType} DEFAULT CURRENT_TIMESTAMP,
       updated_at ${datetimeType} DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Multiple Hero Banners table for homepage slider manager
+  await run(`
+    CREATE TABLE IF NOT EXISTS hero_banners (
+      id ${idType},
+      title VARCHAR(150),
+      subtitle VARCHAR(255),
+      cta_text VARCHAR(50) DEFAULT 'Shop Now',
+      media_url TEXT NOT NULL,
+      media_type VARCHAR(50) DEFAULT 'image',
+      link_url TEXT DEFAULT 'products.html',
+      priority INTEGER DEFAULT 0,
+      status VARCHAR(50) DEFAULT 'active',
+      created_at ${datetimeType} DEFAULT CURRENT_TIMESTAMP
     )
   `);
 
@@ -524,6 +543,7 @@ async function createTables() {
     `ALTER TABLE products ADD COLUMN style VARCHAR(100)`,
     `ALTER TABLE products ADD COLUMN gender VARCHAR(50)`,
     `ALTER TABLE products ADD COLUMN color_variants TEXT`,
+    `ALTER TABLE products ADD COLUMN color_images TEXT`,
     `ALTER TABLE order_items ADD COLUMN color VARCHAR(50)`,
     `ALTER TABLE order_items ADD COLUMN variant_sku VARCHAR(100)`,
     `ALTER TABLE orders ADD COLUMN shiprocket_order_id VARCHAR(50)`,
@@ -802,6 +822,39 @@ async function seedDatabase() {
     console.error('Failed to migrate/update hero slide backgrounds to PNG:', e.message);
   }
 
+  // Update Kurti product description in database
+  try {
+    const kurtiDesc = "Brighten your daily style with this vibrant lime green short kurti from Little to Largée. Featuring a chic floral print, comfortable 3/4th sleeves, and a flattering buttoned neckline, it pairs effortlessly with your favorite jeans or trousers for a fresh, everyday look.\n\nFabric: 100% Breathable Cotton\nCare: Gentle machine wash";
+    await run("UPDATE products SET description = ? WHERE LOWER(name) LIKE '%kurti%' OR LOWER(name) LIKE '%lime%' OR LOWER(name) LIKE '%maroon%' OR LOWER(name) LIKE '%baby%'", [kurtiDesc]);
+    console.log('✔ Updated Kurti product description in database.');
+  } catch (e) {
+    console.error('Failed to update Kurti product description:', e.message);
+  }
+
+  // Seed default hero banners for homepage slider
+  try {
+    const bannerCount = await get('SELECT COUNT(*) as count FROM hero_banners');
+    if (parseInt(bannerCount.count) === 0) {
+      console.log('Seeding default homepage hero banners...');
+      await run(`
+        INSERT INTO hero_banners (title, subtitle, cta_text, media_url, media_type, link_url, priority, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `, ['Coordinated Family Styles', 'Discover matching vacation outfits, lounge wear, and festival wear for the entire family.', 'Shop Collection', 'images/hero_vacation.png', 'image', 'products.html', 1, 'active']);
+
+      await run(`
+        INSERT INTO hero_banners (title, subtitle, cta_text, media_url, media_type, link_url, priority, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `, ['Grand Ethnic Festival Sale', 'Flat 15% discount on all silk ethnic wear, dupattas, and handcrafted kurtis.', 'Explore Offers', 'images/hero_ethnic.png', 'image', 'offers.html', 2, 'active']);
+
+      await run(`
+        INSERT INTO hero_banners (title, subtitle, cta_text, media_url, media_type, link_url, priority, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `, ['Trending Kids Fashion', 'Ultra soft 100% organic cotton outfits & footwear for little ones.', 'Shop Kids Wear', 'images/hero_kids.png', 'image', 'products.html?category=kids', 3, 'active']);
+    }
+  } catch (e) {
+    console.error('Failed to seed hero banners:', e.message);
+  }
+
   // Seed default system settings
   try {
     const settingsCount = await get('SELECT COUNT(*) as count FROM settings');
@@ -809,6 +862,8 @@ async function seedDatabase() {
       console.log('Seeding default system settings...');
       await run("INSERT INTO settings (key, value) VALUES ('shipping_fee', '1')");
       await run("INSERT INTO settings (key, value) VALUES ('free_shipping_threshold', '999')");
+      await run("INSERT INTO settings (key, value) VALUES ('allowed_pincodes', '36, 37, 38, 39')");
+      await run("INSERT INTO settings (key, value) VALUES ('pincode_error_message', 'Please enter a valid Gujarat PIN Code.')");
     }
   } catch (e) {
     console.error('Failed to seed default settings:', e.message);
@@ -920,7 +975,15 @@ async function seedDatabase() {
       }
     }
   } catch (e) {
-    console.warn('Product variant migration note:', e.message);
+    console.error('Failed to migrate product variants:', e.message);
+  }
+
+  // Fix any unverified online payments that were mistakenly set to 'Completed' without Razorpay verification
+  try {
+    await run("UPDATE payments SET status = 'Pending' WHERE status IN ('Completed', 'Success') AND method != 'COD' AND (transaction_id LIKE 'PENDING-%' OR transaction_id LIKE 'COD-%' OR transaction_id NOT LIKE 'pay_%')");
+    console.log('✔ Fixed unverified online payments status to Pending.');
+  } catch (e) {
+    console.error('Failed to fix unverified payments status:', e.message);
   }
 }
 

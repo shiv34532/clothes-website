@@ -13,8 +13,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Product Details | Little to Large</title>
-  <meta name="description" content="Detailed specifications, 360 degree product view, fabric details, sizing options, and verified customer reviews on Little to Large.">
+  <meta name="description" content="View high-definition product images, fabric details, sizing options, customer reviews, and pincode delivery check on Little to Large.">
   <link rel="canonical" id="canonicalTag" href="https://littletolargee.com/product-detail">
+  <link rel="canonical" id="canonicalUrl" href="https://littletolargee.com/product-detail">
   <meta property="og:title" id="ogTitle" content="Product Details | Little to Large">
   <meta property="og:description" id="ogDesc" content="Explore handcrafted premium apparel tailored for the entire family.">
   <meta property="og:type" content="product">
@@ -105,11 +106,16 @@
 
       <!-- Sizing Options -->
       <div class="detail-variants">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem">
-          <h4>Select Size:</h4>
-          <a href="javascript:void(0)" onclick="openSizeAdvisorModal(activeProduct ? activeProduct.category : 'Women')" style="font-size:0.82rem; color:var(--marigold-dark); font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:4px">
-            <i class="fas fa-ruler-combined"></i> Size Guide & Fit Advisor
-          </a>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px">
+          <h4 style="margin:0">Select Size:</h4>
+          <div style="display:flex; gap:10px; align-items:center">
+            <button type="button" onclick="openSizeChartModal()" class="size-chart-trigger-btn">
+              <i class="fas fa-ruler-combined"></i> 📏 Size Guide
+            </button>
+            <a href="javascript:void(0)" onclick="openSizeAdvisorModal(activeProduct ? activeProduct.category : 'Women')" style="font-size:0.82rem; color:var(--marigold-dark); font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:4px">
+              <i class="fas fa-magic"></i> AI Fit Advisor
+            </a>
+          </div>
         </div>
         <div class="size-selector" id="sizeOptionsContainer">
           <!-- Injected size chips -->
@@ -280,8 +286,8 @@
     }
 
     function renderProductDetails(p) {
-      document.title = `${p.name} | Little to Large`;
-      const canonicalEl = document.getElementById('canonicalTag');
+      document.title = `${p.name} | Little to Large Clothing`;
+      const canonicalEl = document.getElementById('canonicalTag') || document.getElementById('canonicalUrl');
       if (canonicalEl) canonicalEl.href = `https://littletolargee.com/product-detail?id=${p.id}`;
       const ogTitleEl = document.getElementById('ogTitle');
       if (ogTitleEl) ogTitleEl.content = `${p.name} | Little to Large`;
@@ -311,7 +317,6 @@
           }
         });
       }
-
       document.getElementById('breadcrumbProdName').textContent = p.name;
       document.getElementById('detailTitle').textContent = p.name;
       document.getElementById('detailCategory').textContent = `${p.category} | ${p.subcategory}`;
@@ -367,6 +372,16 @@
           </div>
         `;
       });
+
+      if (p.video_url && p.video_url.trim()) {
+        const formattedVideo = formatLocalPath(p.video_url.trim());
+        thumbList.innerHTML += `
+          <div class="thumb video-thumb-badge" onclick="showProductVideo('${formattedVideo}')" style="position:relative; background:#1e1b4b; border:2px solid var(--accent); display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; min-width:60px; height:60px; border-radius:8px;" title="Play Product Video">
+            <i class="fas fa-play" style="color:#fff; font-size:1.1rem;"></i>
+            <span style="font-size:0.6rem; color:#fff; font-weight:800; margin-top:2px;">VIDEO</span>
+          </div>
+        `;
+      }
 
       // Initialize 360 viewer
       const img360 = document.getElementById('image360');
@@ -438,6 +453,32 @@
         `;
       });
 
+      // Return & Replacement Policy Notice
+      const returnNoticeEl = document.getElementById('detailReturnNotice');
+      if (returnNoticeEl) {
+        if (parseInt(p.return_window_days) === 0) {
+          returnNoticeEl.innerHTML = '<span style="color:#dc2626; font-weight:800">🚫 Non-Refundable & Non-Returnable Item (Final Sale)</span>';
+        } else {
+          returnNoticeEl.innerHTML = `<span style="color:#16a34a; font-weight:800">↺ ${p.return_window_days || 7} Days Replacement Only</span> <small style="color:#64748b">(Strictly Non-Refundable. Replacement allowed within ${p.return_window_days || 7} days after delivery. User responsible for damage after delivery.)</small>`;
+        }
+      }
+
+      // Rating Stars
+      const starWrapper = document.getElementById('detailRatingStars');
+      if (starWrapper) {
+        starWrapper.innerHTML = '';
+        const floorRating = Math.floor(p.rating || 0);
+        for (let i = 1; i <= 5; i++) {
+          if (i <= floorRating) {
+            starWrapper.innerHTML += '<i class="fas fa-star" style="font-size:1.2rem; color:#f59e0b"></i>';
+          } else if (i - 0.5 <= (p.rating || 0)) {
+            starWrapper.innerHTML += '<i class="fas fa-star-half-alt" style="font-size:1.2rem; color:#f59e0b"></i>';
+          } else {
+            starWrapper.innerHTML += '<i class="far fa-star" style="font-size:1.2rem; color:#f59e0b"></i>';
+          }
+        }
+        starWrapper.innerHTML += `<span class="rating-num" style="font-size:0.95rem; font-weight:700">(${p.rating || '5.0'})</span>`;
+      }
       // Wishlist active styling
       const wishlist = getLocalWishlist();
       const isWish = wishlist.includes(p.id);
@@ -664,9 +705,14 @@
 
     function changeMainImage(el, imgSrc) {
       document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
-      el.classList.add('active');
-      document.getElementById('mainProdImage').src = imgSrc;
+      if (el) el.classList.add('active');
+      const wrapper = document.getElementById('zoomContainer');
+      if (wrapper) {
+        wrapper.innerHTML = `<img id="mainProdImage" src="${imgSrc}" alt="Product Image" onerror="this.src='/images/products/placeholder.jpg'">`;
+      }
     }
+
+
 
     function selectSize(el, size) {
       document.querySelectorAll('.size-option').forEach(s => s.classList.remove('active'));
@@ -674,6 +720,76 @@
       selectedSize = size;
     }
 
+    function getColorCssCode(cName) {
+      if (!cName) return '#64748b';
+      const lower = cName.trim().toLowerCase();
+      
+      const colorMap = {
+        'lime': '#32cd32',
+        'lime green': '#32cd32',
+        'green': '#16a34a',
+        'dark green': '#14532d',
+        'red': '#dc2626',
+        'maroon': '#800000',
+        'navy': '#1e3a8a',
+        'navy blue': '#1e3a8a',
+        'blue': '#2563eb',
+        'sky blue': '#0ea5e9',
+        'royal blue': '#1d4ed8',
+        'pink': '#ec4899',
+        'fuchsia': '#d946ef',
+        'magenta': '#d946ef',
+        'purple': '#a855f7',
+        'violet': '#7c3aed',
+        'indigo': '#4f46e5',
+        'black': '#18181b',
+        'charcoal': '#334155',
+        'white': '#ffffff',
+        'gold': '#eab308',
+        'yellow': '#eab308',
+        'saffron': '#f97316',
+        'orange': '#f97316',
+        'beige': '#f5f5dc',
+        'cream': '#fffdd0',
+        'peach': '#ffdab9',
+        'teal': '#0d9488',
+        'cyan': '#06b6d4',
+        'brown': '#78350f',
+        'tan': '#d2b48c',
+        'grey': '#6b7280',
+        'gray': '#6b7280',
+        'olive': '#65a30d',
+        'multicolor': 'linear-gradient(135deg, #ef4444, #eab308, #3b82f6, #10b981)',
+        'multi-color': 'linear-gradient(135deg, #ef4444, #eab308, #3b82f6, #10b981)',
+        'multicoloured': 'linear-gradient(135deg, #ef4444, #eab308, #3b82f6, #10b981)'
+      };
+
+      for (const [k, v] of Object.entries(colorMap)) {
+        if (lower.includes(k)) return v;
+      }
+      return cName.trim();
+    }
+
+    function selectColor(el, color) {
+      document.querySelectorAll('.color-option').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      selectedColor = color;
+
+      // Photo switching based on color mapping
+      if (activeProduct && activeProduct.color_images && activeProduct.color_images.trim()) {
+        const mappings = activeProduct.color_images.split(',');
+        for (const m of mappings) {
+          const parts = m.split(':');
+          if (parts.length >= 2 && parts[0].trim().toLowerCase() === color.trim().toLowerCase()) {
+            const imgUrl = parts.slice(1).join(':').trim();
+            if (imgUrl) {
+              const mainImg = document.getElementById('mainProdImage');
+              if (mainImg) mainImg.src = formatLocalPath(imgUrl);
+            }
+          }
+        }
+      }
+    }
     function changeQty(diff) {
       selectedQty += diff;
       if (selectedQty < 1) selectedQty = 1;
@@ -685,14 +801,14 @@
     }
 
     // Pincode availability
-    function checkPincode() {
+    async function checkPincode() {
       const pin = document.getElementById('pinInput').value.trim();
       const result = document.getElementById('pinResult');
       
-      if (pin.length < 6 || isNaN(pin)) {
+      if (!pin || pin.length !== 6 || !/^\d{6}$/.test(pin)) {
         result.style.display = 'block';
         result.style.color = 'var(--danger)';
-        result.textContent = '❌ Please enter a valid 6-digit Pincode';
+        result.textContent = '❌ Please enter a valid 6-digit numeric PIN Code.';
         return;
       }
 
@@ -700,10 +816,20 @@
       result.style.color = 'var(--primary)';
       result.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking availability...';
 
-      setTimeout(() => {
-        result.style.color = 'var(--success)';
-        result.innerHTML = `✅ Delivery available to <strong>${pin}</strong>!<br>Estimated Delivery: 2-3 Days. Cash on Delivery supported.`;
-      }, 1000);
+      try {
+        const res = await fetch(`/api/pincode/check?pincode=${encodeURIComponent(pin)}`);
+        const data = await res.json();
+        if (data.success) {
+          result.style.color = 'var(--success)';
+          result.innerHTML = `✅ Delivery available to <strong>${pin}</strong>!<br>Estimated Delivery: 2-4 Business Days. Cash on Delivery supported.`;
+        } else {
+          result.style.color = 'var(--danger)';
+          result.textContent = `❌ ${data.message || 'Delivery is currently unavailable to this PIN Code.'}`;
+        }
+      } catch (err) {
+        result.style.color = 'var(--danger)';
+        result.textContent = '❌ Error checking PIN code. Please try again.';
+      }
     }
 
     // Mouse hover zoom engine
@@ -957,6 +1083,7 @@
               <div class="product-card" style="box-shadow:var(--shadow-sm); border:1px solid var(--border-color); border-radius:var(--radius-lg); overflow:hidden; background-color:#fff; transition:var(--transition);">
                 <div class="product-img-wrapper" onclick="window.location.href='/product-detail?id=${p.id}'" style="cursor:pointer; position:relative; padding-bottom:125%; background:#fcfcfc">
                   <img src="${mainImg}" alt="${p.name}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover" onerror="this.src='/images/products/placeholder.jpg'">
+                  ${p.video_url ? '<div class="video-badge">🎬 Video</div>' : ''}
                 </div>
                 <div class="product-details" style="padding:1.1rem">
                   <div style="display:flex; align-items:center; justify-content:space-between">
@@ -979,6 +1106,175 @@
         grid.innerHTML = '<div style="grid-column: 1/-1; color:var(--text-light); text-align:center">Explore more styles in our store catalog.</div>';
       }
     }
+
+    // Product Video Overlay Player with Mobile Autoplay & Infinite Loop Protection
+    function showProductVideo(videoUrl) {
+      if (!videoUrl || !videoUrl.trim()) {
+        showToast('Product video unavailable for this item', 'info');
+        return;
+      }
+      const formatted = formatLocalPath(videoUrl.trim());
+      const modal = document.getElementById('productVideoModal');
+      const player = document.getElementById('productVideoPlayer');
+      
+      if (!player || !modal) return;
+
+      // Always clear previous error handler to avoid event duplication
+      player.onerror = null;
+
+      let errorShown = false;
+      player.onerror = (e) => {
+        player.onerror = null; // Detach immediately!
+        if (!errorShown) {
+          errorShown = true;
+          console.warn('Video playback error:', e);
+          showToast('Product video stream currently unavailable.', 'info');
+        }
+        closeProductVideo();
+      };
+      
+      player.src = formatted;
+      player.muted = true;
+      player.setAttribute('playsinline', '');
+      player.setAttribute('webkit-playsinline', '');
+      modal.classList.add('active');
+      
+      const playPromise = player.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(e => {
+          console.log('Mobile video autoplay handled:', e);
+        });
+      }
+    }
+
+    function closeProductVideo() {
+      const modal = document.getElementById('productVideoModal');
+      const player = document.getElementById('productVideoPlayer');
+      if (player) {
+        player.onerror = null; // Detach listener BEFORE clearing src to stop recursive event firing!
+        player.pause();
+        player.removeAttribute('src');
+        player.load();
+      }
+      if (modal) {
+        modal.classList.remove('active');
+      }
+    }
+
+    // Size Guide Modal Data & Switcher
+    const sizeChartsData = {
+      kids: [
+        { size: '18-24M', brandSize: '1-2Y', chest: '21.0', waist: '19.8' },
+        { size: '2-4Y', brandSize: '2-4Y', chest: '22.5', waist: '21.5' },
+        { size: '4-6Y', brandSize: '4-6Y', chest: '24.0', waist: '22.0' },
+        { size: '6-8Y', brandSize: '6-8Y', chest: '26.0', waist: '23.3' },
+        { size: '8-10Y', brandSize: '8-10Y', chest: '28.0', waist: '24.8' }
+      ],
+      women: [
+        { size: 'XS', brandSize: 'XS (32)', chest: '32.0', waist: '26.0' },
+        { size: 'S', brandSize: 'S (34)', chest: '34.0', waist: '28.0' },
+        { size: 'M', brandSize: 'M (36)', chest: '36.0', waist: '30.0' },
+        { size: 'L', brandSize: 'L (38)', chest: '38.0', waist: '32.0' },
+        { size: 'XL', brandSize: 'XL (40)', chest: '40.0', waist: '34.0' },
+        { size: 'XXL', brandSize: 'XXL (42)', chest: '42.0', waist: '36.0' }
+      ],
+      men: [
+        { size: 'S', brandSize: 'S (38)', chest: '38.0', waist: '32.0' },
+        { size: 'M', brandSize: 'M (40)', chest: '40.0', waist: '34.0' },
+        { size: 'L', brandSize: 'L (42)', chest: '42.0', waist: '36.0' },
+        { size: 'XL', brandSize: 'XL (44)', chest: '44.0', waist: '38.0' },
+        { size: 'XXL', brandSize: 'XXL (46)', chest: '46.0', waist: '40.0' }
+      ]
+    };
+
+    function renderSizeChartTable(chartType) {
+      const data = sizeChartsData[chartType] || sizeChartsData.kids;
+      const container = document.getElementById('sizeChartTableContainer');
+      let html = `
+        <table class="size-chart-table">
+          <thead>
+            <tr>
+              <th style="width:40px">Select</th>
+              <th>Size</th>
+              <th>Brand Size</th>
+              <th>To Fit Chest (in)</th>
+              <th>To Fit Waist (in)</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      data.forEach(row => {
+        html += `
+          <tr onclick="selectSizeFromChart('${row.size}')">
+            <td><input type="radio" name="chartRadio" value="${row.size}"></td>
+            <td><strong>${row.size}</strong></td>
+            <td>${row.brandSize}</td>
+            <td>${row.chest}</td>
+            <td>${row.waist}</td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    function switchSizeChartTab(btn, chartType) {
+      document.querySelectorAll('.size-chart-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      renderSizeChartTable(chartType);
+    }
+
+    function openSizeChartModal() {
+      renderSizeChartTable('kids');
+      document.getElementById('sizeChartModalOverlay').classList.add('active');
+    }
+
+    function closeSizeChartModal(e) {
+      if (!e || e.target.id === 'sizeChartModalOverlay' || e.target.closest('.size-chart-close-btn')) {
+        document.getElementById('sizeChartModalOverlay').classList.remove('active');
+      }
+    }
+
+    function selectSizeFromChart(sizeVal) {
+      const chips = document.querySelectorAll('#sizeOptionsContainer .size-chip');
+      chips.forEach(chip => {
+        if (chip.textContent.trim().toUpperCase() === sizeVal.toUpperCase()) {
+          chip.click();
+        }
+      });
+      document.getElementById('sizeChartModalOverlay').classList.remove('active');
+    }
   </script>
+
+  <!-- Interactive Product Video Overlay Modal -->
+  <div id="productVideoModal" class="size-chart-modal-overlay" onclick="closeProductVideo()">
+    <div class="size-chart-modal" style="max-width:800px; padding:15px; background:#000; border-radius:16px; position:relative" onclick="event.stopPropagation()">
+      <button class="size-chart-close-btn" onclick="closeProductVideo()" style="top:10px; right:10px; z-index:10; background:rgba(255,255,255,0.2); color:#fff; width:36px; height:36px; border-radius:50%; border:none; cursor:pointer;"><i class="fas fa-times"></i></button>
+      <video id="productVideoPlayer" controls style="width:100%; max-height:75vh; border-radius:12px; background:#000;" autoplay muted playsinline webkit-playsinline preload="auto"></video>
+    </div>
+  </div>
+
+  <!-- Interactive Size Guide Modal (Matching User Screenshot) -->
+  <div id="sizeChartModalOverlay" class="size-chart-modal-overlay" onclick="closeSizeChartModal(event)">
+    <div class="size-chart-modal" onclick="event.stopPropagation()">
+      <button class="size-chart-close-btn" onclick="closeSizeChartModal()"><i class="fas fa-times"></i></button>
+      <h3 style="font-size:1.2rem; font-weight:800; color:var(--primary); margin-bottom:6px; display:flex; align-items:center; gap:8px">
+        <span>📏</span> Interactive Size Measurement Guide
+      </h3>
+      <p style="font-size:0.82rem; color:var(--text-light); margin-bottom:15px">Click any row in the chart to automatically select your size for this product.</p>
+
+      <div class="size-chart-tabs">
+        <div class="size-chart-tab active" onclick="switchSizeChartTab(this, 'kids')">🧒 Kids Wear</div>
+        <div class="size-chart-tab" onclick="switchSizeChartTab(this, 'women')">👩 Women's Outfits</div>
+        <div class="size-chart-tab" onclick="switchSizeChartTab(this, 'men')">👨 Men's Shirts & Ethnic</div>
+      </div>
+
+      <div id="sizeChartTableContainer" class="size-chart-table-wrapper">
+        <!-- Dynamically rendered size table matching user screenshot -->
+      </div>
+    </div>
+  </div>
 </body>
 </html>

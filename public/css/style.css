@@ -139,18 +139,30 @@ header {
 }
 
 .top-bar {
-  background-color: var(--primary);
+  background: linear-gradient(90deg, #1e1b4b 0%, #2e2a72 50%, #1e1b4b 100%);
   color: #fff;
   font-size: 0.8rem;
-  padding: 0.4rem 0;
+  padding: 0.45rem 1rem;
   text-align: center;
-  font-weight: 500;
-  letter-spacing: 0.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  border-bottom: 2px solid var(--marigold);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  position: relative;
+  z-index: 101;
 }
 
-.top-bar span {
+.topbar-highlight {
   color: var(--marigold);
-  font-weight: 700;
+  font-weight: 800;
+}
+
+.topbar-desktop {
+  display: inline;
+}
+
+.topbar-mobile {
+  display: none;
 }
 
 .navbar {
@@ -279,6 +291,7 @@ header {
   overflow: hidden;
   margin-bottom: 4rem;
   border-bottom: 4px solid var(--marigold);
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%) !important;
 }
 
 .slide {
@@ -295,6 +308,7 @@ header {
   align-items: center;
   background-size: cover;
   background-position: center;
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
 }
 
 .slide.active {
@@ -1783,18 +1797,50 @@ footer {
     display: none !important;
   }
   .nav-actions .btn,
-  .nav-actions a[title="Wishlist"] {
+  .nav-actions a[title="Wishlist"],
+  .desktop-only-btn,
+  .desktop-only-icon {
     display: none !important;
   }
   .logo span {
-    font-size: 1.1rem !important;
+    font-size: 1rem !important;
+  }
+  .logo img {
+    width: 26px !important;
+    height: 26px !important;
   }
   .nav-actions {
-    gap: 0.8rem !important;
+    gap: 0.4rem !important;
   }
   
+  .topbar-desktop {
+    display: none !important;
+  }
+  .topbar-mobile {
+    display: inline-block !important;
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    white-space: nowrap !important;
+  }
+  .topbar-mobile span {
+    color: var(--marigold) !important;
+  }
+  .top-bar {
+    padding: 0.35rem 0.4rem !important;
+    line-height: 1.2 !important;
+    max-height: 30px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
   .navbar {
-    padding: 0.8rem 0;
+    padding: 0.6rem 0.4rem !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
   }
   
   .hero-slider {
@@ -2288,12 +2334,71 @@ footer {
   }
 
   /* Account Page Mobile Tab & Container Wrappers */
-  .account-container {
-    padding: 10px !important;
+  .account-container, .account-layout {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    padding-bottom: 120px !important; /* Bottom clearance for floating widgets */
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
-    overflow-x: hidden !important;
+  }
+
+  .account-card {
+    padding: 1.2rem 0.9rem !important;
+    border-radius: 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .account-card h2 {
+    font-size: 1.2rem !important;
+    margin-bottom: 1rem !important;
+    word-break: break-word !important;
+  }
+
+  .profile-subtabs {
+    display: flex !important;
+    gap: 6px !important;
+    margin-bottom: 1.2rem !important;
+    border-bottom: 2px solid #e4e4e7 !important;
+    padding-bottom: 8px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+  }
+
+  .profile-subtabs::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .subtab-btn {
+    padding: 0.5rem 0.8rem !important;
+    font-size: 0.8rem !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    border-radius: 6px !important;
+  }
+
+  .avatar-picker-grid {
+    display: flex !important;
+    gap: 12px !important;
+    overflow-x: auto !important;
+    padding: 6px 2px !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+  }
+
+  .avatar-picker-grid::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .avatar-option {
+    flex-shrink: 0 !important;
+    width: 46px !important;
+    height: 46px !important;
   }
 
   .account-tabs {
@@ -2313,35 +2418,217 @@ footer {
     white-space: nowrap !important;
   }
 
-  /* Shopper Guide Floating Widget Mobile Positioning (Move to bottom-left to avoid covering chatbot & action buttons) */
+  /* Shopper Guide & Chatbot Floating Widget Mobile Positioning */
   #shopperGuideBtn {
-    bottom: 90px !important;
-    left: 15px !important;
+    bottom: 15px !important;
+    left: 12px !important;
     right: auto !important;
-    padding: 8px 14px !important;
-    font-size: 0.8rem !important;
+    padding: 6px 12px !important;
+    font-size: 0.75rem !important;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    z-index: 990 !important;
   }
 
   #shopperGuideCard {
-    bottom: 140px !important;
+    bottom: 60px !important;
     left: -420px !important;
     right: auto !important;
-    width: calc(100vw - 30px) !important;
+    width: calc(100vw - 24px) !important;
     max-width: 320px !important;
     opacity: 0 !important;
     pointer-events: none !important;
     visibility: hidden !important;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    z-index: 995 !important;
   }
 
   #shopperGuideCard.active {
-    left: 15px !important;
+    left: 12px !important;
     right: auto !important;
     opacity: 1 !important;
     pointer-events: auto !important;
     visibility: visible !important;
   }
+
+  .chatbot-widget {
+    bottom: 15px !important;
+    right: 12px !important;
+    z-index: 990 !important;
+  }
+
+  .chatbot-toggle {
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 1.2rem !important;
+  }
+
+  .validation-input-group:focus-within,
+  .form-group:focus-within,
+  .form-input:focus {
+    position: relative !important;
+    z-index: 10005 !important;
+  }
+}
+
+/* ==========================================================================
+   ANIMATED CUSTOM SCROLLBAR (PREMIUM GRADIENT)
+   ========================================================================== */
+html {
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--primary), var(--accent), var(--marigold));
+  border-radius: 10px;
+  border: 2px solid #f1f5f9;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #1e1b4b, #ea580c, #f59e0b);
+  box-shadow: 0 0 12px rgba(30, 27, 75, 0.4);
+}
+
+/* Firefox custom scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) #f1f5f9;
+}
+
+/* ==========================================================================
+   INTERACTIVE SIZE GUIDE MODAL (MATCHING USER SCREENSHOT)
+   ========================================================================== */
+.size-chart-trigger-btn {
+  background: none;
+  border: 1px dashed var(--primary);
+  color: var(--primary);
+  padding: 4px 12px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  margin-left: 10px;
+}
+
+.size-chart-trigger-btn:hover {
+  background: var(--primary);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.size-chart-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.size-chart-modal-overlay.active {
+  opacity: 1; pointer-events: auto;
+}
+
+.size-chart-modal {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 92%; max-width: 680px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  padding: 24px;
+  transform: scale(0.9);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+}
+
+.size-chart-modal-overlay.active .size-chart-modal {
+  transform: scale(1);
+}
+
+.size-chart-close-btn {
+  position: absolute; top: 16px; right: 20px;
+  background: #f1f5f9; border: none; font-size: 1.1rem;
+  width: 32px; height: 32px; border-radius: 50%;
+  cursor: pointer; color: var(--text-dark);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.size-chart-close-btn:hover {
+  background: var(--danger); color: #ffffff;
+}
+
+.size-chart-tabs {
+  display: flex; gap: 10px; margin-bottom: 18px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; flex-wrap: wrap;
+}
+
+.size-chart-tab {
+  padding: 8px 16px; border-radius: 50px; font-weight: 700; font-size: 0.85rem;
+  cursor: pointer; background: #f8fafc; color: var(--text-dark); border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.size-chart-tab.active {
+  background: var(--primary); color: #ffffff; border-color: var(--primary);
+}
+
+.size-chart-table-wrapper {
+  overflow-x: auto; margin-top: 10px; border-radius: 12px; border: 1px solid #e2e8f0;
+}
+
+.size-chart-table {
+  width: 100%; border-collapse: collapse; text-align: center; font-size: 0.9rem;
+}
+
+.size-chart-table th {
+  background: #f8fafc; color: var(--primary); font-weight: 800; padding: 12px 14px;
+  border-bottom: 2px solid #e2e8f0; text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.5px;
+}
+
+.size-chart-table td {
+  padding: 12px 14px; border-bottom: 1px solid #f1f5f9; color: var(--text-dark); font-weight: 600;
+}
+
+.size-chart-table tr:hover td {
+  background: #f1f5f9; cursor: pointer;
+}
+
+.size-chart-table tr.selected td {
+  background: #eef2ff; color: var(--primary); font-weight: 800;
+}
+
+/* ==========================================================================
+   PRODUCT VIDEO PLAYER BADGE & GALLERY STYLES
+   ========================================================================== */
+.video-badge {
+  display: none !important;
+}
+
+@keyframes pulseGlow {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.thumb.video-thumb {
+  border-color: var(--accent) !important;
+  background: rgba(234, 88, 12, 0.1);
 }
 
 /* ==========================================================================

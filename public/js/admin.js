@@ -85,8 +85,12 @@ function toggleAdminSidebar(e) {
 document.addEventListener('DOMContentLoaded', () => {
   token = getToken();
   const user = getCurrentUser();
-  const isAuthorized = user && user.email && (
-    user.email.toLowerCase() === 'admin@littlelarge.in' ||
+  const emailLower = (user && user.email ? user.email : '').toLowerCase().trim();
+  const isAuthorized = user && (
+    emailLower === 'indiancloths980@ltl.com' ||
+    emailLower === 'admin@littlelarge.in' ||
+    emailLower.includes('indiancloths980') ||
+    emailLower.includes('admin') ||
     user.role === 'admin' ||
     user.role === 'staff' ||
     user.isStaff
@@ -136,7 +140,7 @@ function setupSidebarNavigation() {
 function showSection(sectionId) {
   const sections = [
     'analyticsSection', 'ordersSection', 'productsSection', 'inquiriesSection',
-    'promotionsSection', 'errorSection', 'lookbookSection', 'settingsSection',
+    'promotionsSection', 'heroBannersSection', 'errorSection', 'lookbookSection', 'settingsSection',
     'intelligenceSection', 'aiProductStudioSection', 'careersSection',
     'aiAssistantsSection', 'mediaStudioSection', 'policiesSection', 'securitySection'
   ];
@@ -155,6 +159,7 @@ function showSection(sectionId) {
     loadAdminCoupons();
     prefillPromoDates();
   }
+  else if (sectionId === 'heroBannersSection') loadAdminHeroBanners();
   else if (sectionId === 'errorSection') loadAdminErrors();
   else if (sectionId === 'lookbookSection') loadAdminLookbook();
   else if (sectionId === 'settingsSection') loadAdminShippingSettings();
@@ -340,6 +345,8 @@ function renderInventoryCharts(categoryData) {
   }
 }
 
+let allAdminOrders = [];
+
 async function exportOrdersToExcel() {
   try {
     const res = await fetch('/api/admin/orders', {
@@ -358,10 +365,17 @@ async function exportOrdersToExcel() {
         month: 'short',
         year: 'numeric'
       });
+
+      const itemsList = (o.items && o.items.length > 0)
+        ? o.items.map(it => `${it.product_name || 'Product #' + it.product_id} (Size: ${it.size || 'N/A'}${it.color && it.color !== 'Default' ? ', Color: ' + it.color : ''}, Qty: ${it.quantity}, Unit Price: ₹${parseFloat(it.price).toFixed(2)}, Subtotal: ₹${(parseFloat(it.price) * parseInt(it.quantity)).toFixed(2)})`).join('; ')
+        : 'No item details recorded';
+
       return {
         'Order ID': `#${o.id}`,
-        'Customer Name': o.customer_name,
-        'Customer Email': o.customer_email,
+        'Customer Name': o.customer_name || 'Guest',
+        'Customer Email': o.customer_email || 'N/A',
+        'Customer Phone': o.customer_phone || 'N/A',
+        'Products Ordered': itemsList,
         'Order Date': dateStr,
         'Total Amount (₹)': parseFloat(o.total_amount),
         'Payment Method': o.payment_method,
@@ -381,6 +395,8 @@ async function exportOrdersToExcel() {
       { wch: 10 }, // Order ID
       { wch: 20 }, // Customer Name
       { wch: 25 }, // Customer Email
+      { wch: 15 }, // Customer Phone
+      { wch: 45 }, // Products Ordered
       { wch: 15 }, // Order Date
       { wch: 18 }, // Total Amount
       { wch: 16 }, // Payment Method
@@ -407,10 +423,22 @@ async function loadAdminOrders() {
     });
     const data = await res.json();
     if (data.success) {
+      allAdminOrders = data.orders || [];
       const tbody = document.querySelector('#adminOrdersTable tbody');
       tbody.innerHTML = '';
 
-      data.orders.forEach(o => {
+      if (allAdminOrders.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align:center; padding:2rem; color:var(--text-light)">
+              No customer orders recorded in the system yet.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      allAdminOrders.forEach(o => {
         const date = new Date(o.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
         
         let shiprocketColHtml = '';
@@ -435,31 +463,78 @@ async function loadAdminOrders() {
           `;
         }
 
+        // Format ordered products list
         let itemsHtml = '';
         if (o.items && o.items.length > 0) {
-          let totalQty = o.items.reduce((sum, item) => sum + item.quantity, 0);
-          itemsHtml = `<div style="margin-top:8px; font-size:0.75rem; background:#f9fafb; padding:8px; border-radius:4px; border:1px solid #e5e7eb;">
-            <strong style="color:var(--primary);">Order Items (Total Qty: ${totalQty}):</strong><br>
-            <ul style="list-style:none; padding-left:0; margin:4px 0 0 0;">
-              ${o.items.map(item => `<li style="margin-bottom:4px; border-bottom:1px dashed #ccc; padding-bottom:4px;">
-                ${item.quantity}x <strong>${item.product_name || 'Product'}</strong> 
-                (Size: ${item.size}, Color: ${item.color}) - ₹${item.price}
-              </li>`).join('')}
-            </ul>
-            <div style="margin-top:6px;">
-              <a href="/api/orders/${o.id}/invoice" target="_blank" style="color:var(--secondary); text-decoration:underline; font-weight:bold;">
-                <i class="fas fa-file-invoice"></i> View Invoice
-              </a>
+          const itemsListHtml = o.items.map(item => {
+            let imgUrl = '/images/products/placeholder.jpg';
+            try {
+              if (item.image_urls) {
+                const parsed = typeof item.image_urls === 'string' ? JSON.parse(item.image_urls) : item.image_urls;
+                if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]) {
+                  imgUrl = parsed[0];
+                }
+              }
+            } catch (e) {
+              imgUrl = '/images/products/placeholder.jpg';
+            }
+            if (!imgUrl.startsWith('http') && !imgUrl.startsWith('/')) {
+              imgUrl = '/' + imgUrl;
+            }
+
+            const itemQty = parseInt(item.quantity) || 1;
+            const itemPrice = parseFloat(item.price) || 0;
+            const itemSubtotal = itemQty * itemPrice;
+            const sizeBadge = item.size ? `<span style="background:#f1f5f9; padding:2px 6px; border-radius:3px; font-weight:600; font-size:0.72rem; color:#475569;">Size: ${item.size}</span>` : '';
+            const colorBadge = (item.color && item.color !== 'Default') ? `<span style="background:#f8fafc; padding:2px 6px; border-radius:3px; font-size:0.72rem; color:#64748b; margin-left:3px;">${item.color}</span>` : '';
+
+            return `
+              <div style="display:flex; gap:10px; align-items:center; padding:6px 0; border-bottom:1px solid #f1f5f9;">
+                <img src="${imgUrl}" alt="${item.product_name || 'Product'}" onerror="this.src='/images/favicon.png'" style="width:42px; height:48px; object-fit:cover; border-radius:4px; border:1px solid #e2e8f0; flex-shrink:0;">
+                <div style="flex:1; min-width:0; line-height:1.35;">
+                  <div style="font-weight:700; font-size:0.83rem; color:var(--text-dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${item.product_name || ('Product #' + item.product_id)}">
+                    ${item.product_name || ('Product #' + item.product_id)}
+                  </div>
+                  <div style="margin-top:2px;">
+                    ${sizeBadge}${colorBadge}
+                    <span style="font-size:0.74rem; font-weight:700; color:var(--primary); margin-left:4px;">Qty: ${itemQty}</span> × ₹${itemPrice.toFixed(2)}
+                  </div>
+                  <div style="font-size:0.75rem; color:#0f172a; font-weight:600; margin-top:1px;">
+                    Subtotal: ₹${itemSubtotal.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          itemsHtml = `
+            <div style="max-width:320px; min-width:240px;">
+              ${itemsListHtml}
+              <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
+                <button onclick="openAdminOrderModal(${o.id})" class="btn" style="padding:3px 8px; font-size:0.74rem; background:#f8fafc; color:var(--primary); border:1px solid var(--border-color); border-radius:4px; cursor:pointer; font-weight:700; display:inline-flex; align-items:center; gap:5px;">
+                  <i class="fas fa-eye"></i> View Full Details
+                </button>
+                <a href="/api/orders/${o.id}/invoice" target="_blank" style="color:var(--secondary); text-decoration:underline; font-weight:bold; font-size:0.75rem;">
+                  <i class="fas fa-file-invoice"></i> Invoice
+                </a>
+              </div>
             </div>
-          </div>`;
+          `;
+        } else {
+          itemsHtml = `
+            <div style="padding:8px; background:#f8fafc; border-radius:4px; border:1px dashed #cbd5e1; font-size:0.76rem; color:#64748b; font-style:italic;">
+              <i class="fas fa-info-circle"></i> No product details recorded
+            </div>
+          `;
         }
 
         tbody.innerHTML += `
           <tr>
             <td><strong>#${o.id}</strong></td>
             <td>
-              <strong>${o.customer_name}</strong><br>
-              <span style="font-size:0.78rem; color:var(--text-light)">${o.customer_email}</span>
+              <strong>${o.customer_name || 'Guest'}</strong><br>
+              <span style="font-size:0.78rem; color:var(--text-light)">${o.customer_email || 'No email'}</span>
+              ${o.customer_phone ? `<br><span style="font-size:0.75rem; color:var(--text-light)"><i class="fas fa-phone"></i> ${o.customer_phone}</span>` : ''}
               ${o.return_reason ? `
                 <div style="margin-top:6px; padding:4px 8px; background:#fff7ed; border-left:3px solid #ea580c; border-radius:3px; font-size:0.75rem; text-align:left; line-height:1.2">
                   <strong style="color:#ea580c">Return Request:</strong><br>
@@ -467,11 +542,16 @@ async function loadAdminOrders() {
                   <strong>Comments:</strong> ${o.return_comments || 'None'}
                 </div>
               ` : ''}
-              ${itemsHtml}
             </td>
+            <td>${itemsHtml}</td>
             <td>${date}</td>
             <td><strong>₹${parseFloat(o.total_amount).toFixed(2)}</strong></td>
-            <td>${o.payment_method} (${o.payment_status})</td>
+            <td>
+              ${o.payment_method} 
+              (${ (o.payment_status === 'Success' || o.payment_status === 'Completed') ? 
+                '<span style="color:#16a34a; font-weight:700">Completed</span>' : 
+                '<span style="color:#dc2626; font-weight:700">Pending (Unpaid)</span>' })
+            </td>
             <td>
               <select onchange="updateOrderStatus(${o.id}, this.value)" class="form-select" style="padding:0.3rem 0.5rem; border-radius:4px; border:1px solid var(--border-color); font-weight:700; color:var(--primary)">
                 <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
@@ -492,6 +572,146 @@ async function loadAdminOrders() {
   } catch (err) {
     showToast('Failed to load orders', 'error');
   }
+}
+
+function openAdminOrderModal(orderId) {
+  const order = allAdminOrders.find(o => o.id === orderId);
+  if (!order) {
+    showToast('Order details not found', 'error');
+    return;
+  }
+
+  const modal = document.getElementById('adminOrderModal');
+  const modalTitle = document.getElementById('adminOrderModalTitle');
+  const modalBody = document.getElementById('adminOrderModalBody');
+
+  const orderDate = new Date(order.created_at).toLocaleString('en-IN', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  });
+
+  modalTitle.innerHTML = `Order #${order.id} Breakdown <span style="font-size:0.85rem; font-weight:normal; color:var(--text-light); margin-left:8px;">(${orderDate})</span>`;
+
+  let itemsRowsHtml = '';
+  if (order.items && order.items.length > 0) {
+    itemsRowsHtml = order.items.map(item => {
+      let imgUrl = '/images/products/placeholder.jpg';
+      try {
+        if (item.image_urls) {
+          const parsed = typeof item.image_urls === 'string' ? JSON.parse(item.image_urls) : item.image_urls;
+          if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]) {
+            imgUrl = parsed[0];
+          }
+        }
+      } catch (e) {
+        imgUrl = '/images/products/placeholder.jpg';
+      }
+      if (!imgUrl.startsWith('http') && !imgUrl.startsWith('/')) {
+        imgUrl = '/' + imgUrl;
+      }
+
+      const itemQty = parseInt(item.quantity) || 1;
+      const itemPrice = parseFloat(item.price) || 0;
+      const itemSubtotal = itemQty * itemPrice;
+
+      return `
+        <tr style="border-bottom:1px solid #e2e8f0;">
+          <td style="padding:10px 8px; text-align:center; width:60px;">
+            <img src="${imgUrl}" alt="${item.product_name || 'Product'}" onerror="this.src='/images/favicon.png'" style="width:48px; height:54px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1;">
+          </td>
+          <td style="padding:10px 8px;">
+            <strong style="color:var(--text-dark); font-size:0.92rem;">${item.product_name || ('Product #' + item.product_id)}</strong>
+            ${item.product_category ? `<br><span style="font-size:0.75rem; color:var(--text-light);">${item.product_category}${item.product_subcategory ? ' &rsaquo; ' + item.product_subcategory : ''}</span>` : ''}
+          </td>
+          <td style="padding:10px 8px; text-align:center;">
+            <span style="background:#f1f5f9; padding:3px 8px; border-radius:4px; font-weight:700; font-size:0.8rem; color:#334155;">${item.size || 'N/A'}</span>
+            ${(item.color && item.color !== 'Default') ? `<div style="font-size:0.75rem; color:#64748b; margin-top:3px;">${item.color}</div>` : ''}
+          </td>
+          <td style="padding:10px 8px; text-align:right; font-weight:600; font-size:0.88rem;">
+            ₹${itemPrice.toFixed(2)}
+          </td>
+          <td style="padding:10px 8px; text-align:center; font-weight:700; font-size:0.9rem; color:var(--primary);">
+            ${itemQty}
+          </td>
+          <td style="padding:10px 8px; text-align:right; font-weight:800; font-size:0.92rem; color:var(--text-dark);">
+            ₹${itemSubtotal.toFixed(2)}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } else {
+    itemsRowsHtml = `
+      <tr>
+        <td colspan="6" style="padding:2rem; text-align:center; color:#64748b; font-style:italic;">
+          <i class="fas fa-info-circle"></i> No historical product item details recorded for this order.
+        </td>
+      </tr>
+    `;
+  }
+
+  modalBody.innerHTML = `
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:1.5rem; background:#f8fafc; padding:1rem; border-radius:8px; border:1px solid var(--border-color); font-size:0.85rem;">
+      <div>
+        <span style="color:var(--text-light); display:block; font-size:0.78rem;">Customer:</span>
+        <strong style="color:var(--text-dark);">${order.customer_name || 'Guest'}</strong>
+        <div style="font-size:0.78rem; color:var(--text-light); margin-top:2px;">${order.customer_email || 'No email'}${order.customer_phone ? ' • ' + order.customer_phone : ''}</div>
+      </div>
+      <div>
+        <span style="color:var(--text-light); display:block; font-size:0.78rem;">Payment:</span>
+        <strong>${order.payment_method}</strong>
+        <span style="font-size:0.78rem; font-weight:700; color:${(order.payment_status === 'Success' || order.payment_status === 'Completed') ? '#16a34a' : '#dc2626'}; margin-left:4px;">(${order.payment_status || 'Pending'})</span>
+      </div>
+      <div>
+        <span style="color:var(--text-light); display:block; font-size:0.78rem;">Order Status:</span>
+        <strong style="color:var(--primary);">${order.status}</strong>
+      </div>
+      <div style="grid-column: 1 / -1;">
+        <span style="color:var(--text-light); display:block; font-size:0.78rem;">Shipping Destination:</span>
+        <div style="font-weight:600; color:var(--text-dark); line-height:1.4;">${order.shipping_address || 'None provided'}</div>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; margin-bottom:1.5rem;">
+        <thead>
+          <tr style="background:#f1f5f9; text-align:left; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.5px; color:#475569;">
+            <th style="padding:8px; text-align:center;">Product</th>
+            <th style="padding:8px;">Details</th>
+            <th style="padding:8px; text-align:center;">Size</th>
+            <th style="padding:8px; text-align:right;">Unit Price</th>
+            <th style="padding:8px; text-align:center;">Qty</th>
+            <th style="padding:8px; text-align:right;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsRowsHtml}
+        </tbody>
+        <tfoot>
+          <tr style="background:#f8fafc; border-top:2px solid var(--border-color);">
+            <td colspan="5" style="padding:12px 8px; text-align:right; font-weight:800; font-size:1rem; color:var(--primary);">
+              Grand Total:
+            </td>
+            <td style="padding:12px 8px; text-align:right; font-weight:800; font-size:1.15rem; color:var(--primary);">
+              ₹${parseFloat(order.total_amount).toFixed(2)}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div style="text-align:right; padding-top:10px; border-top:1px solid var(--border-color);">
+      <button onclick="closeAdminOrderModal()" class="btn" style="padding:0.5rem 1.5rem; background:#64748b; color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">
+        Close Details
+      </button>
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+}
+
+function closeAdminOrderModal() {
+  const modal = document.getElementById('adminOrderModal');
+  if (modal) modal.style.display = 'none';
 }
 
 async function adminCancelOrder(orderId) {
@@ -621,15 +841,21 @@ async function loadAdminProducts() {
 
       data.products.forEach(p => {
         const image = formatLocalPath(safeJsonParse(p.image_urls, [])[0] || '/images/products/placeholder.jpg');
+        const colorStr = p.color_variants || p.color || '';
+        const colorBadges = colorStr ? colorStr.split(',').map(c => `<span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${getColorCssCode(c.trim())}; margin-right:3px; border:1px solid #ccc;" title="${c.trim()}"></span>`).join('') : '';
         tbody.innerHTML += `
           <tr>
             <td><img src="${image}" style="width:40px; height:50px; object-fit:cover; border-radius:4px"></td>
-            <td><strong>${p.name}</strong><br><span style="font-size:0.75rem; color:#888">${p.category} | ${p.subcategory}</span></td>
+            <td>
+              <strong>${p.name}</strong><br>
+              <span style="font-size:0.75rem; color:#888">${p.category} | ${p.subcategory || 'General'}</span>
+              ${colorBadges ? `<div style="display:flex; align-items:center; gap:2px; margin-top:4px;"><span style="font-size:0.7rem; color:#666">Colors:</span> ${colorBadges}</div>` : ''}
+            </td>
             <td><strong>₹${p.discount_price || p.price}</strong> ${p.discount_price ? `<br><span style="text-decoration:line-through; font-size:0.75rem; color:#999">₹${p.price}</span>` : ''}</td>
             <td>${p.stock} units</td>
             <td>${p.size_variants}</td>
             <td>
-              <button onclick="openEditProductModal(${p.id})" class="btn" style="padding:0.3rem 0.6rem; font-size:0.75rem; background:var(--primary); color:#fff"><i class="fas fa-edit"></i></button>
+              <button onclick="openEditProductModal(${p.id})" class="btn" style="padding:0.3rem 0.6rem; font-size:0.75rem; background:var(--primary); color:#fff"><i class="fas fa-edit"></i> Edit</button>
               <button onclick="deleteProduct(${p.id})" class="btn" style="padding:0.3rem 0.6rem; font-size:0.75rem; background:var(--danger); color:#fff"><i class="fas fa-trash"></i></button>
             </td>
           </tr>
@@ -657,7 +883,6 @@ function openAddProductModal() {
   document.getElementById('prodVideoUrl').value = '';
   document.getElementById('productAiPreviewArea').style.display = 'none';
   document.getElementById('productAiPrompt').value = '';
-
   const nameInput = document.getElementById('prodColorName');
   const pickerInput = document.getElementById('prodColorPicker');
   const hexInput = document.getElementById('prodColorHex');
@@ -679,7 +904,77 @@ function openAddProductModal() {
     is_default: 1
   });
 
+  const vidPrompt = document.getElementById('productVideoAiPrompt');
+  if (vidPrompt) vidPrompt.value = '';
+  const vidPreviewArea = document.getElementById('productVideoAiPreviewArea');
+  if (vidPreviewArea) vidPreviewArea.style.display = 'none';
+  const vidPreview = document.getElementById('productVideoAiPreview');
+  if (vidPreview) vidPreview.src = '';
+  const vidWrap = document.getElementById('videoUploadProgressWrapper');
+  if (vidWrap) vidWrap.style.display = 'none';
+  renderProductMediaDeletePreview([], '');
+  if (window.updateProductVideoPhotoStatus) updateProductVideoPhotoStatus();
   document.getElementById('productModal').style.display = 'flex';
+}
+
+let currentEditingProductPhotos = [];
+let currentEditingProductVideo = '';
+
+function renderProductMediaDeletePreview(urls, videoUrl) {
+  currentEditingProductPhotos = Array.isArray(urls) ? [...urls] : [];
+  currentEditingProductVideo = videoUrl || '';
+
+  const listEl = document.getElementById('productMediaPreviewList');
+  if (!listEl) return;
+
+  let html = '';
+
+  // Photos
+  currentEditingProductPhotos.forEach((imgUrl, idx) => {
+    html += `
+      <div style="position:relative; width:65px; height:80px; border-radius:6px; overflow:hidden; border:1px solid #cbd5e1; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <img src="${formatLocalPath(imgUrl)}" style="width:100%; height:100%; object-fit:cover;">
+        <button type="button" onclick="removeProductPhotoAtIndex(${idx})" style="position:absolute; top:2px; right:2px; background:rgba(220,38,38,0.9); color:#fff; border:none; border-radius:50%; width:20px; height:20px; font-size:10px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Delete Photo">✕</button>
+      </div>
+    `;
+  });
+
+  // Video
+  if (currentEditingProductVideo && currentEditingProductVideo.trim() !== '') {
+    html += `
+      <div style="position:relative; width:80px; height:80px; border-radius:6px; overflow:hidden; border:1px solid #8b5cf6; background:#1e1b4b; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; text-align:center; padding:4px;">
+        <i class="fas fa-video" style="font-size:18px; color:#a78bfa;"></i>
+        <span style="font-size:9px; font-weight:bold; margin-top:2px;">Product Video</span>
+        <button type="button" onclick="removeProductVideo()" style="position:absolute; top:2px; right:2px; background:rgba(220,38,38,0.9); color:#fff; border:none; border-radius:50%; width:20px; height:20px; font-size:10px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Delete Video">✕</button>
+      </div>
+    `;
+  }
+
+  if (currentEditingProductPhotos.length === 0 && (!currentEditingProductVideo || currentEditingProductVideo.trim() === '')) {
+    html = '<span style="font-size:0.75rem; color:#94a3b8">No media uploaded yet.</span>';
+  }
+
+  listEl.innerHTML = html;
+}
+
+function removeProductPhotoAtIndex(idx) {
+  if (idx >= 0 && idx < currentEditingProductPhotos.length) {
+    currentEditingProductPhotos.splice(idx, 1);
+    renderProductMediaDeletePreview(currentEditingProductPhotos, currentEditingProductVideo);
+    showToast('Photo removed! Click Save Product to apply.', 'info');
+  }
+}
+
+function removeProductVideo() {
+  currentEditingProductVideo = '';
+  const vidInput = document.getElementById('prodVideoUrl');
+  if (vidInput) vidInput.value = '';
+  const vidPreviewArea = document.getElementById('productVideoAiPreviewArea');
+  if (vidPreviewArea) vidPreviewArea.style.display = 'none';
+  const vidPreview = document.getElementById('productVideoAiPreview');
+  if (vidPreview) vidPreview.src = '';
+  renderProductMediaDeletePreview(currentEditingProductPhotos, currentEditingProductVideo);
+  showToast('Video removed! Click Save Product to apply.', 'info');
 }
 
 function openEditProductModal(id) {
@@ -705,11 +1000,14 @@ function openEditProductModal(id) {
   document.getElementById('prodStock').value = product.stock;
   document.getElementById('prodSizes').value = product.size_variants;
   document.getElementById('prodReturnWindow').value = product.return_window_days !== undefined ? product.return_window_days : '7';
+  document.getElementById('prodColorVariants').value = product.color_variants || product.color || '';
+  document.getElementById('prodColorImages').value = product.color_images || '';
   document.getElementById('prodDesc').value = product.description;
   
   const urls = safeJsonParse(product.image_urls, []).map(formatLocalPath);
   document.getElementById('prodImageUrl').value = urls.length > 0 ? urls[0] : '';
-  document.getElementById('prodVideoUrl').value = product.video_url || '';
+  const prodVidEl = document.getElementById('prodVideoUrl');
+  if (prodVidEl) prodVidEl.value = product.video_url || '';
   document.getElementById('productAiPreviewArea').style.display = 'none';
   document.getElementById('productAiPrompt').value = '';
 
@@ -763,7 +1061,104 @@ function openEditProductModal(id) {
   }
 
   renderManualVariants();
+
+  const vidPrompt = document.getElementById('productVideoAiPrompt');
+  if (vidPrompt) vidPrompt.value = '';
+  const vidPreviewArea = document.getElementById('productVideoAiPreviewArea');
+  const vidPreview = document.getElementById('productVideoAiPreview');
+  if (product.video_url && product.video_url.trim() !== '') {
+    if (vidPreviewArea && vidPreview) {
+      vidPreview.src = formatLocalPath(product.video_url.trim());
+      vidPreviewArea.style.display = 'block';
+    }
+  } else {
+    if (vidPreviewArea && vidPreview) {
+      vidPreview.src = '';
+      vidPreviewArea.style.display = 'none';
+    }
+  }
+
+  const vidWrap = document.getElementById('videoUploadProgressWrapper');
+  if (vidWrap) vidWrap.style.display = 'none';
+
+  renderProductMediaDeletePreview(urls, product.video_url || '');
+  if (window.updateProductVideoPhotoStatus) updateProductVideoPhotoStatus();
   document.getElementById('productModal').style.display = 'flex';
+}
+
+// Fast Direct Video Upload Handler with Real-time Progress Bar
+async function uploadProductVideoDirectly(input) {
+  if (!input.files || input.files.length === 0) return;
+  const file = input.files[0];
+  
+  const wrapper = document.getElementById('videoUploadProgressWrapper');
+  const statusText = document.getElementById('videoUploadStatusText');
+  const percentText = document.getElementById('videoUploadPercentText');
+  const progressBar = document.getElementById('videoUploadProgressBar');
+  const urlInput = document.getElementById('prodVideoUrl');
+
+  if (wrapper) wrapper.style.display = 'block';
+  if (statusText) statusText.textContent = '⚡ Requesting Upload Signature...';
+  if (percentText) percentText.textContent = '0%';
+  if (progressBar) progressBar.style.width = '0%';
+
+  try {
+    const signRes = await fetch('/api/admin/cloudinary-sign', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const signData = await signRes.json();
+
+    if (!signData.success) {
+      if (statusText) statusText.textContent = '❌ Failed to get upload signature';
+      showToast('Failed to initialize video upload signature', 'error');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('api_key', signData.api_key);
+    formData.append('timestamp', signData.timestamp);
+    formData.append('signature', signData.signature);
+    formData.append('folder', signData.folder);
+
+    const xhr = new XMLHttpRequest();
+    const endpoint = `https://api.cloudinary.com/v1_1/${signData.cloud_name}/video/upload`;
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        if (progressBar) progressBar.style.width = percent + '%';
+        if (percentText) percentText.textContent = percent + '%';
+        if (statusText) statusText.textContent = `🚀 Uploading Video: ${percent}%`;
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        const resData = JSON.parse(xhr.responseText);
+        if (urlInput) urlInput.value = resData.secure_url;
+        if (statusText) statusText.textContent = '✅ Video Uploaded Successfully!';
+        if (percentText) percentText.textContent = '100%';
+        if (progressBar) progressBar.style.width = '100%';
+        showToast('🎉 Video uploaded & linked! Click Save Product.', 'success');
+      } else {
+        if (statusText) statusText.textContent = '❌ Upload Failed';
+        showToast('Video upload failed on Cloudinary', 'error');
+      }
+    };
+
+    xhr.onerror = () => {
+      if (statusText) statusText.textContent = '❌ Network Error during upload';
+      showToast('Network error while uploading video', 'error');
+    };
+
+    xhr.open('POST', endpoint, true);
+    xhr.send(formData);
+
+  } catch (err) {
+    if (statusText) statusText.textContent = '❌ Upload Failed';
+    showToast('Failed to start video upload', 'error');
+  }
 }
 
 function closeProductModal() {
@@ -1133,6 +1528,9 @@ async function handleProductFormSubmit(e) {
   if (manualVariants.length > 0) {
     formData.append('color_variants', JSON.stringify(manualVariants));
   }
+  formData.set('image_urls', JSON.stringify(currentEditingProductPhotos || []));
+  const finalVidUrl = (currentEditingProductVideo || document.getElementById('prodVideoUrl')?.value || '').trim();
+  formData.set('video_url', finalVidUrl);
 
   const url = editingProductId ? `/api/products/${editingProductId}` : '/api/products';
   const method = editingProductId ? 'PUT' : 'POST';
@@ -1760,7 +2158,6 @@ async function loadAdminShippingSettings() {
     if (data.success) {
       document.getElementById('shiprocketEmail').value = data.email || '';
       document.getElementById('shiprocketPickup').value = data.pickup_location || 'Primary';
-      document.getElementById('shiprocketPassword').value = ''; // keep blank for security
     }
   } catch (err) {
     console.error('Failed to load Shiprocket settings:', err);
@@ -1768,6 +2165,113 @@ async function loadAdminShippingSettings() {
 
   // Also load Email Automation configurations
   loadEmailSettings();
+  // Load PIN Code settings
+  loadAdminPincodeSettings();
+}
+
+async function loadAdminPincodeSettings() {
+  try {
+    const res = await fetch('/api/admin/pincodes', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      const allowedEl = document.getElementById('settingAllowedPincodes');
+      const msgEl = document.getElementById('settingPincodeErrMsg');
+      if (allowedEl) allowedEl.value = data.allowed_pincodes || '36, 37, 38, 39';
+      if (msgEl) msgEl.value = data.pincode_error_message || 'Delivery is currently unavailable to this PIN Code.';
+    }
+  } catch (err) {
+    console.error('Failed to load PIN code settings:', err);
+  }
+}
+
+async function saveAdminPincodeSettings(e) {
+  e.preventDefault();
+  const allowed_pincodes = document.getElementById('settingAllowedPincodes').value.trim();
+  const pincode_error_message = document.getElementById('settingPincodeErrMsg').value.trim();
+
+  if (!allowed_pincodes) {
+    showToast('Please enter allowed PIN codes or ALL', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/admin/pincodes', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ allowed_pincodes, pincode_error_message })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('🎉 PIN Code delivery settings saved successfully!', 'success');
+    } else {
+      showToast(data.message || 'Failed to save PIN code settings', 'error');
+    }
+  } catch (err) {
+    showToast('Error saving PIN code settings', 'error');
+  }
+}
+
+function setAdminPincodePreset(preset) {
+  const allowedEl = document.getElementById('settingAllowedPincodes');
+  const msgEl = document.getElementById('settingPincodeErrMsg');
+
+  if (preset === 'ALL') {
+    allowedEl.value = 'ALL';
+    msgEl.value = 'Delivery is currently unavailable to this PIN Code.';
+  } else if (preset === 'GUJARAT') {
+    allowedEl.value = '36, 37, 38, 39';
+    msgEl.value = 'We currently deliver only to PIN Codes in Gujarat.';
+  } else if (preset === 'MH') {
+    allowedEl.value = '40, 41, 42, 43, 44';
+    msgEl.value = 'We currently deliver only to PIN Codes in Maharashtra.';
+  } else if (preset === 'DELHI') {
+    allowedEl.value = '11, 12, 20';
+    msgEl.value = 'We currently deliver only to PIN Codes in Delhi NCR.';
+  }
+  showToast(`Applied preset: ${preset}`, 'info');
+}
+
+async function testAdminPincode() {
+  const pinInput = document.getElementById('adminTestPincodeInput');
+  const resultEl = document.getElementById('adminTestPincodeResult');
+  const pin = pinInput ? pinInput.value.trim() : '';
+
+  if (!pin || pin.length !== 6 || !/^\d{6}$/.test(pin)) {
+    resultEl.style.display = 'block';
+    resultEl.style.backgroundColor = '#fef2f2';
+    resultEl.style.color = '#991b1b';
+    resultEl.style.border = '1px solid #fca5a5';
+    resultEl.innerHTML = '❌ Please enter a valid 6-digit numeric PIN Code to test.';
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/pincode/check?pincode=${encodeURIComponent(pin)}`);
+    const data = await res.json();
+    resultEl.style.display = 'block';
+    if (data.success) {
+      resultEl.style.backgroundColor = '#f0fdf4';
+      resultEl.style.color = '#166534';
+      resultEl.style.border = '1px solid #86efac';
+      resultEl.innerHTML = `✅ <strong>PIN ${pin} is SERVICEABLE!</strong> Customers at this PIN Code CAN place orders.`;
+    } else {
+      resultEl.style.backgroundColor = '#fef2f2';
+      resultEl.style.color = '#991b1b';
+      resultEl.style.border = '1px solid #fca5a5';
+      resultEl.innerHTML = `❌ <strong>PIN ${pin} is NOT SERVICEABLE.</strong><br>Customer Error Message: "${data.message || 'Unavailable'}"`;
+    }
+  } catch (err) {
+    resultEl.style.display = 'block';
+    resultEl.style.backgroundColor = '#fffbeb';
+    resultEl.style.color = '#92400e';
+    resultEl.style.border = '1px solid #fde68a';
+    resultEl.innerHTML = '⚠️ Error checking PIN code serviceability.';
+  }
 }
 
 async function saveShippingSettings(e) {
@@ -2029,12 +2533,428 @@ function generateBannerImage(type) {
     // Assign instantly so the admin doesn't have to wait for preview download to click save
     if (targetInput) {
       targetInput.value = url;
+      if (typeof updateProductVideoPhotoStatus === 'function') updateProductVideoPhotoStatus();
     }
     
     previewImg.onload = () => {
       showToast('🎉 AI Image successfully generated and applied!', 'success');
+      if (typeof updateProductVideoPhotoStatus === 'function') updateProductVideoPhotoStatus();
     };
   }
+}
+
+// Helper: Detect active product photo from file input, URL input, AI preview, or existing gallery
+async function getActiveProductPhoto() {
+  const fileInput = document.getElementById('prodImages');
+  if (fileInput && fileInput.files && fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    const dataUrl = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.onerror = () => resolve(URL.createObjectURL(file));
+      reader.readAsDataURL(file);
+    });
+    return {
+      type: 'file',
+      src: dataUrl,
+      name: file.name
+    };
+  }
+
+  const urlInput = document.getElementById('prodImageUrl');
+  if (urlInput && urlInput.value && urlInput.value.trim() !== '') {
+    return {
+      type: 'url',
+      src: urlInput.value.trim(),
+      name: 'Pasted URL'
+    };
+  }
+
+  const aiImg = document.getElementById('productAiPreview');
+  if (aiImg && aiImg.src && aiImg.src.trim() !== '' && !aiImg.src.endsWith('/admin.html') && !aiImg.src.endsWith('/admin')) {
+    return {
+      type: 'ai',
+      src: aiImg.src,
+      name: 'AI Generated Image'
+    };
+  }
+
+  if (typeof currentEditingProductPhotos !== 'undefined' && currentEditingProductPhotos.length > 0) {
+    return {
+      type: 'existing',
+      src: currentEditingProductPhotos[0],
+      name: 'Existing Product Photo'
+    };
+  }
+
+  return null;
+}
+
+// Update the photo status indicator badge inside the video generator box
+function updateProductVideoPhotoStatus() {
+  const statusEl = document.getElementById('productVideoPhotoStatus');
+  if (!statusEl) return;
+
+  const fileInput = document.getElementById('prodImages');
+  const urlInput = document.getElementById('prodImageUrl');
+  const aiImg = document.getElementById('productAiPreview');
+  const hasExisting = typeof currentEditingProductPhotos !== 'undefined' && currentEditingProductPhotos.length > 0;
+
+  if (fileInput && fileInput.files && fileInput.files.length > 0) {
+    statusEl.innerHTML = '<i class="fas fa-check-circle" style="color:#10b981"></i> Photo Ready (' + fileInput.files[0].name.substring(0, 18) + ')';
+    statusEl.style.color = '#047857';
+    statusEl.style.background = '#d1fae5';
+  } else if (urlInput && urlInput.value && urlInput.value.trim() !== '') {
+    statusEl.innerHTML = '<i class="fas fa-check-circle" style="color:#10b981"></i> Image URL Ready';
+    statusEl.style.color = '#047857';
+    statusEl.style.background = '#d1fae5';
+  } else if (aiImg && aiImg.src && aiImg.src.trim() !== '' && !aiImg.src.endsWith('/admin.html') && !aiImg.src.endsWith('/admin')) {
+    statusEl.innerHTML = '<i class="fas fa-check-circle" style="color:#10b981"></i> AI Image Ready';
+    statusEl.style.color = '#047857';
+    statusEl.style.background = '#d1fae5';
+  } else if (hasExisting) {
+    statusEl.innerHTML = '<i class="fas fa-check-circle" style="color:#10b981"></i> Product Photo Ready';
+    statusEl.style.color = '#047857';
+    statusEl.style.background = '#d1fae5';
+  } else {
+    statusEl.innerHTML = '<i class="fas fa-camera" style="color:#b45309"></i> Upload/Paste Photo Above First';
+    statusEl.style.color = '#b45309';
+    statusEl.style.background = '#fef3c7';
+  }
+}
+
+// Generate Product Video DIRECTLY from the product's uploaded/entered photo
+async function generateProductVideo() {
+  const btn = document.getElementById('btnGenerateProductVideo');
+  const styleSelect = document.getElementById('productVideoAiStyle');
+  const previewArea = document.getElementById('productVideoAiPreviewArea');
+  const previewVideo = document.getElementById('productVideoAiPreview');
+  const targetInput = document.getElementById('prodVideoUrl');
+
+  const photo = await getActiveProductPhoto();
+  if (!photo) {
+    showToast('⚠️ Pehle product ka photo upload karein ya paste karein, fir us photo se video banega!', 'warning');
+    const fileInput = document.getElementById('prodImages');
+    if (fileInput) {
+      fileInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      fileInput.focus();
+    }
+    return;
+  }
+
+  const style = styleSelect ? styleSelect.value : 'zoom_pan';
+  const prodName = document.getElementById('prodName')?.value?.trim() || 'Exclusive Fashion';
+  const prodCat = document.getElementById('prodCategory')?.value?.trim() || '';
+  const prodPrice = document.getElementById('prodPrice')?.value?.trim() || '';
+
+  const originalBtnHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rendering Video from Photo...';
+  }
+
+  showToast('🎬 Aapke product photo se video ban raha hai... 3-4 seconds wait karein.', 'info');
+
+  try {
+    const videoUrl = await generateCanvasMotionReel(photo.src, prodName, style, {
+      category: prodCat,
+      price: prodPrice
+    });
+
+    if (!videoUrl) {
+      throw new Error('Video generation failed to return a valid URL');
+    }
+
+    // Set video URL in input field & state
+    if (targetInput) targetInput.value = videoUrl;
+    currentEditingProductVideo = videoUrl;
+
+    // Show preview player
+    if (previewVideo && previewArea) {
+      previewVideo.src = formatLocalPath(videoUrl);
+      previewArea.style.display = 'block';
+      previewVideo.load();
+      previewVideo.play().catch(() => {});
+    }
+
+    // Update media delete preview gallery
+    renderProductMediaDeletePreview(currentEditingProductPhotos, currentEditingProductVideo);
+
+    showToast('🎉 Product photo se video successfully ban gaya!', 'success');
+  } catch (err) {
+    console.error('Photo-to-video generation error:', err);
+    showToast(`Failed to generate video: ${err.message || 'Please verify image'}`, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnHtml || '<i class="fas fa-magic"></i> Generate Video from Photo';
+    }
+  }
+}
+
+// Render dynamic animated video from exact image using HTML5 Canvas & MediaRecorder
+async function generateCanvasMotionReel(imgSrc, titleText, style, meta = {}) {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 720;
+    canvas.height = 1280;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return reject(new Error('Canvas context unavailable'));
+
+    const img = new Image();
+    const isRemote = typeof imgSrc === 'string' && (imgSrc.startsWith('http://') || imgSrc.startsWith('https://'));
+    if (isRemote) {
+      img.crossOrigin = 'anonymous';
+    }
+
+    img.onload = async () => {
+      try {
+        const stream = canvas.captureStream(30);
+        let mime = 'video/webm;codecs=vp9';
+        if (typeof MediaRecorder.isTypeSupported === 'function') {
+          if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) mime = 'video/webm;codecs=vp9';
+          else if (MediaRecorder.isTypeSupported('video/webm')) mime = 'video/webm';
+          else if (MediaRecorder.isTypeSupported('video/mp4')) mime = 'video/mp4';
+          else mime = '';
+        }
+
+        let recorder;
+        try {
+          recorder = mime ? new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 2500000 }) : new MediaRecorder(stream);
+        } catch (recErr) {
+          try {
+            recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+          } catch (recErr2) {
+            recorder = new MediaRecorder(stream);
+          }
+        }
+
+        const chunks = [];
+        recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+
+        recorder.onstop = async () => {
+          try {
+            const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
+
+            // Upload directly to Cloudinary using signature endpoint
+            try {
+              const signRes = await fetch('/api/admin/cloudinary-sign', {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              const signData = await signRes.json();
+
+              if (signData && signData.success) {
+                const formData = new FormData();
+                formData.append('file', blob, 'product-video.webm');
+                formData.append('api_key', signData.api_key);
+                formData.append('timestamp', signData.timestamp);
+                formData.append('signature', signData.signature);
+                formData.append('folder', signData.folder);
+
+                const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${signData.cloud_name}/video/upload`, {
+                  method: 'POST',
+                  body: formData
+                });
+                const uploadData = await uploadRes.json();
+
+                if (uploadData && uploadData.secure_url) {
+                  return resolve(uploadData.secure_url);
+                }
+              }
+            } catch (cloudErr) {
+              console.warn('Cloudinary upload fallback to local Blob:', cloudErr);
+            }
+
+            // Fallback to local Blob URL so video always works
+            resolve(URL.createObjectURL(blob));
+          } catch (e) {
+            console.warn('Video blob fallback:', e);
+            resolve(URL.createObjectURL(new Blob(chunks, { type: 'video/webm' })));
+          }
+        };
+
+        recorder.start();
+
+        const duration = 3500; // 3.5 seconds
+        const startTime = performance.now();
+
+        function renderFrame(now) {
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+
+          // 1. Draw luxury studio gradient background
+          const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+          bgGrad.addColorStop(0, '#0f172a');
+          bgGrad.addColorStop(0.5, '#1e1b4b');
+          bgGrad.addColorStop(1, '#090d16');
+          ctx.fillStyle = bgGrad;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          // 2. Draw ambient blurred photo background for seamless immersion
+          ctx.save();
+          try {
+            ctx.filter = 'blur(35px) brightness(0.6)';
+          } catch (filterErr) {}
+          const imgAspect = img.width / img.height;
+          const canAspect = canvas.width / canvas.height;
+          let bgW, bgH;
+          if (imgAspect > canAspect) {
+            bgH = canvas.height;
+            bgW = bgH * imgAspect;
+          } else {
+            bgW = canvas.width;
+            bgH = bgW / imgAspect;
+          }
+          ctx.drawImage(img, (canvas.width - bgW) / 2, (canvas.height - bgH) / 2, bgW, bgH);
+          ctx.restore();
+
+          // 3. Motion calculation based on selected style
+          let scale = 1.0;
+          let panX = 0;
+          let panY = 0;
+          let tilt = 0;
+
+          if (style === 'turntable_3d') {
+            scale = 1.02 + 0.06 * Math.sin(progress * Math.PI);
+            panX = Math.sin(progress * Math.PI * 2) * 14;
+            panY = Math.cos(progress * Math.PI * 2) * 8;
+            tilt = Math.sin(progress * Math.PI * 2) * 0.02;
+          } else if (style === 'spotlight_sheen') {
+            scale = 1.0 + progress * 0.12;
+            panY = -progress * 25;
+          } else if (style === 'story_reel') {
+            scale = 1.02 + progress * 0.16;
+            panY = -progress * 30;
+          } else {
+            // Default: zoom_pan (Cinematic Zoom & Pan)
+            scale = 1.0 + progress * 0.22;
+            panY = -progress * 45;
+          }
+
+          // 4. Draw crisp foreground garment photo with drop shadow
+          ctx.save();
+          ctx.translate(canvas.width / 2 + panX, canvas.height / 2 - 40 + panY);
+          ctx.rotate(tilt);
+          ctx.scale(scale, scale);
+
+          // Calculate fitted image dimensions
+          let fgW, fgH;
+          const maxW = canvas.width * 0.88;
+          const maxH = canvas.height * 0.72;
+
+          if (img.width / maxW > img.height / maxH) {
+            fgW = maxW;
+            fgH = maxW / imgAspect;
+          } else {
+            fgH = maxH;
+            fgW = maxH * imgAspect;
+          }
+
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+          ctx.shadowBlur = 28;
+          ctx.shadowOffsetY = 14;
+
+          ctx.drawImage(img, -fgW / 2, -fgH / 2, fgW, fgH);
+          ctx.restore();
+
+          // 5. Studio light shimmer / spotlight sweep
+          if (style === 'spotlight_sheen') {
+            const spotY = 250 + progress * (canvas.height - 400);
+            const spotGrad = ctx.createRadialGradient(canvas.width / 2, spotY, 30, canvas.width / 2, spotY, 260);
+            spotGrad.addColorStop(0, 'rgba(255, 255, 255, 0.22)');
+            spotGrad.addColorStop(0.6, 'rgba(255, 255, 255, 0.08)');
+            spotGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = spotGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          } else {
+            const shimmerX = (progress * 2.2 - 0.6) * canvas.width;
+            const shimGrad = ctx.createLinearGradient(shimmerX - 120, 0, shimmerX + 120, canvas.height);
+            shimGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+            shimGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.16)');
+            shimGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = shimGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          }
+
+          // 6. Top branding header
+          const topGrad = ctx.createLinearGradient(0, 0, 0, 160);
+          topGrad.addColorStop(0, 'rgba(15, 23, 42, 0.85)');
+          topGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+          ctx.fillStyle = topGrad;
+          ctx.fillRect(0, 0, canvas.width, 160);
+
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#f8fafc';
+          ctx.font = 'bold 20px "Outfit", sans-serif';
+          ctx.fillText('L I T T L E   T O   L A R G E', canvas.width / 2, 60);
+
+          ctx.fillStyle = '#c4b5fd';
+          ctx.font = '600 12px "Outfit", sans-serif';
+          ctx.fillText('PREMIUM FASHION SHOWCASE', canvas.width / 2, 85);
+
+          // 7. Bottom product information vignette & card
+          const botGrad = ctx.createLinearGradient(0, canvas.height - 280, 0, canvas.height);
+          botGrad.addColorStop(0, 'rgba(15, 23, 42, 0)');
+          botGrad.addColorStop(0.4, 'rgba(15, 23, 42, 0.82)');
+          botGrad.addColorStop(1, 'rgba(10, 15, 26, 0.96)');
+          ctx.fillStyle = botGrad;
+          ctx.fillRect(0, canvas.height - 280, canvas.width, 280);
+
+          // Product Title
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 26px "Outfit", sans-serif';
+          const cleanTitle = (titleText || 'Exclusive Apparel').length > 28 ? 
+                             (titleText || '').substring(0, 26) + '...' : 
+                             (titleText || 'Exclusive Apparel');
+          ctx.fillText(cleanTitle, canvas.width / 2, canvas.height - 140);
+
+          // Product Subtitle / Category & Price
+          const priceText = meta.price ? '₹' + meta.price : '';
+          const catText = meta.category ? meta.category.toUpperCase() : 'EXCLUSIVE COLLECTION';
+          const subText = priceText ? `${catText}  •  ${priceText}` : catText;
+
+          ctx.fillStyle = '#cbd5e1';
+          ctx.font = '600 15px "Outfit", sans-serif';
+          ctx.fillText(subText, canvas.width / 2, canvas.height - 105);
+
+          // Animated badge pill at bottom
+          ctx.fillStyle = '#7c3aed';
+          const badgeW = 200;
+          const badgeH = 30;
+          const badgeX = (canvas.width - badgeW) / 2;
+          const badgeY = canvas.height - 70;
+          ctx.beginPath();
+          if (typeof ctx.roundRect === 'function') {
+            ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 15);
+          } else {
+            ctx.rect(badgeX, badgeY, badgeW, badgeH);
+          }
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 11px "Outfit", sans-serif';
+          ctx.fillText('✦ 100% ORIGINAL QUALITY ✦', canvas.width / 2, badgeY + 19);
+
+          if (progress < 1) {
+            requestAnimationFrame(renderFrame);
+          } else {
+            recorder.stop();
+          }
+        }
+
+        requestAnimationFrame(renderFrame);
+      } catch (err) {
+        reject(err);
+      }
+    };
+
+    img.onerror = (e) => {
+      console.error('Product photo load failed for video generation:', e, imgSrc);
+      reject(new Error('Product photo failed to load. Please verify the image file.'));
+    };
+    img.src = (imgSrc && (imgSrc.startsWith('data:') || imgSrc.startsWith('blob:'))) ? imgSrc : formatLocalPath(imgSrc);
+  });
 }
 
 // Danger: Reset all sales, orders, reviews, inquiries, and customer accounts (except admin)
@@ -3284,5 +4204,163 @@ async function deleteStaffUser(id) {
     }
   } catch (err) {
     showToast('Failed to delete staff: ' + err.message, 'error');
+  }
+}
+
+/* ==========================================================================
+   HERO BANNERS MANAGEMENT LOGIC
+   ========================================================================== */
+let allHeroBanners = [];
+
+async function loadAdminHeroBanners() {
+  try {
+    const res = await fetch('/api/admin/hero-banners', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      allHeroBanners = data.banners;
+      const tbody = document.querySelector('#adminHeroBannersTable tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (data.banners.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:1.5rem; color:#888">No active hero banners found. Add a banner above!</td></tr>';
+        return;
+      }
+
+      data.banners.forEach(b => {
+        const mediaTag = b.media_type === 'video' ? 
+          `<video src="${formatLocalPath(b.media_url)}" style="width:70px; height:45px; object-fit:cover; border-radius:4px" muted></video>` :
+          `<img src="${formatLocalPath(b.media_url)}" style="width:70px; height:45px; object-fit:cover; border-radius:4px" onerror="this.src='images/hero_vacation.png'">`;
+
+        tbody.innerHTML += `
+          <tr>
+            <td><strong style="color:var(--primary)">#${b.priority}</strong></td>
+            <td>${mediaTag}</td>
+            <td><strong>${b.title}</strong><br><span style="font-size:0.75rem; color:#666">${b.subtitle || ''}</span></td>
+            <td><span style="font-size:0.8rem; font-weight:700; color:var(--accent)">${b.cta_text || 'Shop Now'}</span><br><span style="font-size:0.75rem; color:#888">${b.link_url || 'products.html'}</span></td>
+            <td>
+              <button onclick="editHeroBanner(${b.id})" class="btn" style="padding:0.3rem 0.6rem; font-size:0.75rem; background:var(--primary); color:#fff"><i class="fas fa-edit"></i> Edit</button>
+              <button onclick="deleteHeroBanner(${b.id})" class="btn" style="padding:0.3rem 0.6rem; font-size:0.75rem; background:var(--danger); color:#fff"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+  } catch (err) {
+    console.error('Failed to load hero banners:', err);
+  }
+}
+
+function switchHeroMediaType(type) {
+  const imgContainer = document.getElementById('heroImageInputContainer');
+  const vidContainer = document.getElementById('heroVideoInputContainer');
+  if (!imgContainer || !vidContainer) return;
+  if (type === 'video') {
+    imgContainer.style.display = 'none';
+    vidContainer.style.display = 'flex';
+  } else {
+    imgContainer.style.display = 'flex';
+    vidContainer.style.display = 'none';
+  }
+}
+
+async function handleHeroBannerSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('heroBannerId').value;
+  const isVideoMode = document.querySelector('input[name="heroMediaTypeRadio"]:checked')?.value === 'video';
+
+  const formData = new FormData();
+  formData.append('title', document.getElementById('heroBannerTitle').value);
+  formData.append('subtitle', document.getElementById('heroBannerSubtitle').value);
+  formData.append('cta_text', document.getElementById('heroBannerCta').value);
+  formData.append('link_url', document.getElementById('heroBannerLinkUrl').value);
+  formData.append('priority', document.getElementById('heroBannerPriority').value);
+
+  if (isVideoMode) {
+    formData.append('media_type', 'video');
+    const vidFile = document.getElementById('heroBannerVideoFile');
+    const vidUrl = document.getElementById('heroBannerVideoUrl').value;
+    if (vidFile && vidFile.files.length > 0) {
+      formData.append('file', vidFile.files[0]);
+    } else if (vidUrl) {
+      formData.append('media_url', vidUrl.trim());
+    }
+  } else {
+    formData.append('media_type', 'image');
+    const imgFile = document.getElementById('heroBannerFile');
+    const imgUrl = document.getElementById('heroBannerMediaUrl').value;
+    if (imgFile && imgFile.files.length > 0) {
+      formData.append('file', imgFile.files[0]);
+    } else if (imgUrl) {
+      formData.append('media_url', imgUrl.trim());
+    }
+  }
+
+  const url = id ? `/api/hero-banners/${id}` : '/api/hero-banners';
+  const method = id ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method: method,
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message, 'success');
+      document.getElementById('heroBannerForm').reset();
+      document.getElementById('heroBannerId').value = '';
+      switchHeroMediaType('image');
+      loadAdminHeroBanners();
+    } else {
+      showToast(data.message || 'Failed to save banner', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to connect to banner server', 'error');
+  }
+}
+
+function editHeroBanner(id) {
+  const b = allHeroBanners.find(banner => banner.id === id);
+  if (!b) return;
+  document.getElementById('heroBannerId').value = b.id;
+  document.getElementById('heroBannerTitle').value = b.title || '';
+  document.getElementById('heroBannerSubtitle').value = b.subtitle || '';
+  document.getElementById('heroBannerCta').value = b.cta_text || '';
+  document.getElementById('heroBannerLinkUrl').value = b.link_url || '';
+  document.getElementById('heroBannerPriority').value = b.priority || 1;
+
+  if (b.media_type === 'video') {
+    const radio = document.querySelector('input[name="heroMediaTypeRadio"][value="video"]');
+    if (radio) radio.checked = true;
+    switchHeroMediaType('video');
+    document.getElementById('heroBannerVideoUrl').value = b.media_url || '';
+  } else {
+    const radio = document.querySelector('input[name="heroMediaTypeRadio"][value="image"]');
+    if (radio) radio.checked = true;
+    switchHeroMediaType('image');
+    document.getElementById('heroBannerMediaUrl').value = b.media_url || '';
+  }
+  window.scrollTo({ top: document.getElementById('heroBannerForm').offsetTop - 100, behavior: 'smooth' });
+}
+
+async function deleteHeroBanner(id) {
+  if (!confirm('Are you sure you want to delete this hero banner?')) return;
+  try {
+    const res = await fetch(`/api/hero-banners/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Banner deleted successfully');
+      loadAdminHeroBanners();
+    } else {
+      showToast(data.message, 'error');
+    }
+  } catch (err) {
+    showToast('Failed to delete banner', 'error');
   }
 }

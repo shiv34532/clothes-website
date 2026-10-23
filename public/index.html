@@ -22,6 +22,7 @@
   <meta property="og:image" content="https://littletolargee.com/images/hero_ethnic.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="google-site-verification" content="VFQnkN8VAEipEoSPzYF063I84_fhuKVxRY-QsdM8tvs" />
+  <meta name="theme-color" content="#1e1b4b">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -56,8 +57,8 @@
     ]
   }
   </script>
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/ux-premium.css">
+  <link rel="stylesheet" href="css/style.css?v=22">
+  <link rel="stylesheet" href="css/ux-premium.css?v=22">
   <link rel="icon" type="image/png" href="/favicon.png?v=4">
   <link rel="shortcut icon" href="/favicon.ico?v=4">
 </head>
@@ -275,103 +276,47 @@
 
     async function loadHeroAndPromotions() {
       try {
-        // 1. Fetch homepage settings
-        const settingsRes = await fetch('/api/homepage-settings');
-        const settingsData = await settingsRes.json();
-        let mainSlideHtml = '';
-        // If API didn't provide settings, fall back to demo homepage settings
-        if ((!settingsData || !settingsData.success || !settingsData.settings) && window.demoHomepageSettings) {
-          settingsData = { success: true, settings: window.demoHomepageSettings };
-        }
+        const res = await fetch('/api/hero-banners');
+        const data = await res.json();
+        
+        let slidesHtml = '';
+        let dotsHtml = '';
 
-        if (settingsData.success && settingsData.settings) {
-          const s = settingsData.settings;
-          if (s.media_type === 'video') {
-            mainSlideHtml = `
-              <div class="slide active" style="background: #222;">
-                <video autoplay muted loop playsinline style="position: absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity: 0.6; z-index:-1">
-                  <source src="${formatLocalPath(s.media_url)}" type="video/mp4">
-                </video>
-                <div class="slide-overlay"></div>
-                <div class="container">
-                  <div class="slide-content">
-                    <h1>${s.hero_title}</h1>
-                    <p>${s.hero_subtitle}</p>
-                    <a href="/products" class="btn">Explore Collections</a>
-                  </div>
-                </div>
-              </div>
-            `;
-          } else {
-            mainSlideHtml = `
-              <div class="slide active" style="background-color: #3b3658;">
-                <div class="slide-overlay"></div>
-                <div class="container hero-slide-grid">
-                  <div class="slide-content">
-                    <h1>${s.hero_title}</h1>
-                    <p>${s.hero_subtitle}</p>
-                    <a href="/products" class="btn">Explore Collections</a>
-                  </div>
-                  <div class="slide-image-frame">
-                    <img src="${formatLocalPath(s.media_url)}" alt="${s.hero_title}" class="hero-slide-img">
-                  </div>
-                </div>
-              </div>
-            `;
-          }
-        } else {
-          mainSlideHtml = `
-            <div class="slide active" style="background-color: #3b3658;">
-              <div class="slide-overlay"></div>
-              <div class="container hero-slide-grid">
-                <div class="slide-content">
-                  <h1>Ethnic Elegance for Every Generation</h1>
-                  <p>Handcrafted ethnic wear and modern western styles matching your family lifestyle.</p>
-                  <a href="/products" class="btn">Explore Store</a>
-                </div>
-                <div class="slide-image-frame">
-                  <img src="images/hero_ethnic.png" alt="Ethnic Family Fashion" class="hero-slide-img">
-                </div>
-              </div>
-            </div>
-          `;
-        }
-
-        // 2. Fetch promotions
-        const promoRes = await fetch('/api/promotions');
-        let promoData = await promoRes.json();
-        if ((!promoData || !promoData.success || !Array.isArray(promoData.promotions) || promoData.promotions.length === 0) && window.demoPromotions) {
-          promoData = { success: true, promotions: window.demoPromotions };
-        }
-        let slidesHtml = mainSlideHtml;
-        let dotsHtml = `<div class="slider-dot active" onclick="setSlide(0)"></div>`;
-
-        if (promoData.success && promoData.promotions && promoData.promotions.length > 0) {
-          promoData.promotions.forEach((p, idx) => {
+        if (data.success && data.banners && data.banners.length > 0) {
+          data.banners.forEach((b, idx) => {
             slidesHtml += `
-              <div class="slide" style="background-color: ${p.bg_color || 'var(--primary)'};">
+              <div class="slide ${idx === 0 ? 'active' : ''}" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);">
                 <div class="slide-overlay"></div>
                 <div class="container hero-slide-grid">
                   <div class="slide-content">
-                    <h1>${p.title}</h1>
-                    <p>${p.subtitle}</p>
-                    <a href="${getCleanPromoLink(p.link_url)}" class="btn">View Deal</a>
+                    <h1>${b.title}</h1>
+                    <p>${b.subtitle || ''}</p>
+                    <a href="${b.link_url || '/products'}" class="btn">${b.cta_text || 'Shop Now'}</a>
                   </div>
                   <div class="slide-image-frame">
-                    <img src="${formatLocalPath(p.media_url || 'images/hero_ethnic.png')}" alt="${p.title}" class="hero-slide-img">
+                    ${(b.media_type === 'video' || (b.media_url && (b.media_url.endsWith('.mp4') || b.media_url.endsWith('.webm') || b.media_url.endsWith('.mov') || b.media_url.includes('/video/upload/')))) ? 
+                      `<video src="${formatLocalPath(b.media_url)}" autoplay muted loop playsinline class="hero-slide-img" style="width:100%; height:100%; object-fit:cover; border-radius:12px"></video>` :
+                      `<img src="${formatLocalPath(b.media_url)}" alt="${b.title}" class="hero-slide-img" onerror="this.onerror=null; this.src='images/hero_vacation.png';">`
+                    }
                   </div>
                 </div>
               </div>
             `;
-            dotsHtml += `<div class="slider-dot" onclick="setSlide(${idx + 1})"></div>`;
+            dotsHtml += `<div class="slider-dot ${idx === 0 ? 'active' : ''}" onclick="setSlide(${idx})"></div>`;
           });
+          document.getElementById('heroSlider').innerHTML = slidesHtml + `<div class="slider-nav">${dotsHtml}</div>`;
+          initSliderLogic();
         }
 
-        renderPromoBannerStrip(promoData.success ? promoData.promotions : []);
-        document.getElementById('heroSlider').innerHTML = slidesHtml + `<div class="slider-nav">${dotsHtml}</div>`;
-        initSliderLogic();
+        try {
+          const promoRes = await fetch('/api/promotions');
+          const promoData = await promoRes.json();
+          if (promoData.success && promoData.promotions) {
+            renderPromoBannerStrip(promoData.promotions);
+          }
+        } catch (e) {}
       } catch (err) {
-        console.error('Failed to load promotions and settings:', err);
+        console.error('Failed to load hero banners:', err);
       }
     }
 
@@ -406,14 +351,16 @@
             }
 
             const wishlist = getLocalWishlist();
-            const isInWishlist = wishlist.includes(p.id);
+            const isInWishlist = Array.isArray(wishlist) && wishlist.some(item => (typeof item === 'object' ? item.id : item) === p.id);
+            const hasValidVideo = p.video_url && typeof p.video_url === 'string' && p.video_url.trim() !== '' && p.video_url.trim() !== 'null' && p.video_url.trim() !== 'undefined';
+            const hoverAttrs = hasValidVideo ? 'onmouseenter="handleCardVideoHover(this, true)" onmouseleave="handleCardVideoHover(this, false)"' : '';
 
             grid.innerHTML += `
               <div class="product-card">
                 ${p.discount_price ? `<span class="badge-tag">Sale</span>` : ''}
-                <div class="product-img-wrapper" onclick="window.location.href='/product-detail?id=${p.id}'" style="cursor:pointer; position:relative">
+                <div class="product-img-wrapper" onclick="window.location.href='/product-detail?id=${p.id}'" ${hoverAttrs} style="cursor:pointer; position:relative">
                   <img src="${mainImg}" alt="${p.name}" onerror="this.src='/images/products/placeholder.jpg'">
-                  ${p.video_url ? `<span class="card-video-pill"><i class="fas fa-play"></i> Video</span>` : ''}
+                  ${hasValidVideo ? `<video class="card-hover-video" src="${formatLocalPath(p.video_url.trim())}" loop muted playsinline style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:inherit; z-index:4; pointer-events:none; transition:opacity 0.2s ease;"></video>` : ''}
                 </div>
                 <button class="wishlist-btn ${isInWishlist ? 'active' : ''}" onclick="event.stopPropagation(); handleWishlistToggle(${p.id}, this)">
                   <i class="fas fa-heart"></i>
@@ -425,6 +372,19 @@
                     ${stars}
                     <span class="rating-num">(${p.rating || '5.0'})</span>
                   </div>
+                  ${(() => {
+                    const rawColorStr = p.color_variants || p.color || '';
+                    if (rawColorStr && rawColorStr.trim()) {
+                      const colors = rawColorStr.split(',').map(c => c.trim()).filter(Boolean);
+                      if (colors.length > 0) {
+                        return `<div style="display:flex; gap:6px; margin: 4px 0; align-items:center;">
+                          <span style="font-size:0.75rem; color:var(--text-light)">Colors:</span>
+                          ${colors.map((col, idx) => `<span class="color-dot ${idx === 0 ? 'active' : ''}" style="width:14px; height:14px; border-radius:50%; background:${getColorCssCode(col)}; border:${idx === 0 ? '2px solid var(--primary)' : '1px solid #ccc'}; display:inline-block; cursor:pointer;" title="${col}" onclick="selectCardColor(event, this, '${col}')"></span>`).join('')}
+                        </div>`;
+                      }
+                    }
+                    return '';
+                  })()}
                   <div class="product-pricing">
                     <span class="price">₹${priceVal}</span>
                     ${oldPriceHtml}
@@ -435,7 +395,7 @@
                       <i class="fas fa-ban"></i> Out of Stock
                     </button>
                   ` : `
-                    <button class="btn-add-cart" onclick="handleAddToCart(${JSON.stringify(p).replace(/"/g, '&quot;')})">
+                    <button class="btn-add-cart" onclick="handleAddCartClick(event, this, ${JSON.stringify(p).replace(/"/g, '&quot;')})">
                       <i class="fas fa-shopping-basket"></i> Add to Box
                     </button>
                   `}
@@ -465,7 +425,7 @@
               }
 
               const wishlist = getLocalWishlist();
-              const isInWishlist = wishlist.includes(p.id);
+              const isInWishlist = Array.isArray(wishlist) && wishlist.some(item => (typeof item === 'object' ? item.id : item) === p.id);
 
               newGrid.innerHTML += `
                 <div class="product-card">
