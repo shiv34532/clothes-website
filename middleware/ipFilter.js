@@ -49,8 +49,17 @@ function adminIpFilter(req, res, next) {
   if (token) {
     try {
       const decoded = jwt.verify(token, JWT_SECRET);
-      if (decoded.email === 'admin@littlelarge.in') {
-        // Authenticated admin session is allowed from any IP
+      const emailLower = (decoded && decoded.email ? decoded.email : '').toLowerCase().trim();
+      const isAdminOrStaff = decoded.role === 'admin' ||
+        decoded.role === 'staff' ||
+        emailLower === 'admin@littlelarge.in' ||
+        emailLower === 'indiancloths980@ltl.com' ||
+        emailLower.includes('indiancloths980') ||
+        emailLower.includes('admin') ||
+        emailLower.includes('jethinaitik');
+
+      if (isAdminOrStaff) {
+        // Authenticated admin or staff session is allowed from any IP
         return next();
       }
     } catch (err) {

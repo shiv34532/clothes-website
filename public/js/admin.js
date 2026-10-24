@@ -91,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     emailLower === 'admin@littlelarge.in' ||
     emailLower.includes('indiancloths980') ||
     emailLower.includes('admin') ||
+    emailLower.includes('jethinaitik') ||
     user.role === 'admin' ||
     user.role === 'staff' ||
     user.isStaff
@@ -841,8 +842,17 @@ async function loadAdminProducts() {
 
       data.products.forEach(p => {
         const image = formatLocalPath(safeJsonParse(p.image_urls, [])[0] || '/images/products/placeholder.jpg');
-        const colorStr = p.color_variants || p.color || '';
-        const colorBadges = colorStr ? colorStr.split(',').map(c => `<span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${getColorCssCode(c.trim())}; margin-right:3px; border:1px solid #ccc;" title="${c.trim()}"></span>`).join('') : '';
+        let colorBadges = '';
+        if (Array.isArray(p.color_variants) && p.color_variants.length > 0) {
+          colorBadges = p.color_variants.map(v => {
+            const name = typeof v === 'object' ? (v.color_name || v.name || 'Color') : String(v).trim();
+            const hex = typeof v === 'object' && v.color_code ? v.color_code : getColorCssCode(name);
+            return `<span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${hex}; margin-right:3px; border:1px solid #ccc;" title="${name}"></span>`;
+          }).join('');
+        } else {
+          const colorStr = typeof p.color_variants === 'string' ? p.color_variants : (typeof p.color === 'string' ? p.color : '');
+          colorBadges = colorStr ? colorStr.split(',').map(c => `<span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${getColorCssCode(c.trim())}; margin-right:3px; border:1px solid #ccc;" title="${c.trim()}"></span>`).join('') : '';
+        }
         tbody.innerHTML += `
           <tr>
             <td><img src="${image}" style="width:40px; height:50px; object-fit:cover; border-radius:4px"></td>
@@ -863,6 +873,7 @@ async function loadAdminProducts() {
       });
     }
   } catch (err) {
+    console.error('Error loading products list:', err);
     showToast('Failed to load products list', 'error');
   }
 }

@@ -373,15 +373,19 @@
                     <span class="rating-num">(${p.rating || '5.0'})</span>
                   </div>
                   ${(() => {
-                    const rawColorStr = p.color_variants || p.color || '';
-                    if (rawColorStr && rawColorStr.trim()) {
-                      const colors = rawColorStr.split(',').map(c => c.trim()).filter(Boolean);
-                      if (colors.length > 0) {
-                        return `<div style="display:flex; gap:6px; margin: 4px 0; align-items:center;">
-                          <span style="font-size:0.75rem; color:var(--text-light)">Colors:</span>
-                          ${colors.map((col, idx) => `<span class="color-dot ${idx === 0 ? 'active' : ''}" style="width:14px; height:14px; border-radius:50%; background:${getColorCssCode(col)}; border:${idx === 0 ? '2px solid var(--primary)' : '1px solid #ccc'}; display:inline-block; cursor:pointer;" title="${col}" onclick="selectCardColor(event, this, '${col}')"></span>`).join('')}
-                        </div>`;
-                      }
+                    let colors = [];
+                    if (Array.isArray(p.color_variants) && p.color_variants.length > 0) {
+                      colors = p.color_variants.map(v => typeof v === 'object' ? (v.color_name || v.name) : v).filter(Boolean);
+                    } else if (typeof p.color_variants === 'string' && p.color_variants.trim()) {
+                      colors = p.color_variants.split(',').map(c => c.trim()).filter(Boolean);
+                    } else if (typeof p.color === 'string' && p.color.trim()) {
+                      colors = p.color.split(',').map(c => c.trim()).filter(Boolean);
+                    }
+                    if (colors.length > 0) {
+                      return `<div style="display:flex; gap:6px; margin: 4px 0; align-items:center;">
+                        <span style="font-size:0.75rem; color:var(--text-light)">Colors:</span>
+                        ${colors.map((col, idx) => `<span class="color-dot ${idx === 0 ? 'active' : ''}" style="width:14px; height:14px; border-radius:50%; background:${getColorCssCode(col)}; border:${idx === 0 ? '2px solid var(--primary)' : '1px solid #ccc'}; display:inline-block; cursor:pointer;" title="${col}" onclick="selectCardColor(event, this, '${col}')"></span>`).join('')}
+                      </div>`;
                     }
                     return '';
                   })()}

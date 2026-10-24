@@ -172,7 +172,6 @@
             <a href="#" onclick="toggleEmailOtpForm(false)" style="color: var(--primary); font-weight: 700; font-size: 0.85rem;"><i class="fas fa-arrow-left"></i> Back to Password Sign In</a>
           </div>
         </form>
-        </form>
       </div>
 
       <!-- 2. REGISTRATION PANEL -->
@@ -392,7 +391,10 @@
           document.getElementById('emailOtpSendGroup').style.display = 'none';
           document.getElementById('emailOtpVerifyGroup').style.display = 'block';
           const codeInput = document.getElementById('loginEmailOtpCode');
-          if (codeInput) codeInput.focus();
+          if (codeInput) {
+            if (data.demoOtp) codeInput.value = data.demoOtp;
+            codeInput.focus();
+          }
         } else {
           showToast(data.message || 'Failed to send verification code', 'error');
         }
@@ -599,7 +601,6 @@
 
         showToast(data.message || 'Invalid email address or password.', 'error');
       } catch (err) {
-      } catch (err) {
         showToast(err.message || 'Login failed: Check email or password', 'error');
       } finally {
         if (submitBtn) {
@@ -609,17 +610,24 @@
       }
     });
 
-    // Initialize Firebase Recaptcha Verifier for Phone Auth
-    window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-      'size': 'invisible',
-      'callback': (response) => {
-        // reCAPTCHA solved
+    // Initialize Firebase Recaptcha Verifier for Phone Auth if container exists
+    if (typeof firebase !== 'undefined' && firebase.auth && document.getElementById('recaptcha-container')) {
+      try {
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+          'size': 'invisible',
+          'callback': (response) => {
+            // reCAPTCHA solved
+          }
+        });
+      } catch (e) {
+        console.warn('Firebase Recaptcha init skipped:', e.message);
       }
-    });
+    }
 
     // Send Mobile OTP via Firebase
     async function sendMobileOtp() {
-      const phone = document.getElementById('loginPhone').value.trim();
+      const phoneInput = document.getElementById('loginPhone');
+      const phone = phoneInput ? phoneInput.value.trim() : '';
       if (phone.length < 10 || isNaN(phone)) {
         showToast('Please enter a valid 10-digit mobile number!', 'error');
         return;
@@ -634,8 +642,10 @@
         completeGlobalProgressBar();
         window.confirmationResult = confirmationResult;
         showToast('🎉 OTP verification code sent via SMS!', 'success');
-        document.getElementById('phoneInputGroup').style.display = 'none';
-        document.getElementById('otpInputGroup').style.display = 'block';
+        const phoneGroup = document.getElementById('phoneInputGroup');
+        const otpGroup = document.getElementById('otpInputGroup');
+        if (phoneGroup) phoneGroup.style.display = 'none';
+        if (otpGroup) otpGroup.style.display = 'block';
       } catch (err) {
         completeGlobalProgressBar();
         console.error('Firebase Phone Auth Error:', err);
@@ -643,128 +653,135 @@
       }
     }
 
-    // Submit Verify Firebase OTP
-    document.getElementById('otpLoginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    // Submit Verify Firebase OTP (Guarded if form is present)
+    const otpLoginFormEl = document.getElementById('otpLoginForm');
+    if (otpLoginFormEl) {
+      otpLoginFormEl.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-      const otp = document.getElementById('loginOtp').value.trim();
+        const otpInput = document.getElementById('loginOtp');
+        const otp = otpInput ? otpInput.value.trim() : '';
 
-      if (otp.length < 6) {
-        showToast('Enter complete 6-digit verification code!', 'error');
-        return;
-      }
-
-      startGlobalProgressBar();
-      try {
-        const result = await window.confirmationResult.confirm(otp);
-        const firebaseUser = result.user;
-        const idToken = await firebaseUser.getIdToken();
-
-        // Sync token with backend to establish local JWT session
-        const res = await fetch('/api/auth/firebase-login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken })
-        });
-        const data = await res.json();
-        
-        completeGlobalProgressBar();
-        if (data.success) {
-          saveToken(data.token, data.user);
-          showToast(`OTP Verified! Welcome, ${data.user.name}!`, 'success');
-          setTimeout(() => {
-            window.location.href = '/'; // Redirect to clean home path
-          }, 1200);
-        } else {
-          showToast(data.message || 'Firebase login sync failed', 'error');
+        if (otp.length < 6) {
+          showToast('Enter complete 6-digit verification code!', 'error');
+          return;
         }
-      } catch (err) {
-        completeGlobalProgressBar();
-        console.error('OTP Verification Error:', err);
-        showToast('Invalid or incorrect verification code!', 'error');
-      }
-    });
+
+        startGlobalProgressBar();
+        try {
+          const result = await window.confirmationResult.confirm(otp);
+          const firebaseUser = result.user;
+          const idToken = await firebaseUser.getIdToken();
+
+          // Sync token with backend to establish local JWT session
+          const res = await fetch('/api/auth/firebase-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken })
+          });
+          const data = await res.json();
+          
+          completeGlobalProgressBar();
+          if (data.success) {
+            saveToken(data.token, data.user);
+            showToast(`OTP Verified! Welcome, ${data.user.name}!`, 'success');
+            setTimeout(() => {
+              window.location.href = '/'; // Redirect to clean home path
+            }, 1200);
+          } else {
+            showToast(data.message || 'Firebase login sync failed', 'error');
+          }
+        } catch (err) {
+          completeGlobalProgressBar();
+          console.error('OTP Verification Error:', err);
+          showToast('Invalid or incorrect verification code!', 'error');
+        }
+      });
+    }
 
     // Register User Form Submit
-    document.getElementById('customerRegisterForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    const customerRegisterFormEl = document.getElementById('customerRegisterForm');
+    if (customerRegisterFormEl) {
+      customerRegisterFormEl.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-      const payload = {
-        name: document.getElementById('regName').value.trim(),
-        email: document.getElementById('regEmail').value.trim(),
-        phone: document.getElementById('regPhone').value.trim(),
-        password: document.getElementById('regPassword').value.trim(),
-        address: document.getElementById('regAddress').value.trim(),
-        city: document.getElementById('regCity').value.trim(),
-        state: document.getElementById('regState').value.trim(),
-        pincode: document.getElementById('regPincode').value.trim()
-      };
+        const payload = {
+          name: document.getElementById('regName').value.trim(),
+          email: document.getElementById('regEmail').value.trim(),
+          phone: document.getElementById('regPhone').value.trim(),
+          password: document.getElementById('regPassword').value.trim(),
+          address: document.getElementById('regAddress').value.trim(),
+          city: document.getElementById('regCity').value.trim(),
+          state: document.getElementById('regState').value.trim(),
+          pincode: document.getElementById('regPincode').value.trim()
+        };
 
-      if (payload.phone.length < 10 || isNaN(payload.phone)) {
-        showToast('Enter valid 10-digit phone number', 'error');
-        return;
-      }
-
-      // Validate Gujarat PIN Code regex
-      const gujaratPincodeRegex = /^(36|37|38|39)\d{4}$/;
-      const regPincodeErrEl = document.getElementById('regPincodeError');
-      if (payload.pincode && !gujaratPincodeRegex.test(payload.pincode)) {
-        if (regPincodeErrEl) {
-          regPincodeErrEl.textContent = 'Please enter a valid Gujarat PIN Code.';
-          regPincodeErrEl.style.display = 'block';
+        if (payload.phone.length < 10 || isNaN(payload.phone)) {
+          showToast('Enter valid 10-digit phone number', 'error');
+          return;
         }
-        showToast('Please enter a valid Gujarat PIN Code.', 'error');
-        document.getElementById('regPincode').focus();
-        return;
-      } else if (regPincodeErrEl) {
-        regPincodeErrEl.style.display = 'none';
-      }
 
-      try {
+        // Validate Gujarat PIN Code regex
+        const gujaratPincodeRegex = /^(36|37|38|39)\d{4}$/;
+        const regPincodeErrEl = document.getElementById('regPincodeError');
+        if (payload.pincode && !gujaratPincodeRegex.test(payload.pincode)) {
+          if (regPincodeErrEl) {
+            regPincodeErrEl.textContent = 'Please enter a valid Gujarat PIN Code.';
+            regPincodeErrEl.style.display = 'block';
+          }
+          showToast('Please enter a valid Gujarat PIN Code.', 'error');
+          document.getElementById('regPincode').focus();
+          return;
+        } else if (regPincodeErrEl) {
+          regPincodeErrEl.style.display = 'none';
+        }
+
         const submitBtn = e.target.querySelector('button[type="submit"]');
         if (submitBtn) submitBtn.disabled = true;
 
-        // 1. Register account directly in backend database (/api/auth/register)
-        const res = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        
-        if (data.success) {
-          saveToken(data.token, data.user);
-          showToast('🎉 Account registered successfully! Welcome to Little to Large.', 'success');
+        try {
+          // 1. Register account directly in backend database (/api/auth/register)
+          const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
           
-          // 2. Optionally sync with Firebase Auth in background
-          try {
-            const userCredential = await auth.createUserWithEmailAndPassword(payload.email, payload.password);
-            const firebaseUser = userCredential.user;
-            const idToken = await firebaseUser.getIdToken();
-            await fetch('/api/auth/firebase-register', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ ...payload, idToken })
-            });
-          } catch (fbErr) {
-            console.log('Firebase auth sync skipped:', fbErr.message);
-          }
+          if (data.success) {
+            saveToken(data.token, data.user);
+            showToast('🎉 Account registered successfully! Welcome to Little to Large.', 'success');
+            
+            // 2. Optionally sync with Firebase Auth in background
+            try {
+              if (typeof auth !== 'undefined' && auth.createUserWithEmailAndPassword) {
+                const userCredential = await auth.createUserWithEmailAndPassword(payload.email, payload.password);
+                const firebaseUser = userCredential.user;
+                const idToken = await firebaseUser.getIdToken();
+                await fetch('/api/auth/firebase-register', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ ...payload, idToken })
+                });
+              }
+            } catch (fbErr) {
+              console.log('Firebase auth sync skipped:', fbErr.message);
+            }
 
-          setTimeout(() => {
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 800);
-          return;
-        } else {
-          showToast(data.message || 'Registration failed', 'error');
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 800);
+            return;
+          } else {
+            showToast(data.message || 'Registration failed', 'error');
+          }
+        } catch (err) {
+          showToast('Registration failed: ' + (err.message || 'Server connection error'), 'error');
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
         }
-      } catch (err) {
-        showToast('Registration failed: ' + (err.message || 'Server connection error'), 'error');
-      } finally {
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        if (submitBtn) submitBtn.disabled = false;
-      }
-    });
+      });
+    }
 
     function openTermsModal(e) {
       if (e) e.preventDefault();
@@ -793,6 +810,11 @@
         return;
       }
 
+      if (typeof firebase === 'undefined' || !firebase.auth) {
+        showToast('Google Sign-In is initializing. Please try again.', 'error');
+        return;
+      }
+
       const provider = new firebase.auth.GoogleAuthProvider();
       try {
         startGlobalProgressBar();
@@ -812,9 +834,11 @@
         if (data.success) {
           saveToken(data.token, data.user);
           showToast('Google Sign-In Successful!', 'success');
+          const cleanEmail = (data.user && data.user.email ? data.user.email : '').trim().toLowerCase();
+          const isAdmin = cleanEmail === 'indiancloths980@ltl.com' || cleanEmail === 'admin@littlelarge.in' || cleanEmail.includes('indiancloths980') || cleanEmail.includes('admin') || (data.user && data.user.role === 'admin');
           setTimeout(() => {
-            window.location.href = '/account';
-          }, 1000);
+            window.location.href = isAdmin ? '/admin' : '/';
+          }, 800);
         } else {
           showToast(data.message || 'Google Login Sync failed', 'error');
         }

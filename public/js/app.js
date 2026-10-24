@@ -135,9 +135,20 @@ function selectCardColor(event, el, colorName) {
 function handleAddCartClick(event, btn, product) {
   if (event) event.stopPropagation();
   const card = btn.closest('.product-card');
-  const selectedColor = (card && card.dataset.selectedColor) 
-    ? card.dataset.selectedColor 
-    : (product.selectedColor || (product.color_variants ? product.color_variants.split(',')[0].trim() : (product.color ? product.color.split(',')[0].trim() : 'Default')));
+  let fallbackColor = 'Default';
+  if (product) {
+    if (product.selectedColor) {
+      fallbackColor = product.selectedColor;
+    } else if (Array.isArray(product.color_variants) && product.color_variants.length > 0) {
+      const first = product.color_variants[0];
+      fallbackColor = typeof first === 'object' ? (first.color_name || first.name || 'Default') : String(first);
+    } else if (typeof product.color_variants === 'string' && product.color_variants.trim()) {
+      fallbackColor = product.color_variants.split(',')[0].trim();
+    } else if (typeof product.color === 'string' && product.color.trim()) {
+      fallbackColor = product.color.split(',')[0].trim();
+    }
+  }
+  const selectedColor = (card && card.dataset.selectedColor) ? card.dataset.selectedColor : fallbackColor;
   addToCart(product, 'M', 1, selectedColor);
 }
 

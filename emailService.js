@@ -293,7 +293,7 @@ async function sendEmailOtp(toEmail, otp, db = null) {
 
     const info = await transporter.sendMail(mailOptions);
     console.log(`[Email OTP Sent] To: ${toEmail} | Code: ${otp} | MessageID: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
+    return { success: true, messageId: info.messageId, simulated: !!info.simulated };
   } catch (err) {
     console.error(`[Email OTP Error] ${toEmail}:`, err.message);
     return { success: false, error: err.message };

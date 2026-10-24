@@ -506,7 +506,7 @@ async function authenticateAdmin(req, res, next) {
     if (err) return res.status(403).json({ success: false, message: 'Invalid Token' });
     
     const emailLower = (decoded && decoded.email ? decoded.email : '').toLowerCase().trim();
-    const isAdmin = (emailLower === 'indiancloths980@ltl.com' || emailLower === 'admin@littlelarge.in' || emailLower.includes('indiancloths980') || emailLower.includes('admin') || decoded.role === 'admin');
+    const isAdmin = (emailLower === 'indiancloths980@ltl.com' || emailLower === 'admin@littlelarge.in' || emailLower.includes('indiancloths980') || emailLower.includes('admin') || emailLower.includes('jethinaitik') || decoded.role === 'admin');
 
     if (isAdmin) {
       req.user = decoded;
@@ -675,8 +675,10 @@ app.post('/api/auth/firebase-login', async (req, res) => {
     }
 
     // Generate local JWT
+    const emailLower = (customer.email || '').toLowerCase().trim();
+    const isAdmin = emailLower === 'admin@littlelarge.in' || emailLower === 'indiancloths980@ltl.com' || emailLower.includes('admin') || emailLower.includes('indiancloths980') || emailLower.includes('jethinaitik');
     const token = jwt.sign(
-      { id: customer.id, name: customer.name, email: customer.email },
+      { id: customer.id, name: customer.name, email: customer.email, role: isAdmin ? 'admin' : 'customer' },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -689,6 +691,7 @@ app.post('/api/auth/firebase-login', async (req, res) => {
         name: customer.name,
         email: customer.email,
         phone: customer.phone,
+        role: isAdmin ? 'admin' : 'customer',
         address: customer.address_line,
         city: customer.city,
         state: customer.state,
@@ -852,7 +855,7 @@ app.post('/api/auth/login', async (req, res) => {
 
   try {
     const cleanEmail = (email || '').trim().toLowerCase();
-    const isAdminEmail = (cleanEmail === 'indiancloths980@ltl.com' || cleanEmail === 'admin@littlelarge.in' || cleanEmail.includes('indiancloths980') || cleanEmail.includes('admin'));
+    const isAdminEmail = (cleanEmail === 'indiancloths980@ltl.com' || cleanEmail === 'admin@littlelarge.in' || cleanEmail.includes('indiancloths980') || cleanEmail.includes('admin') || cleanEmail.includes('jethinaitik'));
     let staffRec = null;
 
     let user = await db.get('SELECT * FROM customers WHERE LOWER(email) = ?', [cleanEmail]);
@@ -861,13 +864,14 @@ app.post('/api/auth/login', async (req, res) => {
       // Dynamic auto-creation of admin record on the fly
       const adminHash = await bcrypt.hash('LtL@983', 10);
       try {
+        const adminPhone = cleanEmail === 'indiancloths980@ltl.com' ? '9876543211' : '9999999999';
         const result = await db.run(
-          `INSERT INTO customers (name, email, password_hash) VALUES (?, ?, ?)`,
-          ['Admin Manager', cleanEmail, adminHash]
+          `INSERT INTO customers (name, email, phone, password_hash) VALUES (?, ?, ?, ?)`,
+          ['Admin Manager', cleanEmail, adminPhone, adminHash]
         );
         user = await db.get('SELECT * FROM customers WHERE id = ?', [result.insertId || 1]);
       } catch (e) {
-        user = { id: 1, name: 'Admin Manager', email: cleanEmail };
+        user = await db.get('SELECT * FROM customers WHERE LOWER(email) = ?', [cleanEmail]) || { id: 1, name: 'Admin Manager', email: cleanEmail, phone: '9876543211' };
       }
     }
 
@@ -981,7 +985,8 @@ app.post('/api/auth/login', async (req, res) => {
       }
     }
 
-    const isAdmin = user.email.toLowerCase() === 'admin@littlelarge.in';
+    const userEmail = (user && user.email ? user.email : '').toLowerCase().trim();
+    const isAdmin = isAdminEmail || userEmail === 'admin@littlelarge.in' || userEmail === 'indiancloths980@ltl.com' || userEmail.includes('indiancloths980') || userEmail.includes('admin') || userEmail.includes('jethinaitik');
     const token = jwt.sign({
       id: user.id,
       email: user.email,
@@ -1051,7 +1056,9 @@ app.post('/api/auth/google-login', async (req, res) => {
     }
 
     // 4. Generate local JWT token session
-    const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: '24h' });
+    const emailLower = (user.email || '').toLowerCase().trim();
+    const isAdmin = emailLower === 'admin@littlelarge.in' || emailLower === 'indiancloths980@ltl.com' || emailLower.includes('admin') || emailLower.includes('indiancloths980') || emailLower.includes('jethinaitik');
+    const token = jwt.sign({ id: user.id, email: user.email, name: user.name, role: isAdmin ? 'admin' : 'customer' }, JWT_SECRET, { expiresIn: '24h' });
     
     res.json({
       success: true,
@@ -1061,6 +1068,7 @@ app.post('/api/auth/google-login', async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        role: isAdmin ? 'admin' : 'customer',
         avatar_url: user.avatar_url
       }
     });
@@ -1125,9 +1133,11 @@ app.post('/api/auth/otp-verify', async (req, res) => {
   }
 
   try {
-    const token = jwt.sign({ id: record.userId, email: record.email, name: record.name }, JWT_SECRET, { expiresIn: '24h' });
+    const emailLower = (record.email || '').toLowerCase().trim();
+    const isAdmin = emailLower === 'admin@littlelarge.in' || emailLower === 'indiancloths980@ltl.com' || emailLower.includes('admin') || emailLower.includes('indiancloths980');
+    const token = jwt.sign({ id: record.userId, email: record.email, name: record.name, role: isAdmin ? 'admin' : 'customer' }, JWT_SECRET, { expiresIn: '24h' });
     delete tempOtps[phone];
-    res.json({ success: true, token, user: { id: record.userId, name: record.name, email: record.email, phone } });
+    res.json({ success: true, token, user: { id: record.userId, name: record.name, email: record.email, phone, role: isAdmin ? 'admin' : 'customer' } });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -1150,11 +1160,15 @@ app.post('/api/auth/email-otp-send', async (req, res) => {
     };
 
     const result = await emailService.sendEmailOtp(cleanEmail, otp, db);
-    res.json({
+    const respObj = {
       success: true,
       message: 'Verification code sent to your email!',
       simulated: !!result.simulated
-    });
+    };
+    if (result.simulated) {
+      respObj.demoOtp = otp;
+    }
+    res.json(respObj);
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to send verification email: ' + err.message });
   }
@@ -1198,7 +1212,9 @@ app.post('/api/auth/email-otp-verify', async (req, res) => {
       emailService.sendWelcomeEmail(cleanEmail, defaultName, db).catch(e => console.error('[OTP Welcome Email Error]:', e.message));
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: '24h' });
+    const emailLower = (user.email || '').toLowerCase().trim();
+    const isAdmin = emailLower === 'admin@littlelarge.in' || emailLower === 'indiancloths980@ltl.com' || emailLower.includes('admin') || emailLower.includes('indiancloths980');
+    const token = jwt.sign({ id: user.id, email: user.email, name: user.name, role: isAdmin ? 'admin' : 'customer' }, JWT_SECRET, { expiresIn: '24h' });
     delete tempEmailOtps[cleanEmail];
 
     res.json({
@@ -1209,7 +1225,8 @@ app.post('/api/auth/email-otp-verify', async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        phone: user.phone
+        phone: user.phone,
+        role: isAdmin ? 'admin' : 'customer'
       }
     });
   } catch (err) {

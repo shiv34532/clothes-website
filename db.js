@@ -622,6 +622,20 @@ async function seedDatabase() {
     `, ['Admin Manager', 'admin@littlelarge.in', '9999999999', adminHash, 'HQ Little to Large', 'Gandhidham', 'Gujarat', '370201']);
   }
 
+  // Ensure primary administrator account indiancloths980@ltl.com exists
+  try {
+    const adminRec = await get("SELECT * FROM customers WHERE email = 'indiancloths980@ltl.com'");
+    if (!adminRec) {
+      const adminHash = await bcrypt.hash('LtL@983', 10);
+      await run(`
+        INSERT INTO customers (name, email, phone, password_hash, address_line, city, state, pincode)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `, ['Admin Manager', 'indiancloths980@ltl.com', '9876543211', adminHash, 'HQ Little to Large', 'Gandhidham', 'Gujarat', '370201']);
+    }
+  } catch (err) {
+    // Non-blocking
+  }
+
   // Check if products seeded
   const productCount = await get('SELECT COUNT(*) as count FROM products');
   if (parseInt(productCount.count) === 0) {
