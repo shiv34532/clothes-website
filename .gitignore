@@ -20,3 +20,7 @@ __pycache__/
 # Temporary user test uploads
 public/images/uploads/ai_upload_*
 
+# Android APK builds
+*.apk
+public/downloads/
+

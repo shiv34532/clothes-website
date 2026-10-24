@@ -7,6 +7,7 @@ It is also configured as a Capacitor project, so the same private app can be pre
 ## Run locally
 
 1. Start the website API from the repository root: `npm start`
+
 2. Open `private-admin-app/index.html` with VS Code Live Server, or run `npm run preview` inside this folder.
 3. On the login screen, keep the API connection at `http://localhost:3000` for local development. For a phone, set it to the live website HTTPS URL and open the app from that host.
 4. Sign in with the existing administrator account. Only `admin@littlelarge.in` is accepted by the client, and the backend verifies the JWT too.

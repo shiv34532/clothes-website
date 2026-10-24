@@ -6,6 +6,7 @@
 
 const crypto = require('crypto');
 
+
 const BASE32_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
 function base32Encode(buffer) {
@@ -57,9 +58,9 @@ function generateTotpToken(secret, timeStepOffset = 0) {
   const hmac = crypto.createHmac('sha1', secretBuf).update(buf).digest();
   const offset = hmac[hmac.length - 1] & 0x0f;
   const code = ((hmac[offset] & 0x7f) << 24) |
-               ((hmac[offset + 1] & 0xff) << 16) |
-               ((hmac[offset + 2] & 0xff) << 8) |
-               (hmac[offset + 3] & 0xff);
+    ((hmac[offset + 1] & 0xff) << 16) |
+    ((hmac[offset + 2] & 0xff) << 8) |
+    (hmac[offset + 3] & 0xff);
   return (code % 1000000).toString().padStart(6, '0');
 }
 
