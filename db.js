@@ -876,8 +876,16 @@ async function seedDatabase() {
       console.log('Seeding default system settings...');
       await run("INSERT INTO settings (key, value) VALUES ('shipping_fee', '1')");
       await run("INSERT INTO settings (key, value) VALUES ('free_shipping_threshold', '999')");
-      await run("INSERT INTO settings (key, value) VALUES ('allowed_pincodes', '36, 37, 38, 39')");
-      await run("INSERT INTO settings (key, value) VALUES ('pincode_error_message', 'Please enter a valid Gujarat PIN Code.')");
+      await run("INSERT INTO settings (key, value) VALUES ('allowed_pincodes', 'ALL')");
+      await run("INSERT INTO settings (key, value) VALUES ('pincode_error_message', 'Delivery is currently unavailable to this PIN Code.')");
+    } else {
+      // Migrate legacy restrictive Gujarat pincode setting to open nationwide delivery
+      const currentPincodes = await get("SELECT value FROM settings WHERE key = 'allowed_pincodes'");
+      if (currentPincodes && currentPincodes.value === '36, 37, 38, 39') {
+        console.log('Migrating legacy pincode restriction to ALL India delivery...');
+        await run("UPDATE settings SET value = 'ALL' WHERE key = 'allowed_pincodes'");
+        await run("UPDATE settings SET value = 'Delivery is currently unavailable to this PIN Code.' WHERE key = 'pincode_error_message'");
+      }
     }
   } catch (e) {
     console.error('Failed to seed default settings:', e.message);

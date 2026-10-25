@@ -62,7 +62,7 @@
         <h4 style="font-size:0.85rem; font-weight:800; color:var(--primary); margin-bottom:10px; display:flex; align-items:center; justify-content:center; gap:6px;">
           <span style="font-size:1.1rem;">🎬</span> Product Video
         </h4>
-        <video id="productVideoPlayer" controls playsinline preload="metadata" style="width:100%; border-radius:8px; background:#111827;"></video>
+        <video id="productVideoCardPlayer" controls playsinline preload="metadata" style="width:100%; border-radius:8px; background:#111827;"></video>
       </div>
 
       <!-- Interactive 3D 360° Product Rotation Entity -->
@@ -344,7 +344,7 @@
 
       // Product video
       const videoCard = document.getElementById('productVideoCard');
-      const videoPlayer = document.getElementById('productVideoPlayer');
+      const videoPlayer = document.getElementById('productVideoCardPlayer');
       const videoUrl = p.video_url || '';
       if (videoUrl) {
         videoCard.style.display = 'block';

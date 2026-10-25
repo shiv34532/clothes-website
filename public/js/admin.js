@@ -2747,7 +2747,24 @@ async function generateCanvasMotionReel(imgSrc, titleText, style, meta = {}) {
           try {
             const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
 
-            // Upload directly to Cloudinary using signature endpoint
+            // 1. Upload video directly to server (stores permanently in Cloudinary or local disk)
+            try {
+              const fd = new FormData();
+              fd.append('video', blob, 'product-video.webm');
+              const upRes = await fetch('/api/admin/upload-product-video', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: fd
+              });
+              const upData = await upRes.json();
+              if (upData && upData.success && upData.video_url) {
+                return resolve(upData.video_url);
+              }
+            } catch (upErr) {
+              console.warn('Server video upload fallback:', upErr);
+            }
+
+            // 2. Direct Cloudinary upload fallback using signature
             try {
               const signRes = await fetch('/api/admin/cloudinary-sign', {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -2773,7 +2790,7 @@ async function generateCanvasMotionReel(imgSrc, titleText, style, meta = {}) {
                 }
               }
             } catch (cloudErr) {
-              console.warn('Cloudinary upload fallback to local Blob:', cloudErr);
+              console.warn('Cloudinary direct fallback:', cloudErr);
             }
 
             // Fallback to local Blob URL so video always works
@@ -2964,7 +2981,11 @@ async function generateCanvasMotionReel(imgSrc, titleText, style, meta = {}) {
       console.error('Product photo load failed for video generation:', e, imgSrc);
       reject(new Error('Product photo failed to load. Please verify the image file.'));
     };
-    img.src = (imgSrc && (imgSrc.startsWith('data:') || imgSrc.startsWith('blob:'))) ? imgSrc : formatLocalPath(imgSrc);
+    if (isRemote) {
+      img.src = '/api/admin/proxy-image?url=' + encodeURIComponent(imgSrc);
+    } else {
+      img.src = (imgSrc && (imgSrc.startsWith('data:') || imgSrc.startsWith('blob:'))) ? imgSrc : formatLocalPath(imgSrc);
+    }
   });
 }
 
@@ -3304,6 +3325,28 @@ async function runAiProductAnalysis() {
     const data = await res.json();
 
     if (data.success) {
+      const wantVideo = document.getElementById('aiOptVideo') && document.getElementById('aiOptVideo').checked;
+      if (wantVideo && data.uploaded_image_urls && data.uploaded_image_urls.length > 0) {
+        if (status) {
+          status.innerHTML = '<i class="fas fa-film fa-spin"></i> Generating 10-Second Promotional Animated Video...';
+        }
+        try {
+          const primaryImg = data.uploaded_image_urls[0];
+          const prodTitle = data.title_suggestion || 'Exclusive Handcrafted Outfit';
+          const prodCat = data.category || 'Fashion';
+          const vidUrl = await generateCanvasMotionReel(primaryImg, prodTitle, 'zoom_pan', {
+            category: prodCat,
+            price: '1199'
+          });
+          if (vidUrl) {
+            data.video_url = vidUrl;
+            showToast('🎬 10-Second Promo Video rendered!', 'success');
+          }
+        } catch (vidErr) {
+          console.warn('AI video generation fallback:', vidErr.message);
+        }
+      }
+
       showToast('AI analysis completed!', 'success');
       populateAiReviewScreen(data);
     } else {
@@ -3388,6 +3431,16 @@ function populateAiReviewScreen(data) {
         </div>
       `;
     });
+
+    if (data.video_url) {
+      document.getElementById('aiProdVideoUrl').value = data.video_url;
+      assetsGrid.innerHTML += `
+        <div style="flex-shrink:0; text-align:center;">
+          <video src="${formatLocalPath(data.video_url)}" controls playsinline loop style="width:100px; height:100px; object-fit:cover; border-radius:8px; border:2px solid #7c3aed; background:#000;"></video>
+          <div style="font-size:0.7rem; color:#7c3aed; font-weight:700; margin-top:2px;">🎥 Promo Video</div>
+        </div>
+      `;
+    }
   }
 }
 
@@ -3707,28 +3760,53 @@ async function runStudioVideo() {
     const headline = document.getElementById('studioVideoHeadline').value;
     const discount = document.getElementById('studioVideoDiscount').value;
 
-    const res = await fetch('/api/admin/ai/create-video', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        product_id: p.id,
-        image_path: urls[0],
-        headline,
-        price_text: `₹${p.discount_price || p.price}`,
-        discount_text: discount
-      })
-    });
-    const data = await res.json();
-    if (data.success && data.video_url) {
-      document.getElementById('studioVideoResultAsset').src = data.video_url + '?t=' + Date.now();
-      document.getElementById('studioVideoDownloadLink').href = data.video_url;
+    // Generate deterministic 10-second promotional video showcase
+    let videoUrl = null;
+    try {
+      videoUrl = await generateCanvasMotionReel(urls[0], headline, 'zoom_pan', {
+        category: p.category || '',
+        price: p.discount_price || p.price || 1499
+      });
+    } catch (motionErr) {
+      console.warn('Client motion reel failed, falling back to server create-video:', motionErr);
+    }
+
+    if (!videoUrl) {
+      const res = await fetch('/api/admin/ai/create-video', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          image_urls: urls,
+          headline: headline,
+          price: p.discount_price || p.price || 1499,
+          discount_price: discount ? parseFloat(discount.replace(/[^\d.]/g, '')) : (p.discount_price || 1199)
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.video_url) {
+        videoUrl = data.video_url;
+      } else {
+        throw new Error(data.message || 'Video generation failed');
+      }
+    }
+
+    if (videoUrl) {
+      const vidAsset = document.getElementById('studioVideoResultAsset');
+      if (vidAsset) {
+        vidAsset.src = formatLocalPath(videoUrl);
+        vidAsset.load();
+        vidAsset.play().catch(() => {});
+      }
+      const dlLink = document.getElementById('studioVideoDownloadLink');
+      if (dlLink) {
+        dlLink.href = formatLocalPath(videoUrl);
+        dlLink.setAttribute('download', 'promo_video.webm');
+      }
       document.getElementById('studioVideoPreviewBox').style.display = 'block';
-      showToast('10-second promo video generated!', 'success');
-    } else {
-      showToast(data.message || 'Video composition failed', 'error');
+      showToast('🎉 10-Second Promo Video generated successfully!', 'success');
     }
   } catch (err) {
     showToast('Failed to compose video: ' + err.message, 'error');

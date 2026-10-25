@@ -788,7 +788,7 @@ async function isPincodeServiceable(pinCode) {
     const allowedRow = await db.get("SELECT value FROM settings WHERE key = 'allowed_pincodes'");
     const msgRow = await db.get("SELECT value FROM settings WHERE key = 'pincode_error_message'");
     
-    const allowedRule = allowedRow && allowedRow.value ? allowedRow.value.trim() : '36, 37, 38, 39';
+    const allowedRule = allowedRow && allowedRow.value ? allowedRow.value.trim() : 'ALL';
     const errorMsg = msgRow && msgRow.value ? msgRow.value.trim() : 'Delivery is currently unavailable to this PIN Code.';
 
     if (!allowedRule || allowedRule.toUpperCase() === 'ALL' || allowedRule.toUpperCase() === 'ANY' || allowedRule === '*') {
@@ -1845,23 +1845,123 @@ app.post('/api/admin/ai/studio-concepts', adminIpFilter, authenticateAdmin, asyn
   }
 });
 
+// Dedicated Admin Video Upload Endpoint (Saves to Cloudinary videos/ or local storage)
+app.post('/api/admin/upload-product-video', adminIpFilter, authenticateAdmin, upload.single('video'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No video file provided' });
+    }
+    const videoDir = path.join(__dirname, 'public', 'images', 'product_videos');
+    if (!fs.existsSync(videoDir)) fs.mkdirSync(videoDir, { recursive: true });
+
+    let finalVideoUrl = null;
+
+    // Upload to Cloudinary if configured
+    if (process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+      try {
+        const cloudUrl = await uploadToCloudinary(req.file, 'videos');
+        if (cloudUrl && !cloudUrl.includes('placeholder')) {
+          finalVideoUrl = cloudUrl;
+        }
+      } catch (cloudErr) {
+        console.warn('[Video Upload] Cloudinary video upload fallback:', cloudErr.message);
+      }
+    }
+
+    // Local disk fallback
+    if (!finalVideoUrl) {
+      const ext = path.extname(req.file.originalname) || '.webm';
+      const filename = `vid_${Date.now()}_${Math.floor(Math.random() * 10000)}${ext}`;
+      const diskPath = path.join(videoDir, filename);
+      fs.writeFileSync(diskPath, req.file.buffer);
+      finalVideoUrl = `/images/product_videos/${filename}`;
+    }
+
+    res.json({ success: true, video_url: finalVideoUrl });
+  } catch (err) {
+    console.error('[Upload Product Video Error]:', err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Proxy Image for Canvas/CORS Video Generation
+app.get('/api/admin/proxy-image', adminIpFilter, authenticateAdmin, async (req, res) => {
+  try {
+    const targetUrl = req.query.url;
+    if (!targetUrl || typeof targetUrl !== 'string') {
+      return res.status(400).send('Missing url query parameter');
+    }
+
+    if (targetUrl.startsWith('/')) {
+      const localPath = path.join(__dirname, 'public', targetUrl.slice(1));
+      if (fs.existsSync(localPath)) {
+        return res.sendFile(localPath);
+      }
+    }
+
+    const response = await fetch(targetUrl);
+    if (!response.ok) {
+      return res.status(response.status).send('Failed to fetch image');
+    }
+
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const arrayBuffer = await response.arrayBuffer();
+    res.send(Buffer.from(arrayBuffer));
+  } catch (err) {
+    res.status(500).send('Proxy error: ' + err.message);
+  }
+});
+
 // Video Studio: Generate 10-Second Deterministic Promotional Product Video
 app.post('/api/admin/ai/create-video', adminIpFilter, authenticateAdmin, async (req, res) => {
   try {
-    const { image_urls, title, price, discount_price } = req.body;
-    if (!image_urls || image_urls.length === 0) {
+    const rawImages = req.body.image_urls || req.body.images || (req.body.image_path ? [req.body.image_path] : []) || [];
+    const title = req.body.title || req.body.headline || 'Festive Indian Garment';
+    const price = parseFloat(req.body.price || (req.body.price_text ? req.body.price_text.replace(/[^\d.]/g, '') : 1999)) || 1999;
+    const discount_price = parseFloat(req.body.discount_price || (req.body.discount_text ? req.body.discount_text.replace(/[^\d.]/g, '') : 1499)) || 1499;
+
+    let urls = [];
+    if (typeof rawImages === 'string') {
+      try { urls = JSON.parse(rawImages); } catch (e) { urls = [rawImages]; }
+    } else if (Array.isArray(rawImages)) {
+      urls = rawImages;
+    }
+
+    if (urls.length === 0) {
       return res.status(400).json({ success: false, message: 'At least one product image is required for video creation.' });
     }
 
+    const tempDir = path.join(__dirname, 'public', 'images', 'uploads');
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+
     const imagePaths = [];
-    for (const u of image_urls) {
-      const clean = u.startsWith('/') ? u.slice(1) : u;
-      const p = path.join(__dirname, 'public', clean);
-      if (fs.existsSync(p)) imagePaths.push(p);
+    for (const u of urls) {
+      if (typeof u !== 'string' || !u.trim()) continue;
+      const cleanUrl = u.trim();
+
+      if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+        try {
+          const resp = await fetch(cleanUrl);
+          if (resp.ok) {
+            const buf = Buffer.from(await resp.arrayBuffer());
+            const tmpFile = path.join(tempDir, `vid_src_${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`);
+            fs.writeFileSync(tmpFile, buf);
+            imagePaths.push(tmpFile);
+          }
+        } catch (fetchErr) {
+          console.warn('[Create Video] Remote fetch error:', fetchErr.message);
+        }
+      } else {
+        const clean = cleanUrl.startsWith('/') ? cleanUrl.slice(1) : cleanUrl;
+        const p = path.join(__dirname, 'public', clean);
+        if (fs.existsSync(p)) imagePaths.push(p);
+      }
     }
 
     if (imagePaths.length === 0) {
-      return res.status(400).json({ success: false, message: 'None of the provided image URLs exist on the local server.' });
+      return res.status(400).json({ success: false, message: 'No valid image files available to compose video.' });
     }
 
     const videoDir = path.join(__dirname, 'public', 'images', 'product_videos');
@@ -3038,7 +3138,7 @@ app.get('/api/admin/pincodes', adminIpFilter, authenticateAdmin, async (req, res
     const msgRow = await db.get("SELECT value FROM settings WHERE key = 'pincode_error_message'");
     res.json({
       success: true,
-      allowed_pincodes: allowedRow ? allowedRow.value : '36, 37, 38, 39',
+      allowed_pincodes: allowedRow ? allowedRow.value : 'ALL',
       pincode_error_message: msgRow ? msgRow.value : 'Delivery is currently unavailable to this PIN Code.'
     });
   } catch (err) {
