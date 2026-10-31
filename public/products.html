@@ -24,6 +24,32 @@
   <link rel="stylesheet" href="css/ux-premium.css">
   <link rel="icon" type="image/png" href="/favicon.png?v=4">
   <link rel="shortcut icon" href="/favicon.ico?v=4">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Little to Large Clothing Collections",
+    "description": "Browse premium ethnic wear, western outfits, and kids fashion from Little to Large.",
+    "url": "https://littletolargee.com/products",
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://littletolargee.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Shop Collections",
+          "item": "https://littletolargee.com/products"
+        }
+      ]
+    }
+  }
+  </script>
 </head>
 <body>
 
@@ -234,53 +260,89 @@
   <script>
     let activeSizeFilter = null;
     
-    // Parse URL params on load
-    document.addEventListener('DOMContentLoaded', () => {
+    // Sync input states from current URL search parameters
+    function syncInputsFromUrl() {
       const urlParams = new URLSearchParams(window.location.search);
-      const catParam = urlParams.get('category');
+      let catParam = urlParams.get('category');
       const subcatParam = urlParams.get('subcategory');
       const searchParam = urlParams.get('search');
-
-      if (catParam) {
-        document.querySelectorAll('.cat-filter').forEach(chk => {
-          if (chk.value === catParam) chk.checked = true;
-        });
-        document.getElementById('shopPageTitle').textContent = `${catParam} Clothing`;
-      }
-
-      if (subcatParam) {
-        document.querySelectorAll('.subcat-filter').forEach(chk => {
-          if (chk.value === subcatParam) chk.checked = true;
-        });
-      }
-
-      if (searchParam) {
-        document.getElementById('shopPageTitle').textContent = `Search results for "${searchParam}"`;
-      }
-
       const styleParam = urlParams.get('style');
-      if (styleParam) {
-        document.querySelectorAll('.style-filter').forEach(chk => {
-          if (chk.value === styleParam) chk.checked = true;
-        });
-        if (!catParam && !searchParam) {
-          document.getElementById('shopPageTitle').textContent = `${styleParam} Outfits`;
+      const fabricParam = urlParams.get('fabric');
+      const colorParam = urlParams.get('color');
+      const genderParam = urlParams.get('gender');
+      const sortParam = urlParams.get('sort');
+
+      // Normalize Category Aliases (children -> Kids, etc.)
+      if (catParam) {
+        const catLower = catParam.toLowerCase().trim();
+        if (catLower === 'children' || catLower === 'child' || catLower === 'kids' || catLower === 'kid') {
+          catParam = 'Kids';
+        } else if (catLower === 'women' || catLower === 'womens') {
+          catParam = 'Women';
+        } else if (catLower === 'men' || catLower === 'mens') {
+          catParam = 'Men';
+        } else if (catLower === 'accessories' || catLower === 'accessory') {
+          catParam = 'Accessories';
         }
       }
+
+      // Check/uncheck category
+      document.querySelectorAll('.cat-filter').forEach(chk => {
+        chk.checked = (catParam && chk.value.toLowerCase() === catParam.toLowerCase());
+      });
+      if (catParam) {
+        document.getElementById('shopPageTitle').textContent = `${catParam}'s Clothing Collections`;
+      } else {
+        document.getElementById('shopPageTitle').textContent = 'All Collections';
+      }
+
+      // Check subcategory
+      document.querySelectorAll('.subcat-filter').forEach(chk => {
+        chk.checked = (subcatParam && chk.value.toLowerCase() === subcatParam.toLowerCase());
+      });
+
+      // Style
+      document.querySelectorAll('.style-filter').forEach(chk => {
+        chk.checked = (styleParam && chk.value.toLowerCase() === styleParam.toLowerCase());
+      });
+
+      // Fabric & Color & Gender
+      document.querySelectorAll('.fabric-filter').forEach(chk => {
+        chk.checked = (fabricParam && chk.value.toLowerCase() === fabricParam.toLowerCase());
+      });
+      document.querySelectorAll('.color-filter').forEach(chk => {
+        chk.checked = (colorParam && chk.value.toLowerCase() === colorParam.toLowerCase());
+      });
+      document.querySelectorAll('.gender-filter').forEach(chk => {
+        chk.checked = (genderParam && chk.value.toLowerCase() === genderParam.toLowerCase());
+      });
+
+      // Sort & Search
+      if (sortParam) document.getElementById('sortSelector').value = sortParam;
+      if (searchParam) {
+        document.getElementById('catalogSearchInput').value = searchParam;
+        document.getElementById('shopPageTitle').textContent = `Search results for "${searchParam}"`;
+      }
+    }
+
+    // Parse URL params on load
+    document.addEventListener('DOMContentLoaded', () => {
+      syncInputsFromUrl();
 
       // Add listeners to elements
       document.querySelectorAll('.cat-filter, .subcat-filter, .fabric-filter, .color-filter, .style-filter, .gender-filter').forEach(el => {
         el.addEventListener('change', syncFilterStates);
       });
-      document.getElementById('sortSelector').addEventListener('change', fetchProducts);
+      document.getElementById('sortSelector').addEventListener('change', () => fetchProducts(true));
       document.getElementById('priceRange').addEventListener('input', handlePriceSliderChange);
 
-      // Check URL parameters for text search on load
-      if (searchParam) {
-        document.getElementById('catalogSearchInput').value = searchParam;
-      }
+      // Listen for browser Back/Forward navigation to keep UI and URL in sync
+      window.addEventListener('popstate', () => {
+        syncInputsFromUrl();
+        fetchProducts(false);
+      });
 
-      fetchProducts();
+      fetchProducts(false);
     });
 
     // Bi-directional state synchronization for checkboxes
@@ -299,7 +361,7 @@
         }
       });
       
-      fetchProducts();
+      fetchProducts(true);
     }
 
     // Bi-directional price slider sync
@@ -357,41 +419,29 @@
     }
 
     // Core catalog query execution
-    async function fetchProducts() {
+    async function fetchProducts(pushHistory = true) {
       const grid = document.getElementById('catalogGrid');
       startGlobalProgressBar();
       injectProductGridSkeleton(grid, 8);
 
-      // Build url query
+      // Build url query from current UI state
       const urlParams = new URLSearchParams();
       
-      // Get category checkboxes checked (including mobile clones if active)
       const checkedCats = Array.from(document.querySelectorAll('.cat-filter:checked')).map(c => c.value);
       if (checkedCats.length > 0) {
         urlParams.set('category', checkedCats[0]);
-      } else {
-        const pathParams = new URLSearchParams(window.location.search);
-        if (pathParams.get('category')) urlParams.set('category', pathParams.get('category'));
       }
 
       const checkedSubcats = Array.from(document.querySelectorAll('.subcat-filter:checked')).map(c => c.value);
       if (checkedSubcats.length > 0) {
         urlParams.set('subcategory', checkedSubcats[0]);
-      } else {
-        const pathParams = new URLSearchParams(window.location.search);
-        if (pathParams.get('subcategory')) urlParams.set('subcategory', pathParams.get('subcategory'));
       }
 
-      // Check text search
       const textSearch = document.getElementById('catalogSearchInput').value.trim();
       if (textSearch) {
         urlParams.set('search', textSearch);
-      } else {
-        const pathParams = new URLSearchParams(window.location.search);
-        if (pathParams.get('search')) urlParams.set('search', pathParams.get('search'));
       }
 
-      // Grab new filters
       const checkedFabrics = Array.from(document.querySelectorAll('.fabric-filter:checked')).map(c => c.value);
       if (checkedFabrics.length > 0) urlParams.set('fabric', checkedFabrics[0]);
 
@@ -401,9 +451,6 @@
       const checkedStyles = Array.from(document.querySelectorAll('.style-filter:checked')).map(c => c.value);
       if (checkedStyles.length > 0) {
         urlParams.set('style', checkedStyles[0]);
-      } else {
-        const pathParams = new URLSearchParams(window.location.search);
-        if (pathParams.get('style')) urlParams.set('style', pathParams.get('style'));
       }
 
       const checkedGenders = Array.from(document.querySelectorAll('.gender-filter:checked')).map(c => c.value);
@@ -412,15 +459,37 @@
       if (activeSizeFilter) urlParams.set('size', activeSizeFilter);
 
       const maxPrice = document.getElementById('priceRange').value;
-      if (maxPrice < 6000) urlParams.set('maxPrice', maxPrice);
+      if (maxPrice && Number(maxPrice) < 6000) urlParams.set('maxPrice', maxPrice);
 
       const sort = document.getElementById('sortSelector').value;
-      if (sort) urlParams.set('sort', sort);
+      if (sort && sort !== 'featured') urlParams.set('sort', sort);
 
-      const pathParams2 = new URLSearchParams(window.location.search);
-      if (pathParams2.get('visualSearch') === 'true' && pathParams2.get('ids')) {
-        urlParams.set('ids', pathParams2.get('ids'));
+      const currentSearch = new URLSearchParams(window.location.search);
+      if (currentSearch.get('visualSearch') === 'true' && currentSearch.get('ids')) {
+        urlParams.set('visualSearch', 'true');
+        urlParams.set('ids', currentSearch.get('ids'));
         document.getElementById('shopPageTitle').textContent = `Visual Search Results`;
+      }
+
+      // Update URL in browser address bar in real time so users and Google get visible distinct URLs!
+      const queryString = urlParams.toString();
+      const newRelativeUrl = queryString ? `${window.location.pathname}?${queryString}` : window.location.pathname;
+      if (pushHistory && window.location.search !== (queryString ? `?${queryString}` : '')) {
+        window.history.pushState({ path: newRelativeUrl }, '', newRelativeUrl);
+      }
+
+      // Update Canonical tag & Page Title dynamically
+      const canonicalTag = document.querySelector('link[rel="canonical"]');
+      if (canonicalTag) canonicalTag.href = `https://littletolargee.com${newRelativeUrl}`;
+
+      if (urlParams.get('category')) {
+        document.title = `${urlParams.get('category')}'s Clothing Collections | Little to Large`;
+        document.getElementById('shopPageTitle').textContent = `${urlParams.get('category')}'s Clothing Collections`;
+      } else if (urlParams.get('search')) {
+        document.title = `Search: ${urlParams.get('search')} | Little to Large`;
+      } else {
+        document.title = 'Shop Collections | Little to Large Clothing';
+        document.getElementById('shopPageTitle').textContent = 'All Clothing Collections';
       }
 
       try {
@@ -476,7 +545,7 @@
             grid.innerHTML += `
               <div class="product-card tilt-hover">
                 ${p.discount_price ? `<span class="badge-tag">Sale</span>` : ''}
-                <div class="product-img-wrapper" onclick="handleProductCardClick(event, ${p.id}, this)" ${hoverAttrs} style="cursor:pointer; position:relative">
+                <a href="/product-detail?id=${p.id}" class="product-img-wrapper" onclick="handleProductCardClick(event, ${p.id}, this)" ${hoverAttrs} style="cursor:pointer; position:relative">
                   <img class="lazy-image" src="/images/products/placeholder.svg" data-src="${mainImg}" alt="${p.name}" onerror="this.src='/images/products/placeholder.jpg'">
                   ${hasValidVideo ? `<video class="card-hover-video" src="${formatLocalPath(p.video_url.trim())}" loop muted playsinline style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:inherit; z-index:4; pointer-events:none; transition:opacity 0.2s ease;"></video>` : ''}
                 </div>
@@ -729,7 +798,7 @@
         grid.innerHTML += `
           <div class="product-card">
             ${p.discount_price ? `<span class="badge-tag">Sale</span>` : ''}
-            <div class="product-img-wrapper" onclick="window.location.href='/product-detail?id=${p.id}'" style="cursor:pointer; position:relative">
+            <a href="/product-detail?id=${p.id}" class="product-img-wrapper" style="display:block; position:relative">
               <img src="${mainImg}" alt="${p.name}" onerror="this.src='/images/products/placeholder.jpg'">
               ${p.video_url ? `<span class="card-video-pill"><i class="fas fa-play"></i> Video</span>` : ''}
             </div>

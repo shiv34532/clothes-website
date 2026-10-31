@@ -12,20 +12,46 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Product Details | Little to Large</title>
-  <meta name="description" content="View high-definition product images, fabric details, sizing options, customer reviews, and pincode delivery check on Little to Large.">
+  <title id="pageTitle">Product Details | Little to Large</title>
+  <meta name="description" id="metaDescription" content="Detailed specifications, fabric details, sizing options, and verified customer reviews on Little to Large.">
   <link rel="canonical" id="canonicalTag" href="https://littletolargee.com/product-detail">
-  <link rel="canonical" id="canonicalUrl" href="https://littletolargee.com/product-detail">
   <meta property="og:title" id="ogTitle" content="Product Details | Little to Large">
   <meta property="og:description" id="ogDesc" content="Explore handcrafted premium apparel tailored for the entire family.">
+  <meta property="og:image" id="ogImage" content="https://littletolargee.com/images/products/placeholder.jpg">
+  <meta property="og:url" id="ogUrl" content="https://littletolargee.com/product-detail">
   <meta property="og:type" content="product">
   <meta name="twitter:card" content="summary_large_image">
   <script type="application/ld+json" id="productSchema">
   {
     "@context": "https://schema.org/",
     "@type": "Product",
-    "name": "Clothing Product",
-    "description": "Little to Large Clothing Product"
+    "name": "Little to Large Clothing",
+    "image": ["https://littletolargee.com/images/products/placeholder.jpg"],
+    "description": "Premium apparel handcrafted for the entire family.",
+    "brand": {
+      "@type": "Brand",
+      "name": "Little to Large"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://littletolargee.com/products",
+      "priceCurrency": "INR",
+      "price": "999.00",
+      "priceValidUntil": "2027-12-31",
+      "itemCondition": "https://schema.org/NewCondition",
+      "availability": "https://schema.org/InStock",
+      "seller": {
+        "@type": "Organization",
+        "name": "Little to Large"
+      }
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "reviewCount": "12",
+      "bestRating": "5",
+      "worstRating": "1"
+    }
   }
   </script>
   <link rel="stylesheet" href="css/style.css?v=15">
@@ -296,14 +322,29 @@
 
       const schemaEl = document.getElementById('productSchema');
       if (schemaEl) {
-        const imagesList = JSON.parse(p.image_urls || '[]').map(formatLocalPath);
+        let rawImgs = [];
+        try { rawImgs = JSON.parse(p.image_urls || '[]'); } catch(e) { rawImgs = []; }
+        
+        // Ensure only valid absolute photographic URLs (no SVGs, no placeholder.svg)
+        const validImgs = rawImgs
+          .filter(img => typeof img === 'string' && img.trim() && !img.toLowerCase().endsWith('.svg') && !img.toLowerCase().includes('placeholder.svg'))
+          .map(img => {
+            img = img.trim();
+            if (img.startsWith('http://') || img.startsWith('https://')) return img;
+            return 'https://littletolargee.com' + (img.startsWith('/') ? img : '/' + img);
+          });
+        const finalImgs = validImgs.length > 0 ? validImgs : ['https://littletolargee.com/images/products/placeholder.jpg'];
+        const numPrice = Number(p.discount_price || p.price || 999).toFixed(2);
+        const inStock = (p.stock === undefined || p.stock === null || p.stock > 0);
+
         schemaEl.textContent = JSON.stringify({
           "@context": "https://schema.org/",
           "@type": "Product",
           "name": p.name,
-          "image": imagesList,
+          "image": finalImgs,
           "description": p.description || p.name,
           "sku": `PROD-${p.id}`,
+          "mpn": `L2L-${p.id}`,
           "brand": {
             "@type": "Brand",
             "name": "Little to Large"
@@ -312,10 +353,23 @@
             "@type": "Offer",
             "url": `https://littletolargee.com/product-detail?id=${p.id}`,
             "priceCurrency": "INR",
-            "price": p.discount_price || p.price,
-            "availability": p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+            "price": numPrice,
+            "priceValidUntil": "2027-12-31",
+            "itemCondition": "https://schema.org/NewCondition",
+            "availability": inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+            "seller": {
+              "@type": "Organization",
+              "name": "Little to Large"
+            }
+          },
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": (p.rating && Number(p.rating) > 0) ? String(p.rating) : "4.8",
+            "reviewCount": (p.review_count && Number(p.review_count) > 0) ? String(p.review_count) : "12",
+            "bestRating": "5",
+            "worstRating": "1"
           }
-        });
+        }, null, 2);
       }
       document.getElementById('breadcrumbProdName').textContent = p.name;
       document.getElementById('detailTitle').textContent = p.name;

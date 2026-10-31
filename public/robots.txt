@@ -1,5 +1,9 @@
 User-agent: *
 Allow: /
 Disallow: /admin
-Disallow: /api/admin
+Disallow: /api/
+Disallow: /cart
+Disallow: /account
+Disallow: /orders
+
 Sitemap: https://littletolargee.com/sitemap.xml

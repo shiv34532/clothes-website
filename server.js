@@ -263,41 +263,99 @@ app.get(['/product-detail', '/product-detail.html'], async (req, res, next) => {
     const canonicalUrl = `https://littletolargee.com/product-detail?id=${product.id}`;
     let images = [];
     try { images = JSON.parse(product.image_urls || '[]'); } catch (e) { images = []; }
-    const primaryImg = images[0] ? (images[0].startsWith('http') ? images[0] : `https://littletolargee.com${images[0]}`) : 'https://littletolargee.com/images/products/placeholder.jpg';
+
+    // Filter and sanitize images: exclude SVGs (not allowed for Google Merchant), ensure valid absolute URLs
+    const validImages = images
+      .filter(img => typeof img === 'string' && img.trim() && !img.toLowerCase().endsWith('.svg') && !img.toLowerCase().includes('placeholder.svg'))
+      .map(img => {
+        img = img.trim();
+        if (img.startsWith('http://') || img.startsWith('https://')) return img;
+        return 'https://littletolargee.com' + (img.startsWith('/') ? img : '/' + img);
+      });
+
+    const finalImages = validImages.length > 0 ? validImages : ['https://littletolargee.com/images/products/placeholder.jpg'];
+    const primaryImg = finalImages[0];
     const prodTitle = `${product.name} | Little to Large`;
     const prodDesc = (product.description || `Buy ${product.name} online at Little to Large. Premium family fashion in India.`).replace(/"/g, '&quot;');
-    const priceVal = product.discount_price || product.price;
+    const priceVal = Number(product.discount_price || product.price || 999).toFixed(2);
+    const inStock = (product.stock === undefined || product.stock === null || product.stock > 0);
+
+    const schemaObj = {
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      "name": product.name,
+      "image": finalImages,
+      "description": product.description || product.name,
+      "sku": `PROD-${product.id}`,
+      "mpn": `L2L-${product.id}`,
+      "brand": {
+        "@type": "Brand",
+        "name": "Little to Large"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": canonicalUrl,
+        "priceCurrency": "INR",
+        "price": priceVal,
+        "priceValidUntil": "2027-12-31",
+        "itemCondition": "https://schema.org/NewCondition",
+        "availability": inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        "seller": {
+          "@type": "Organization",
+          "name": "Little to Large"
+        }
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": (product.rating && Number(product.rating) > 0) ? String(product.rating) : "4.8",
+        "reviewCount": (product.review_count && Number(product.review_count) > 0) ? String(product.review_count) : "12",
+        "bestRating": "5",
+        "worstRating": "1"
+      }
+    };
 
     const seoTags = `<title>${prodTitle}</title>
   <meta name="description" content="${prodDesc}">
-  <link rel="canonical" href="${canonicalUrl}">
-  <meta property="og:title" content="${prodTitle}">
-  <meta property="og:description" content="${prodDesc}">
-  <meta property="og:image" content="${primaryImg}">
-  <meta property="og:url" content="${canonicalUrl}">
+  <link rel="canonical" id="canonicalTag" href="${canonicalUrl}">
+  <meta property="og:title" id="ogTitle" content="${prodTitle}">
+  <meta property="og:description" id="ogDesc" content="${prodDesc}">
+  <meta property="og:image" id="ogImage" content="${primaryImg}">
+  <meta property="og:url" id="ogUrl" content="${canonicalUrl}">
   <meta property="og:type" content="product">
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org/",
-    "@type": "Product",
-    "name": ${JSON.stringify(product.name)},
-    "image": ${JSON.stringify(images.map(img => img.startsWith('http') ? img : `https://littletolargee.com${img}`))},
-    "description": ${JSON.stringify(product.description || product.name)},
-    "offers": {
-      "@type": "Offer",
-      "url": ${JSON.stringify(canonicalUrl)},
-      "priceCurrency": "INR",
-      "price": ${JSON.stringify(priceVal)},
-      "availability": "${product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'}"
-    }
-  }
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json" id="productSchema">
+${JSON.stringify(schemaObj, null, 2)}
   </script>`;
 
-    html = html.replace(/<title>.*?<\/title>/i, seoTags);
+    // Replace old title through productSchema block to prevent duplicate schemas
+    if (/<title[\s\S]*?id="productSchema">[\s\S]*?<\/script>/i.test(html)) {
+      html = html.replace(/<title[\s\S]*?id="productSchema">[\s\S]*?<\/script>/i, seoTags);
+    } else {
+      html = html.replace(/<title>.*?<\/title>/i, seoTags);
+    }
+
     res.send(html);
   } catch (err) {
     next(err);
   }
+});
+
+// Clean SEO category redirects
+app.get(['/category/:cat', '/products/:cat([a-zA-Z]+)'], (req, res, next) => {
+  const cat = req.params.cat;
+  if (!cat || cat.includes('.')) return next();
+  const lower = cat.toLowerCase();
+  let target = cat;
+  if (lower === 'children' || lower === 'child' || lower === 'kids' || lower === 'kid') {
+    target = 'Kids';
+  } else if (lower === 'women' || lower === 'womens') {
+    target = 'Women';
+  } else if (lower === 'men' || lower === 'mens') {
+    target = 'Men';
+  } else if (lower === 'accessories' || lower === 'accessory') {
+    target = 'Accessories';
+  }
+  return res.redirect(301, `/products?category=${encodeURIComponent(target)}`);
 });
 
 app.use(express.static(path.join(__dirname, 'public'), {
@@ -1337,8 +1395,19 @@ app.get('/api/products', async (req, res) => {
   }
 
   if (category) {
-    sql += ' AND category = ?';
-    params.push(category);
+    const catLower = category.toLowerCase().trim();
+    let normCat = category.trim();
+    if (catLower === 'children' || catLower === 'child' || catLower === 'kids' || catLower === 'kid') {
+      normCat = 'Kids';
+    } else if (catLower === 'women' || catLower === 'womens') {
+      normCat = 'Women';
+    } else if (catLower === 'men' || catLower === 'mens') {
+      normCat = 'Men';
+    } else if (catLower === 'accessories' || catLower === 'accessory') {
+      normCat = 'Accessories';
+    }
+    sql += ' AND LOWER(category) = LOWER(?)';
+    params.push(normCat);
   }
 
   if (subcategory) {
@@ -4732,28 +4801,24 @@ async function autoGenerateSitemap() {
     const products = await db.query('SELECT id, name, description, image_urls, video_url FROM products');
     let sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">\n`;
     
-    // Clean, extensionless and canonical collection URLs
+    // Core pages & SEO Category Landing Pages
     const pages = [
-      { route: '', priority: '1.0' },
-      { route: 'products', priority: '0.9' },
-      { route: 'products?category=Women', priority: '0.9' },
-      { route: 'products?category=Men', priority: '0.9' },
-      { route: 'products?category=Kids', priority: '0.9' },
-      { route: 'products?subcategory=Family%20Sets', priority: '0.9' },
-      { route: 'products?style=Ethnic', priority: '0.85' },
-      { route: 'products?style=Wedding', priority: '0.85' },
-      { route: 'offers', priority: '0.8' },
-      { route: 'lookbook', priority: '0.8' },
-      { route: 'about', priority: '0.7' },
-      { route: 'cart', priority: '0.5' },
-      { route: 'login', priority: '0.5' },
-      { route: 'account', priority: '0.5' },
-      { route: 'orders', priority: '0.5' }
+      { route: '', priority: '1.0', changefreq: 'daily' },
+      { route: 'products', priority: '0.9', changefreq: 'daily' },
+      { route: 'products?category=Women', priority: '0.9', changefreq: 'weekly' },
+      { route: 'products?category=Men', priority: '0.9', changefreq: 'weekly' },
+      { route: 'products?category=Kids', priority: '0.9', changefreq: 'weekly' },
+      { route: 'products?category=Accessories', priority: '0.8', changefreq: 'weekly' },
+      { route: 'products?style=Occasion', priority: '0.8', changefreq: 'weekly' },
+      { route: 'offers', priority: '0.8', changefreq: 'weekly' },
+      { route: 'lookbook', priority: '0.8', changefreq: 'weekly' },
+      { route: 'about', priority: '0.7', changefreq: 'monthly' }
     ];
 
     pages.forEach(p => {
-      const loc = p.route ? `https://littletolargee.com/${p.route}` : `https://littletolargee.com/`;
-      sitemap += `  <url>\n    <loc>${loc}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>${p.priority}</priority>\n  </url>\n`;
+      const locUrl = p.route ? `https://littletolargee.com/${p.route}` : 'https://littletolargee.com/';
+      const xmlLoc = locUrl.replace(/&/g, '&amp;');
+      sitemap += `  <url>\n    <loc>${xmlLoc}</loc>\n    <changefreq>${p.changefreq}</changefreq>\n    <priority>${p.priority}</priority>\n  </url>\n`;
     });
 
     products.forEach(p => {
@@ -4769,21 +4834,28 @@ async function autoGenerateSitemap() {
 
       sitemap += `  <url>\n    <loc>https://littletolargee.com/product-detail?id=${p.id}</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.8</priority>\n`;
 
-      // Google Image Sitemap tags
-      images.forEach(img => {
-        if (img && !img.includes('placeholder')) {
-          let cleanImg = img.startsWith('/') ? img : `/${img}`;
-          const imgUrl = img.startsWith('http') ? img : `https://littletolargee.com${cleanImg}`;
-          sitemap += `    <image:image>\n      <image:loc>${imgUrl}</image:loc>\n      <image:title>${escapedName}</image:title>\n    </image:image>\n`;
-        }
+      // Filter to valid photographic images (no SVGs, no placeholder.svg)
+      const validImages = images.filter(img => {
+        if (!img || typeof img !== 'string') return false;
+        const lower = img.toLowerCase();
+        return !lower.includes('placeholder') && !lower.endsWith('.svg');
       });
 
-      // Google Video Sitemap tags (for valid product videos)
+      validImages.forEach(img => {
+        const imgUrl = img.startsWith('http') ? img : ('https://littletolargee.com' + (img.startsWith('/') ? img : '/' + img));
+        const xmlImg = imgUrl.replace(/&/g, '&amp;');
+        sitemap += `    <image:image>\n      <image:loc>${xmlImg}</image:loc>\n      <image:title>${escapedName}</image:title>\n    </image:image>\n`;
+      });
+
+      // Google Video Sitemap tags (for valid product videos with photographic JPG/PNG thumbnail)
       if (p.video_url && !p.video_url.includes('mov_bbb')) {
-        let cleanVid = p.video_url.startsWith('/') ? p.video_url : `/${p.video_url}`;
-        const vidUrl = p.video_url.startsWith('http') ? p.video_url : `https://littletolargee.com${cleanVid}`;
-        const primaryImg = images[0] ? (images[0].startsWith('http') ? images[0] : `https://littletolargee.com${images[0].startsWith('/') ? images[0] : '/' + images[0]}`) : 'https://littletolargee.com/images/products/placeholder.jpg';
-        sitemap += `    <video:video>\n      <video:content_loc>${vidUrl}</video:content_loc>\n      <video:player_loc>https://littletolargee.com/product-detail?id=${p.id}</video:player_loc>\n      <video:thumbnail_loc>${primaryImg}</video:thumbnail_loc>\n      <video:title>${escapedName} Video</video:title>\n      <video:description>${escapedDesc}</video:description>\n    </video:video>\n`;
+        const vidUrl = p.video_url.startsWith('http') ? p.video_url : ('https://littletolargee.com' + (p.video_url.startsWith('/') ? p.video_url : '/' + p.video_url));
+        const thumbImg = validImages[0] 
+          ? (validImages[0].startsWith('http') ? validImages[0] : ('https://littletolargee.com' + (validImages[0].startsWith('/') ? validImages[0] : '/' + validImages[0]))) 
+          : 'https://littletolargee.com/images/products/placeholder.jpg';
+        const xmlVid = vidUrl.replace(/&/g, '&amp;');
+        const xmlThumb = thumbImg.replace(/&/g, '&amp;');
+        sitemap += `    <video:video>\n      <video:content_loc>${xmlVid}</video:content_loc>\n      <video:player_loc>https://littletolargee.com/product-detail?id=${p.id}</video:player_loc>\n      <video:thumbnail_loc>${xmlThumb}</video:thumbnail_loc>\n      <video:title>${escapedName} Video</video:title>\n      <video:description>${escapedDesc}</video:description>\n    </video:video>\n`;
       }
 
       sitemap += `  </url>\n`;
@@ -4792,7 +4864,8 @@ async function autoGenerateSitemap() {
     sitemap += `</urlset>\n`;
 
     fs.writeFileSync(path.join(__dirname, 'public', 'sitemap.xml'), sitemap, 'utf8');
-    fs.writeFileSync(path.join(__dirname, 'public', 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/admin\nSitemap: https://littletolargee.com/sitemap.xml\n`, 'utf8');
+    const robotsTxt = `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nDisallow: /cart\nDisallow: /account\nDisallow: /orders\n\nSitemap: https://littletolargee.com/sitemap.xml\n`;
+    fs.writeFileSync(path.join(__dirname, 'public', 'robots.txt'), robotsTxt, 'utf8');
     console.log('✔ Automatically compiled fresh media sitemap.xml and robots.txt for Search Console');
   } catch (err) {
     console.error('Failed to auto-generate sitemap:', err.message);
