@@ -1,0 +1,211 @@
+/* ==============================================================================
+   PURCHASE DISCOUNT SPINNER (GAMIFIED OFFER WHEEL) CSS
+   ============================================================================== */
+
+/* Floating Launcher Trigger */
+#spinnerLauncherBtn {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  z-index: 99990;
+  background: linear-gradient(135deg, #e67e22 0%, #e74c3c 100%);
+  color: #fff;
+  border: 3px solid #f1c40f;
+  border-radius: 50px;
+  padding: 0.75rem 1.4rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#spinnerLauncherBtn:hover {
+  transform: scale(1.08) translateY(-3px);
+  box-shadow: 0 12px 30px rgba(231, 76, 60, 0.6);
+}
+
+.spinner-badge-count {
+  background: #f1c40f;
+  color: #2c3e50;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+/* Modal Backdrop */
+#spinnerModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99995;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+#spinnerModalOverlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Modal Content Box */
+.spinner-modal-container {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 2.2rem;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  position: relative;
+  transform: scale(0.9);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+}
+
+#spinnerModalOverlay.active .spinner-modal-container {
+  transform: scale(1);
+}
+
+.spinner-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  font-size: 1.1rem;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.spinner-close-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Wheel Canvas Wrapper */
+.spinner-wheel-wrapper {
+  position: relative;
+  width: 320px;
+  height: 320px;
+  margin: 1.5rem auto 1rem;
+}
+
+#spinnerCanvas {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Indicator / Pointer Arrow at Top */
+.spinner-pointer {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 16px solid transparent;
+  border-right: 16px solid transparent;
+  border-top: 28px solid #e74c3c;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+  z-index: 10;
+}
+
+/* Center Spin Button */
+.spinner-center-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: #f1c40f;
+  border: 4px solid #f1c40f;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 12;
+  transition: transform 0.2s;
+}
+
+.spinner-center-btn:hover:not(:disabled) {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.spinner-center-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: grayscale(0.8);
+}
+
+/* Eligibility & Status Subtext */
+.spinner-status-info {
+  margin-top: 1rem;
+  font-size: 0.88rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.spinner-rule-tag {
+  display: inline-block;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.35rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #475569;
+  margin-top: 0.5rem;
+}
+
+/* Winner Celebration Card */
+.spinner-win-card {
+  display: none;
+  background: linear-gradient(135deg, #fefce8 0%, #fff7ed 100%);
+  border: 2px dashed #f59e0b;
+  border-radius: 16px;
+  padding: 1.2rem;
+  margin-top: 1rem;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.spinner-win-code {
+  font-family: monospace;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #b45309;
+  letter-spacing: 2px;
+  background: #fde68a;
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
+  display: inline-block;
+  margin: 0.5rem 0;
+}

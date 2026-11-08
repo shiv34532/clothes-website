@@ -1,1 +1,24 @@
-{"name":"Little to Large Admin Studio","short_name":"L2L Studio","start_url":"./","display":"standalone","background_color":"#f5f1e8","theme_color":"#122b27","description":"Private admin publishing app for Little to Large","icons":[]}
+{
+  "name": "Little to Largee Admin Studio",
+  "short_name": "L2L Admin",
+  "description": "Cross-platform mobile management studio for Little to Largee store administrators",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1e1b4b",
+  "theme_color": "#780016",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

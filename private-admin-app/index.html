@@ -2,77 +2,701 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#122b27">
-  <meta name="description" content="Little to Large private admin publishing app">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#780016">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="L2L Admin">
+  <meta name="description" content="Little to Largee Admin Studio - Mobile Management Console">
   <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="styles.css">
-  <title>L2L Studio</title>
+  <title>Little to Largee Admin Studio</title>
 </head>
 <body>
-  <div id="app" class="app-shell">
-    <section id="loginView" class="login-view">
-      <div class="brand-lockup">
-        <div class="brand-mark" aria-hidden="true"><span>L</span><span>2</span><span>L</span></div>
-        <div><p class="eyebrow">PRIVATE ADMIN STUDIO</p><h1>Little to Large</h1><p class="muted">Publish your next look from anywhere.</p></div>
+  <!-- PIN / Lock Screen for CIA Confidentiality & Authentication -->
+  <div id="pinLockScreen" class="pin-lock-screen" style="display:none;">
+    <div class="pin-box">
+      <div class="pin-logo">🛍️</div>
+      <h2>Little to Largee</h2>
+      <p class="pin-sub">Admin Console Locked</p>
+      <div class="pin-dots">
+        <span class="dot" id="dot1"></span>
+        <span class="dot" id="dot2"></span>
+        <span class="dot" id="dot3"></span>
+        <span class="dot" id="dot4"></span>
       </div>
-      <form id="loginForm" class="panel login-panel">
-        <div><p class="eyebrow">ADMIN ACCESS</p><h2>Welcome back</h2><p class="muted">Sign in with the store administrator account.</p></div>
-        <label>Email<input id="loginEmail" type="email" autocomplete="username" placeholder="admin@littlelarge.in" required></label>
-        <label>Password<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Your password" required></label>
-        <button class="button button-primary" type="submit"><span>Enter Studio</span><span class="button-arrow">&#8594;</span></button>
-        <p id="loginStatus" class="status" role="alert"></p>
+      <div class="pin-pad">
+        <button type="button" class="pin-btn" onclick="enterPin('1')">1</button>
+        <button type="button" class="pin-btn" onclick="enterPin('2')">2</button>
+        <button type="button" class="pin-btn" onclick="enterPin('3')">3</button>
+        <button type="button" class="pin-btn" onclick="enterPin('4')">4</button>
+        <button type="button" class="pin-btn" onclick="enterPin('5')">5</button>
+        <button type="button" class="pin-btn" onclick="enterPin('6')">6</button>
+        <button type="button" class="pin-btn" onclick="enterPin('7')">7</button>
+        <button type="button" class="pin-btn" onclick="enterPin('8')">8</button>
+        <button type="button" class="pin-btn" onclick="enterPin('9')">9</button>
+        <button type="button" class="pin-btn pin-func" onclick="clearPin()">C</button>
+        <button type="button" class="pin-btn" onclick="enterPin('0')">0</button>
+        <button type="button" class="pin-btn pin-func" onclick="unlockWithPassword()">🔑</button>
+      </div>
+      <p id="pinMsg" class="pin-msg"></p>
+    </div>
+  </div>
+
+  <div id="app" class="app-shell">
+    <!-- Offline Banner -->
+    <div id="offlineBanner" class="offline-banner" style="display:none;">
+      📡 Operating in Offline / Cached Mode. Reconnecting to Little to Largee server...
+    </div>
+
+    <!-- Login View -->
+    <section id="loginView" class="login-view">
+      <div class="brand-hero">
+        <div class="brand-avatar">👑</div>
+        <h1 class="brand-title">Little to Largee</h1>
+        <p class="brand-tagline">Official Administrator Studio • Android & iOS</p>
+        <div class="security-chip">
+          <span>🛡️ Live Store Platform Data • CIA Security Verified</span>
+        </div>
+      </div>
+
+      <form id="loginForm" class="login-card">
+        <div class="card-heading">
+          <h2>Administrator Sign In</h2>
+          <p>Access live products catalog, orders, analytics & spinner management</p>
+        </div>
+
+        <div class="form-group">
+          <label for="loginEmail">Admin Email</label>
+          <input id="loginEmail" type="email" autocomplete="username" value="admin@littlelarge.in" required>
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input id="loginPassword" type="password" autocomplete="current-password" value="admin123" required>
+          <small class="muted" style="display:block; margin-top:3px;">Default: <code>admin123</code> (or your custom password)</small>
+        </div>
+
+        <!-- Direct Server Host Configuration -->
+        <div class="form-group" style="background:rgba(0,0,0,0.2); padding:0.75rem; border-radius:8px; border:1px solid var(--border);">
+          <label style="color:var(--accent);">🌐 Store Backend Target IP</label>
+          <div style="display:flex; gap:0.4rem; margin-top:0.25rem;">
+            <input id="quickServerInput" type="text" value="http://10.16.72.77:3000" style="font-size:0.85rem; font-family:monospace; padding:0.4rem 0.6rem;">
+            <button type="button" class="btn btn-xs btn-outline" onclick="quickTestConnection()" style="white-space:nowrap; padding:0.4rem 0.6rem;">⚡ Test</button>
+          </div>
+          <div class="preset-buttons mt-1">
+            <button type="button" class="btn btn-xs btn-outline" onclick="setQuickServer('http://10.16.72.77:3000')">📡 Wi-Fi Phone (10.16.72.77:3000)</button>
+            <button type="button" class="btn btn-xs btn-outline" onclick="setQuickServer('http://10.0.2.2:3000')">📱 Emulator (10.0.2.2:3000)</button>
+            <button type="button" class="btn btn-xs btn-outline" onclick="setQuickServer('http://localhost:3000')">💻 PC (localhost:3000)</button>
+          </div>
+          <span id="quickServerStatus" class="muted" style="display:block; margin-top:0.3rem; font-size:0.72rem;"></span>
+        </div>
+
+        <button class="btn btn-primary btn-block mt-2" type="submit" id="btnLogin">
+          <span>Enter Live Admin Studio</span>
+          <span class="btn-icon">→</span>
+        </button>
+
+        <p id="loginStatus" class="status-msg" role="alert"></p>
       </form>
-      <p class="login-footnote"><span class="secure-dot"></span> Admin-only publishing space</p>
+      <p class="login-footer">Little to Largee • Live Enterprise Commerce Shell</p>
     </section>
 
-    <section id="studioView" class="studio-view" hidden>
-      <header class="topbar">
-        <div class="brand-mini"><div class="brand-mark small" aria-hidden="true"><span>L</span><span>2</span><span>L</span></div><div><strong>L2L Studio</strong><small>Private publishing desk</small></div></div>
-        <button id="logoutButton" class="icon-button" type="button" aria-label="Sign out" title="Sign out">&#8599;</button>
+    <!-- Studio Main View -->
+    <section id="studioView" class="studio-view" style="display:none;">
+      <!-- Mobile Top App Bar -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button type="button" class="icon-btn" onclick="toggleDrawer()" title="Menu">☰</button>
+          <div class="brand-mini">
+            <span class="brand-name">Little to Largee</span>
+            <span class="brand-sub">Live Platform Studio</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <button type="button" class="server-pill" onclick="openServerModal()" id="topServerPill" title="Server Connection">
+            <span class="status-dot dot-green"></span>
+            <span id="topServerLabel">Connected</span>
+          </button>
+          <button type="button" class="icon-btn" onclick="lockConsole()" title="Quick Lock">🔒</button>
+          <button type="button" class="icon-btn" onclick="logout()" title="Sign Out">🚪</button>
+        </div>
       </header>
-      <main>
-        <section class="welcome-row"><div><p class="eyebrow">GOOD TO SEE YOU</p><h1>Make it live.</h1><p class="muted">Add a product or refresh the storefront in a few taps.</p></div><div id="connectionPill" class="connection-pill"><span></span> Connected</div></section>
-        <div id="toast" class="toast" role="status"></div>
-        <nav class="tabbar" aria-label="Studio sections"><button class="tab active" data-tab="productTab" type="button">Product</button><button class="tab" data-tab="bannerTab" type="button">Banner</button><button class="tab" data-tab="catalogTab" type="button">Live catalog</button></nav>
 
-        <section id="productTab" class="tab-panel active-panel">
-          <form id="productForm" class="panel form-panel">
-            <div class="section-heading"><div class="section-icon">+</div><div><p class="eyebrow">CATALOG PUBLISHER</p><h2>New clothing product</h2></div></div>
-            <label>Product name<input name="name" type="text" placeholder="e.g. Sandstone Linen Co-ord" required></label>
-            <div class="field-grid"><label>Category<select name="category" required><option>Men</option><option>Women</option><option>Kids</option><option>Accessories</option></select></label><label>Style / subcategory<input name="subcategory" type="text" placeholder="Ethnic, Western..."></label></div>
-            <div class="field-grid"><label>MRP (INR)<input name="price" type="number" min="1" step="0.01" placeholder="2499" required></label><label>Sale price<input name="discount_price" type="number" min="0" step="0.01" placeholder="1499"></label></div>
-            <div class="field-grid"><label>Stock<input name="stock" type="number" min="0" placeholder="25" required></label><label>Sizes<input name="size_variants" type="text" value="S,M,L,XL" required></label></div>
-            <label>Description<textarea name="description" rows="4" placeholder="Fabric, fit, care and styling details" required></textarea></label>
-            <div class="upload-box"><div class="upload-copy"><span class="upload-icon">&#9633;</span><div><strong>Product photos</strong><small>Up to 5 images, up to 10 MB each</small></div></div><input name="images" type="file" accept="image/*" multiple></div>
-            <div class="upload-box"><div class="upload-copy"><span class="upload-icon">&#9654;</span><div><strong>Product video</strong><small>Optional demo video from your phone</small></div></div><input name="video" type="file" accept="video/*"></div>
-            <label>Or use a hosted image URL<input name="image_url" type="url" placeholder="https://..."></label>
-            <label>Or use a hosted video URL <span class="optional">optional</span><input name="video_url" type="url" placeholder="https://...mp4"></label>
-            <div class="inline-field"><label>Return window (days)<input name="return_window_days" type="number" min="0" value="7"></label><button class="button button-primary submit-button" type="submit">Publish product <span class="button-arrow">&#8594;</span></button></div>
-          </form>
+      <!-- Slide-Out Drawer for all modules -->
+      <div id="drawerOverlay" class="drawer-overlay" onclick="toggleDrawer()"></div>
+      <aside id="appDrawer" class="app-drawer">
+        <div class="drawer-header">
+          <div class="drawer-logo">👑 Little to Largee</div>
+          <p class="drawer-subtitle">Management Console</p>
+          <button type="button" class="drawer-close" onclick="toggleDrawer()">✕</button>
+        </div>
+        <ul class="drawer-menu">
+          <li><button type="button" class="drawer-item active" onclick="switchTab('analyticsTab')">📊 Analytics & KPIs</button></li>
+          <li><button type="button" class="drawer-item" onclick="switchTab('productsTab')">👗 Products Inventory (23 Items)</button></li>
+          <li><button type="button" class="drawer-item" onclick="switchTab('ordersTab')">📦 Order Fulfillment & Invoices</button></li>
+          <li><button type="button" class="drawer-item" onclick="switchTab('spinnerTab')">🎡 Tiered Spinner & Win-Cap</button></li>
+          <li><button type="button" class="drawer-item" onclick="switchTab('storiesTab')">🎬 Daily Stories & Media</button></li>
+          <li><button type="button" class="drawer-item" onclick="switchTab('mediaTab')">📂 Drive Media Explorer</button></li>
+          <li><button type="button" class="drawer-item" onclick="switchTab('dbStudioTab')">🗄️ SQL Live Database Studio</button></li>
+          <li><button type="button" class="drawer-item" onclick="switchTab('bannersTab')">🎯 Hero Banners & Deals</button></li>
+          <li><button type="button" class="drawer-item" onclick="switchTab('aiStudioTab')">✨ AI Product Studio</button></li>
+          <li><button type="button" class="drawer-item" onclick="switchTab('securityTab')">🛡️ CIA Security & Change Password</button></li>
+          <li><button type="button" class="drawer-item" onclick="switchTab('settingsTab')">⚙️ Shipping & Store Settings</button></li>
+        </ul>
+        <div class="drawer-footer">
+          <div class="version-tag">Little to Largee Mobile v2.1 • Android & iOS</div>
+        </div>
+      </aside>
+
+      <!-- Main Content Container with Tabs -->
+      <main class="app-content" id="appContent">
+        <!-- Toast Notification -->
+        <div id="toast" class="toast-popup" style="display:none;"></div>
+
+        <!-- 1. ANALYTICS TAB -->
+        <section id="analyticsTab" class="tab-view active">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">REAL PLATFORM DATA</p>
+              <h2>Executive Dashboard</h2>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline" onclick="loadDashboard()">🔄 Sync Live</button>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-icon">💰</div>
+              <div class="kpi-body">
+                <span class="kpi-label">Total Revenue</span>
+                <strong class="kpi-value" id="kpiRevenue">₹5,899.20</strong>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon">📦</div>
+              <div class="kpi-body">
+                <span class="kpi-label">Total Orders</span>
+                <strong class="kpi-value" id="kpiOrders">7</strong>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon">👗</div>
+              <div class="kpi-body">
+                <span class="kpi-label">Active Catalog</span>
+                <strong class="kpi-value" id="kpiProducts">23</strong>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon">👥</div>
+              <div class="kpi-body">
+                <span class="kpi-label">Customers</span>
+                <strong class="kpi-value" id="kpiCustomers">3</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div class="quick-actions-bar">
+            <button type="button" class="action-btn" onclick="openAddProductModal()">
+              <span>+</span> New Product
+            </button>
+            <button type="button" class="action-btn" onclick="switchTab('ordersTab')">
+              <span>🚚</span> Check Orders
+            </button>
+            <button type="button" class="action-btn" onclick="switchTab('dbStudioTab')">
+              <span>🗄️</span> DB Studio
+            </button>
+            <button type="button" class="action-btn" onclick="switchTab('securityTab')">
+              <span>🔑</span> Password
+            </button>
+          </div>
+
+          <!-- Real Category Breakdown -->
+          <div class="card-box mt-3">
+            <h3>Live Catalog Breakdown</h3>
+            <div class="category-bars" id="categoryBars">
+              <div class="bar-row"><span>Kids's Wear</span><div class="bar-track"><div class="bar-fill" style="width:39%"></div></div><span>9 (39%)</span></div>
+              <div class="bar-row"><span>Women's Wear</span><div class="bar-track"><div class="bar-fill" style="width:30%"></div></div><span>7 (30%)</span></div>
+              <div class="bar-row"><span>Men's Wear</span><div class="bar-track"><div class="bar-fill" style="width:26%"></div></div><span>6 (26%)</span></div>
+              <div class="bar-row"><span>Accessories</span><div class="bar-track"><div class="bar-fill" style="width:4%"></div></div><span>1 (4%)</span></div>
+            </div>
+          </div>
         </section>
 
-        <section id="bannerTab" class="tab-panel" hidden>
-          <form id="bannerForm" class="panel form-panel">
-            <div class="section-heading"><div class="section-icon sun">&#9733;</div><div><p class="eyebrow">STOREFRONT CAMPAIGN</p><h2>Homepage banner</h2></div></div>
-            <p class="helper">Publish an image campaign that appears on the website homepage immediately.</p>
-            <label>Campaign title<input name="title" type="text" placeholder="The new season edit" required></label>
-            <label>Supporting line<input name="subtitle" type="text" placeholder="Fresh layers for every little moment"></label>
-            <div class="field-grid"><label>Start date<input name="start_date" type="date" required></label><label>End date<input name="end_date" type="date" required></label></div>
-            <div class="field-grid"><label>Priority<input name="priority" type="number" value="10" min="0"></label><label>Background color<input name="bg_color" type="text" value="#122b27" placeholder="#122b27"></label></div>
-            <label>Button link <span class="optional">optional</span><input name="link_url" type="text" placeholder="/products.html?category=Women"></label>
-            <div class="upload-box"><div class="upload-copy"><span class="upload-icon">&#9633;</span><div><strong>Campaign image</strong><small>Wide JPG, PNG or WEBP works best</small></div></div><input name="image" type="file" accept="image/*"></div>
-            <label>Or use a hosted image URL<input name="media_url" type="url" placeholder="https://..."></label>
-            <button class="button button-primary submit-button" type="submit">Publish banner <span class="button-arrow">&#8594;</span></button>
-          </form>
+        <!-- 2. PRODUCTS INVENTORY TAB -->
+        <section id="productsTab" class="tab-view" style="display:none;">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">LIVE STORE CATALOG</p>
+              <h2>Products Inventory (23 Items)</h2>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary" onclick="openAddProductModal()">+ Add Product</button>
+          </div>
+
+          <!-- Search and Filters -->
+          <div class="filter-controls">
+            <input type="search" id="productSearchInput" placeholder="🔍 Search product name, fabric, style..." oninput="filterProducts()">
+            <div class="chip-scroll">
+              <button type="button" class="filter-chip active" onclick="setProductCategory('All', this)">All (23)</button>
+              <button type="button" class="filter-chip" onclick="setProductCategory('Kids', this)">Kids (9)</button>
+              <button type="button" class="filter-chip" onclick="setProductCategory('Women', this)">Women (7)</button>
+              <button type="button" class="filter-chip" onclick="setProductCategory('Men', this)">Men (6)</button>
+              <button type="button" class="filter-chip" onclick="setProductCategory('Accessories', this)">Accessories (1)</button>
+            </div>
+          </div>
+
+          <!-- Product Card Grid -->
+          <div class="products-mobile-grid" id="productsContainer">
+            <div class="loading-state">Loading products catalog...</div>
+          </div>
         </section>
 
-        <section id="catalogTab" class="tab-panel" hidden><div class="catalog-header"><div><p class="eyebrow">LIVE FROM WEBSITE</p><h2>Recent catalog</h2></div><button id="refreshCatalog" class="button button-light" type="button">Refresh</button></div><div id="catalogList" class="catalog-list"><div class="loading-state">Loading catalog...</div></div></section>
+        <!-- 3. ORDERS & FULFILLMENT TAB -->
+        <section id="ordersTab" class="tab-view" style="display:none;">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">REAL CUSTOMER ORDERS</p>
+              <h2>Orders & Invoices (7 Orders)</h2>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline" onclick="loadOrders()">🔄 Refresh</button>
+          </div>
+
+          <div class="chip-scroll">
+            <button type="button" class="filter-chip active" onclick="setOrderStatusFilter('All', this)">All Orders (7)</button>
+            <button type="button" class="filter-chip" onclick="setOrderStatusFilter('Pending', this)">Pending (7)</button>
+            <button type="button" class="filter-chip" onclick="setOrderStatusFilter('Shipped', this)">Shipped</button>
+            <button type="button" class="filter-chip" onclick="setOrderStatusFilter('Delivered', this)">Delivered</button>
+          </div>
+
+          <div class="orders-list" id="ordersContainer">
+            <div class="loading-state">Loading orders...</div>
+          </div>
+        </section>
+
+        <!-- 4. SPINNER & WIN-CAP TAB -->
+        <section id="spinnerTab" class="tab-view" style="display:none;">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">GAMIFICATION CONTROLS</p>
+              <h2>Tiered Spinner & Win-Cap</h2>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary" onclick="saveSpinnerConfig()">💾 Save Config</button>
+          </div>
+
+          <div class="card-box">
+            <h3>Wheel Discount Tiers</h3>
+            <p class="muted">Configured tiers: 10%, 20%, 30%, 40%, and 70% Jackpot.</p>
+            <div class="tier-table-wrapper">
+              <table class="simple-table">
+                <thead><tr><th>Tier</th><th>Discount</th><th>Probability Weight</th><th>Active</th></tr></thead>
+                <tbody>
+                  <tr><td>Tier 1</td><td><strong>10% OFF</strong></td><td><input type="number" class="table-input" value="40" id="tier1Weight">%</td><td>✅</td></tr>
+                  <tr><td>Tier 2</td><td><strong>20% OFF</strong></td><td><input type="number" class="table-input" value="30" id="tier2Weight">%</td><td>✅</td></tr>
+                  <tr><td>Tier 3</td><td><strong>30% OFF</strong></td><td><input type="number" class="table-input" value="18" id="tier3Weight">%</td><td>✅</td></tr>
+                  <tr><td>Tier 4</td><td><strong>40% OFF</strong></td><td><input type="number" class="table-input" value="10" id="tier4Weight">%</td><td>✅</td></tr>
+                  <tr class="highlight-row"><td>⭐ Jackpot</td><td><strong>70% OFF</strong></td><td><input type="number" class="table-input" value="2" id="tierJackpotWeight">%</td><td>⭐ Protected</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card-box mt-3">
+            <h3>🔒 Jackpot Win-Cap Controls</h3>
+            <div class="form-group">
+              <label>Global Monthly Winners Cap (70% Jackpot)</label>
+              <input type="number" id="jackpotGlobalCap" value="2" min="1" max="10">
+              <small class="muted">Strict server cap: Exactly 2 customers per month can win the 70% jackpot globally.</small>
+            </div>
+            <div class="form-group">
+              <label>Customer Frequency Limit</label>
+              <input type="text" value="Maximum 1 win per customer per month" readonly>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. STORIES TAB -->
+        <section id="storiesTab" class="tab-view" style="display:none;">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">DAILY ENGAGEMENT</p>
+              <h2>Daily Story Manager</h2>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary" onclick="openAddStoryModal()">+ Add Story</button>
+          </div>
+
+          <div class="card-box">
+            <p class="muted">Manage stories displayed to customers on the homepage. Supports photo and video clips.</p>
+            <div id="storiesContainer" class="stories-list">
+              <div class="loading-state">Loading stories...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. DRIVE & MEDIA EXPLORER TAB -->
+        <section id="mediaTab" class="tab-view" style="display:none;">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">ASSETS FILE SYSTEM</p>
+              <h2>Drive Media Explorer</h2>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline" onclick="loadMediaExplorer()">🔄 Refresh</button>
+          </div>
+
+          <div class="card-box">
+            <div class="drive-select-row">
+              <label>Drive Location:</label>
+              <select id="driveSelect" onchange="loadMediaExplorer()">
+                <option value="all">📁 All Media Assets (Images & Videos)</option>
+                <option value="products">👗 Products Gallery</option>
+                <option value="banners">🎯 Banners & Campaigns</option>
+                <option value="stories">🎬 Customer Stories</option>
+              </select>
+            </div>
+
+            <div class="media-batch-bar">
+              <span id="selectedMediaCount">0 selected</span>
+              <button type="button" class="btn btn-xs btn-outline" onclick="selectAllMedia(true)">Select All</button>
+              <button type="button" class="btn btn-xs btn-outline" onclick="selectAllMedia(false)">Clear</button>
+            </div>
+
+            <div class="media-grid" id="mediaGrid">
+              <div class="loading-state">Loading media files...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. SQL LIVE DATABASE STUDIO TAB -->
+        <section id="dbStudioTab" class="tab-view" style="display:none;">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">SQLITE SERVER STUDIO</p>
+              <h2>Live Database Studio (26 Tables)</h2>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline" onclick="loadDatabaseTables()">🔄 Sync</button>
+          </div>
+
+          <div class="card-box">
+            <div class="form-group">
+              <label>Select Table</label>
+              <select id="dbTableSelect" onchange="loadTableData()">
+                <option value="products">products (23 rows)</option>
+                <option value="orders">orders (7 rows)</option>
+                <option value="customers">customers (4 rows)</option>
+                <option value="order_items">order_items</option>
+                <option value="coupons">coupons</option>
+                <option value="spinner_settings">spinner_settings</option>
+                <option value="stories">stories</option>
+                <option value="hero_banners">hero_banners</option>
+                <option value="settings">settings</option>
+              </select>
+            </div>
+
+            <!-- SQL Query Runner -->
+            <div class="sql-runner-box">
+              <div class="sql-runner-header">
+                <span>⚡ Interactive SQL Runner</span>
+                <button type="button" class="btn btn-xs btn-primary" onclick="runCustomSql()">Execute</button>
+              </div>
+              <textarea id="sqlQueryInput" rows="2" placeholder="SELECT * FROM products LIMIT 10;"></textarea>
+            </div>
+
+            <!-- Table Result View -->
+            <div class="db-table-responsive" id="dbTableContainer">
+              <div class="loading-state">Select table to view records...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 8. HERO BANNERS & DEALS TAB -->
+        <section id="bannersTab" class="tab-view" style="display:none;">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">STOREFRONT CAMPAIGNS</p>
+              <h2>Hero Banners & Slider</h2>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary" onclick="openAddBannerModal()">+ Add Banner</button>
+          </div>
+
+          <div class="card-box">
+            <div id="bannersContainer" class="banners-list">
+              <div class="loading-state">Loading banners...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 9. AI PRODUCT STUDIO TAB -->
+        <section id="aiStudioTab" class="tab-view" style="display:none;">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">INTELLIGENT MERCHANDISING</p>
+              <h2>✨ AI Product Studio</h2>
+            </div>
+          </div>
+
+          <div class="card-box">
+            <h3>Generate Indian Ethnic Description</h3>
+            <div class="form-group">
+              <label>Outfit Style / Title</label>
+              <input type="text" id="aiOutfitTitle" placeholder="e.g. Royal Maroon Silk Anarkali Set">
+            </div>
+            <div class="form-group">
+              <label>Target Audience</label>
+              <select id="aiAudience">
+                <option>Women Festive</option>
+                <option>Men Wedding Kurtas</option>
+                <option>Kids Festive Wear</option>
+                <option>Family Twinning Co-ords</option>
+              </select>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="generateAiCopy()">✨ Generate Story & Copy</button>
+
+            <div id="aiOutputBox" class="mt-3 ai-result-box" style="display:none;">
+              <h4>Generated Merchandise Copy:</h4>
+              <p id="aiOutputText" class="ai-text"></p>
+              <button type="button" class="btn btn-xs btn-outline" onclick="copyAiOutput()">📋 Copy to Clipboard</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 10. SECURITY & CHANGE PASSWORD TAB -->
+        <section id="securityTab" class="tab-view" style="display:none;">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">GOVERNANCE & CIA</p>
+              <h2>Security & Change Password</h2>
+            </div>
+          </div>
+
+          <!-- Change App Password Card -->
+          <div class="card-box" style="border-top:3px solid #059669;">
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+              <span style="font-size:1.4rem;">🔑</span>
+              <div>
+                <h3>Change App & Admin Password</h3>
+                <span class="muted">Updates master password for both web console and mobile app</span>
+              </div>
+            </div>
+
+            <form onsubmit="handleMobileChangePassword(event)">
+              <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" id="mobOldPassword" placeholder="Enter current password" required>
+              </div>
+              <div class="form-group">
+                <label>New Password (min. 4 characters)</label>
+                <input type="password" id="mobNewPassword" placeholder="Enter new password" minlength="4" required>
+              </div>
+              <div class="form-group">
+                <label>Confirm New Password</label>
+                <input type="password" id="mobConfirmPassword" placeholder="Re-enter new password" minlength="4" required>
+              </div>
+              <button type="submit" class="btn btn-primary btn-block" id="btnMobChangePass">
+                <i class="fas fa-check-circle"></i> Save New Password
+              </button>
+              <div id="mobPassStatus" class="status-msg" style="text-align:center; margin-top:0.6rem;"></div>
+            </form>
+          </div>
+
+          <div class="card-box mt-3">
+            <h3>Quick PIN Lock</h3>
+            <p class="muted">Set a 4-digit PIN for rapid unlocking on mobile:</p>
+            <div class="form-group mt-2">
+              <input type="password" id="newPinInput" maxlength="4" placeholder="Enter new 4-digit PIN" style="max-width:200px">
+              <button type="button" class="btn btn-sm btn-primary mt-2" onclick="saveNewPin()">Set PIN</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 11. SETTINGS TAB -->
+        <section id="settingsTab" class="tab-view" style="display:none;">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">STORE PREFERENCES</p>
+              <h2>Shipping & Policies</h2>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary" onclick="saveStoreSettings()">💾 Save</button>
+          </div>
+
+          <div class="card-box">
+            <h3>Shipping Fee Structure</h3>
+            <div class="form-group">
+              <label>Free Shipping Threshold (INR)</label>
+              <input type="number" id="settingFreeShipping" value="999">
+            </div>
+            <div class="form-group">
+              <label>Standard Shipping Rate (INR)</label>
+              <input type="number" id="settingStandardShipping" value="99">
+            </div>
+            <div class="form-group">
+              <label>Express Shipping Rate (INR)</label>
+              <input type="number" id="settingExpressShipping" value="199">
+            </div>
+            <div class="form-group">
+              <label>Return & Exchange Window (Days)</label>
+              <input type="number" id="settingReturnDays" value="7">
+            </div>
+          </div>
+        </section>
       </main>
-      <footer class="studio-footer"><span>Little to Large</span><button id="settingsButton" type="button">API connection</button></footer>
+
+      <!-- Bottom Navigation Bar for Mobile (Thumb-Friendly for Android & iOS) -->
+      <nav class="app-bottom-nav">
+        <button type="button" class="nav-btn active" onclick="switchTab('analyticsTab')" data-tab="analyticsTab">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">Analytics</span>
+        </button>
+        <button type="button" class="nav-btn" onclick="switchTab('productsTab')" data-tab="productsTab">
+          <span class="nav-icon">👗</span>
+          <span class="nav-label">Products</span>
+        </button>
+        <button type="button" class="nav-btn" onclick="switchTab('ordersTab')" data-tab="ordersTab">
+          <span class="nav-icon">📦</span>
+          <span class="nav-label">Orders</span>
+        </button>
+        <button type="button" class="nav-btn" onclick="switchTab('spinnerTab')" data-tab="spinnerTab">
+          <span class="nav-icon">🎡</span>
+          <span class="nav-label">Spinner</span>
+        </button>
+        <button type="button" class="nav-btn" onclick="switchTab('dbStudioTab')" data-tab="dbStudioTab">
+          <span class="nav-icon">🗄️</span>
+          <span class="nav-label">DB</span>
+        </button>
+        <button type="button" class="nav-btn" onclick="toggleDrawer()">
+          <span class="nav-icon">☰</span>
+          <span class="nav-label">More</span>
+        </button>
+      </nav>
     </section>
   </div>
-  <dialog id="settingsDialog"><form method="dialog" class="settings-card"><div class="section-heading"><div class="section-icon">&#9881;</div><div><p class="eyebrow">CONNECTION</p><h2>Website API</h2></div></div><label>Website URL<input id="apiBaseInput" type="url" placeholder="http://localhost:3000"></label><p class="helper">For a phone, enter your live HTTPS website URL. For VS Code preview, use the local backend URL.</p><div class="dialog-actions"><button class="button button-light" value="cancel">Cancel</button><button id="saveSettings" class="button button-primary" value="default">Save connection</button></div></form></dialog>
+
+  <!-- MODALS -->
+
+  <!-- 1. Server Target Picker Modal -->
+  <div id="serverModal" class="modal-backdrop" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🌐 Store Backend Target Switcher</h3>
+        <button type="button" class="modal-close" onclick="closeServerModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="muted">Select your backend connection target or enter custom host IP:</p>
+        <div class="preset-buttons">
+          <button type="button" class="btn btn-xs btn-outline" onclick="selectServerPreset('http://10.16.72.77:3000')">📡 Wi-Fi Phone (10.16.72.77:3000)</button>
+          <button type="button" class="btn btn-xs btn-outline" onclick="selectServerPreset('http://10.0.2.2:3000')">📱 Android Emulator (10.0.2.2:3000)</button>
+          <button type="button" class="btn btn-xs btn-outline" onclick="selectServerPreset('http://localhost:3000')">💻 Localhost (localhost:3000)</button>
+        </div>
+        <div class="form-group mt-2">
+          <label>Target URL</label>
+          <input type="url" id="customServerInput" value="http://10.16.72.77:3000">
+        </div>
+        <div class="ping-status-row">
+          <span id="pingResultBadge" class="server-badge">Untested</span>
+          <button type="button" class="btn btn-sm btn-outline" onclick="testServerPing()">⚡ Ping Test</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary btn-block" onclick="saveServerTarget()">Apply Connection</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Add/Edit Product Modal -->
+  <div id="productModal" class="modal-backdrop" style="display:none;">
+    <div class="modal-card modal-large">
+      <div class="modal-header">
+        <h3 id="productModalTitle">Add New Clothing Product</h3>
+        <button type="button" class="modal-close" onclick="closeProductModal()">✕</button>
+      </div>
+      <form id="productModalForm" onsubmit="handleProductSubmit(event)">
+        <div class="modal-body modal-scroll">
+          <input type="hidden" id="prodEditId" value="">
+          <div class="form-group">
+            <label>Product Name</label>
+            <input type="text" id="prodName" placeholder="e.g. Vasant Utsav Silk Kurta Set" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Category</label>
+              <select id="prodCategory" required>
+                <option>Kids</option>
+                <option>Women</option>
+                <option>Men</option>
+                <option>Accessories</option>
+                <option>Family Sets</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Subcategory</label>
+              <input type="text" id="prodSubcategory" placeholder="Ethnic, Loungewear...">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>MRP (INR)</label>
+              <input type="number" id="prodPrice" min="1" step="0.01" placeholder="2999" required>
+            </div>
+            <div class="form-group">
+              <label>Sale Price (INR)</label>
+              <input type="number" id="prodDiscountPrice" min="0" step="0.01" placeholder="1999">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Stock Count</label>
+              <input type="number" id="prodStock" min="0" value="20" required>
+            </div>
+            <div class="form-group">
+              <label>Available Sizes</label>
+              <input type="text" id="prodSizes" value="S, M, L, XL, XXL" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="prodDesc" rows="3" placeholder="Fabric, weave, styling and wash care details" required></textarea>
+          </div>
+          <div class="form-group">
+            <label>Photo Source (Choose Camera/File or URL)</label>
+            <input type="file" id="prodPhotoFile" accept="image/*" class="file-input">
+            <input type="url" id="prodImageUrl" placeholder="Or enter image URL https://..." class="mt-1">
+          </div>
+          <div class="form-group">
+            <label>Video Source (Optional)</label>
+            <input type="file" id="prodVideoFile" accept="video/*" class="file-input">
+            <input type="url" id="prodVideoUrl" placeholder="Or enter video URL https://..." class="mt-1">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveProduct">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. Professional Tax Invoice Modal -->
+  <div id="invoiceModal" class="modal-backdrop" style="display:none;">
+    <div class="modal-card modal-large">
+      <div class="modal-header">
+        <h3>🧾 Tax Invoice & Packing Bill</h3>
+        <button type="button" class="modal-close" onclick="closeInvoiceModal()">✕</button>
+      </div>
+      <div class="modal-body modal-scroll" id="invoiceModalBody">
+        <!-- Rendered invoice details -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="window.print()">🖨️ Print / Save PDF</button>
+        <button type="button" class="btn btn-primary" onclick="closeInvoiceModal()">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Real Seed Data Snapshot & Scripts -->
+  <script src="real-seed-data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

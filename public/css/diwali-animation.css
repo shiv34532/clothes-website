@@ -1,0 +1,157 @@
+/* ==============================================================================
+   DIWALI-THEMED ENTRY ANIMATION CSS (0.75s Ultra-Lightweight & GPU Optimized)
+   ============================================================================== */
+
+#diwaliGateOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: radial-gradient(circle at center, #1a0b2e 0%, #0d0517 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  perspective: 1200px;
+  touch-action: none;
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+#diwaliGateOverlay.fade-exit {
+  opacity: 0;
+  transition: opacity 0.25s ease-out;
+  pointer-events: none;
+}
+
+/* Door Container */
+.diwali-doors-wrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  z-index: 10;
+}
+
+/* Left & Right Palace Gates */
+.diwali-door {
+  flex: 1;
+  height: 100%;
+  position: relative;
+  background: linear-gradient(135deg, #4a0e17 0%, #29040a 50%, #170205 100%);
+  border: 4px solid #d4af37;
+  box-shadow: inset 0 0 40px rgba(212, 175, 55, 0.4);
+  transform-origin: center left;
+  transition: transform 0.65s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: transform;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.diwali-door.door-right {
+  transform-origin: center right;
+  border-left: 2px solid #f6d365;
+}
+
+.diwali-door.door-left {
+  border-right: 2px solid #f6d365;
+}
+
+/* Ornate Indian Brass Mandala / Arch on Door */
+.diwali-door-ornament {
+  width: 140px;
+  height: 240px;
+  border: 3px double #f6d365;
+  border-radius: 70px 70px 10px 10px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 25px rgba(246, 211, 101, 0.3);
+}
+
+.diwali-door-handle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid #d4af37;
+  background: #f6d365;
+  box-shadow: 0 0 15px rgba(246, 211, 101, 0.8);
+}
+
+/* Door Swing Open State (0.65s duration) */
+.diwali-doors-wrapper.opened .door-left {
+  transform: rotateY(-110deg);
+}
+
+.diwali-doors-wrapper.opened .door-right {
+  transform: rotateY(110deg);
+}
+
+/* Interactive Center Call-To-Action */
+.diwali-gate-center {
+  position: absolute;
+  z-index: 20;
+  text-align: center;
+  color: #fff;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: auto;
+}
+
+.diwali-doors-wrapper.opened + .diwali-gate-center {
+  opacity: 0;
+  transform: scale(0.85);
+  pointer-events: none;
+}
+
+.diwali-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, #ffe066 0%, #f6d365 50%, #fda085 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 20px rgba(246, 211, 101, 0.5);
+}
+
+.diwali-subtitle {
+  font-size: 0.95rem;
+  color: #ffeaa7;
+  letter-spacing: 1px;
+  margin-bottom: 1.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.diwali-open-btn {
+  background: linear-gradient(135deg, #d4af37 0%, #f39c12 100%);
+  color: #1a0b2e;
+  font-weight: 800;
+  font-size: 1rem;
+  padding: 0.85rem 2.2rem;
+  border-radius: 50px;
+  border: 2px solid #fff;
+  cursor: pointer;
+  box-shadow: 0 0 25px rgba(243, 156, 18, 0.8);
+  animation: diwaliPulse 1.5s infinite;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+@keyframes diwaliPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(243, 156, 18, 0.6); }
+  50% { transform: scale(1.05); box-shadow: 0 0 35px rgba(243, 156, 18, 1); }
+}
+
+/* Fireworks & Sky-Shot Canvas */
+#diwaliFireworksCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 15;
+  pointer-events: none;
+}
