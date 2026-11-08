@@ -2536,12 +2536,14 @@ html {
   background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(4px);
   z-index: 10000;
-  display: flex; align-items: center; justify-content: center;
+  display: none;
+  align-items: center; justify-content: center;
   opacity: 0; pointer-events: none;
   transition: opacity 0.3s ease;
 }
 
 .size-chart-modal-overlay.active {
+  display: flex !important;
   opacity: 1; pointer-events: auto;
 }
 

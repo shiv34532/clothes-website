@@ -306,44 +306,88 @@
     }
 
     // Coupon Engine
-    function applyCoupon() {
-      const input = document.getElementById('couponInput').value.trim().toUpperCase();
+    async function applyCoupon(customCode = null) {
+      const input = (customCode || document.getElementById('couponInput').value).trim().toUpperCase();
+      if (!input) {
+        showToast('Please enter a coupon code', 'warning');
+        return;
+      }
       const cart = getCart();
-      if (cart.length === 0) return;
+      if (cart.length === 0) {
+        showToast('Your cart is empty', 'warning');
+        return;
+      }
 
       let subtotal = cart.reduce((tot, it) => tot + it.price * it.quantity, 0);
       let discount = 0;
 
+      // 1. Check local special rule coupons
       if (input === 'WELCOME10') {
-        discount = subtotal * 0.1; // 10%
-        showToast('WELCOME10 Applied! 10% discount subtracted.');
+        discount = subtotal * 0.1;
       } else if (input === 'FAMILY40') {
-        // Flat 40% on accessories
         const accTotal = cart.filter(it => it.name.toLowerCase().includes('mojari') || it.name.toLowerCase().includes('clutch') || it.name.toLowerCase().includes('wallet'))
                              .reduce((tot, it) => tot + it.price * it.quantity, 0);
         if (accTotal > 0) {
           discount = accTotal * 0.4;
-          showToast('FAMILY40 Applied! 40% accessory discount subtracted.');
         } else {
           showToast('FAMILY40 code only valid for Accessories items in cart!', 'error');
           return;
         }
       } else if (input === 'TWINNING500') {
-        const kidsCount = cart.filter(it => it.image.includes('kids') || it.name.toLowerCase().includes('dungaree') || it.name.toLowerCase().includes('lehenga') || it.name.toLowerCase().includes('romper'))
+        const kidsCount = cart.filter(it => (it.image && it.image.includes('kids')) || it.name.toLowerCase().includes('dungaree') || it.name.toLowerCase().includes('lehenga') || it.name.toLowerCase().includes('romper'))
                               .reduce((tot, it) => tot + it.quantity, 0);
         if (kidsCount >= 2) {
-          discount = 500;
-          showToast('TWINNING500 Applied! ₹500 discount subtracted.');
+          discount = Math.min(500, subtotal);
         } else {
           showToast('Buy at least 2 Kids wear outfits to activate TWINNING500!', 'error');
           return;
         }
-      } else {
-        showToast('Invalid Coupon Code entered!', 'error');
+      } else if (input.startsWith('SPIN70') || input === 'SPIN70') {
+        discount = subtotal * 0.70;
+      } else if (input.startsWith('SPIN40') || input === 'SPIN40') {
+        discount = subtotal * 0.40;
+      } else if (input.startsWith('SPIN30') || input === 'SPIN30') {
+        discount = subtotal * 0.30;
+      } else if (input.startsWith('SPIN20') || input === 'SPIN20' || input === 'FESTIVE20') {
+        discount = subtotal * 0.20;
+      } else if (input.startsWith('SPIN10') || input === 'SPIN10') {
+        discount = subtotal * 0.10;
+      } else if (input === 'FREESHIP') {
+        sessionStorage.setItem('l2l_freeship', 'true');
+        showToast('FREESHIP Applied! Free shipping on this order.', 'success');
+        renderPriceSummary();
+        renderCheckoutSummary();
         return;
+      } else if (input === 'SAVE200') {
+        discount = Math.min(200, subtotal);
+      } else if (input === 'ROYAL500') {
+        discount = Math.min(500, subtotal);
+      } else {
+        // Query database via API for any custom admin coupons
+        try {
+          const res = await fetch('/api/coupons');
+          const data = await res.json();
+          const match = data.coupons && data.coupons.find(c => c.code.toUpperCase() === input);
+          if (match) {
+            if (match.discount_type === 'percentage') {
+              discount = (subtotal * match.discount_value) / 100;
+            } else {
+              discount = Math.min(match.discount_value, subtotal);
+            }
+          } else {
+            showToast('Invalid Coupon Code entered!', 'error');
+            return;
+          }
+        } catch (e) {
+          showToast('Invalid Coupon Code entered!', 'error');
+          return;
+        }
       }
 
       sessionStorage.setItem('l2l_discount', discount);
+      sessionStorage.setItem('l2l_applied_coupon', input);
+      document.getElementById('couponInput').value = input;
+      showToast(`✓ Coupon "${input}" Applied! Saved ₹${discount.toFixed(0)}`, 'success');
       renderPriceSummary();
       renderCheckoutSummary();
     }

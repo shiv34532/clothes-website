@@ -54,8 +54,8 @@
     }
   }
   </script>
-  <link rel="stylesheet" href="css/style.css?v=15">
-  <link rel="stylesheet" href="css/ux-premium.css">
+  <link rel="stylesheet" href="/css/style.css?v=25">
+  <link rel="stylesheet" href="/css/ux-premium.css?v=25">
   <link rel="icon" type="image/png" href="/favicon.png?v=4">
   <link rel="shortcut icon" href="/favicon.ico?v=4">
 </head>
@@ -657,14 +657,21 @@
     function applyVariantToUI(variant, p, updateUrl = true) {
       // 1. Swap Image Gallery to this Color Variant's Photos
       let variantImgs = [];
-      if (Array.isArray(variant.image_urls) && variant.image_urls.length > 0) {
-        variantImgs = variant.image_urls;
-      } else if (typeof variant.image_urls === 'string') {
-        try { variantImgs = JSON.parse(variant.image_urls); } catch (e) {}
+      const rawVImgs = variant.image_urls || variant.images || variant.image;
+      if (Array.isArray(rawVImgs) && rawVImgs.length > 0) {
+        variantImgs = rawVImgs;
+      } else if (typeof rawVImgs === 'string' && rawVImgs.trim()) {
+        try { variantImgs = JSON.parse(rawVImgs); } catch (e) {
+          variantImgs = rawVImgs.split(',').map(s => s.trim()).filter(Boolean);
+        }
       }
 
       if (!variantImgs || variantImgs.length === 0) {
-        try { variantImgs = JSON.parse(p.image_urls || '[]'); } catch (e) { variantImgs = []; }
+        if (typeof safeParseImages === 'function') {
+          variantImgs = safeParseImages(p.image_urls);
+        } else {
+          try { variantImgs = JSON.parse(p.image_urls || '[]'); } catch (e) { variantImgs = []; }
+        }
       }
 
       if (variantImgs.length > 0) {
@@ -1191,7 +1198,7 @@
       player.muted = true;
       player.setAttribute('playsinline', '');
       player.setAttribute('webkit-playsinline', '');
-      modal.classList.add('active');
+      modal.style.display = 'flex'; modal.classList.add('active');
       
       const playPromise = player.play();
       if (playPromise !== undefined) {
@@ -1205,13 +1212,14 @@
       const modal = document.getElementById('productVideoModal');
       const player = document.getElementById('productVideoPlayer');
       if (player) {
-        player.onerror = null; // Detach listener BEFORE clearing src to stop recursive event firing!
+        player.onerror = null;
         player.pause();
         player.removeAttribute('src');
         player.load();
       }
       if (modal) {
         modal.classList.remove('active');
+        modal.style.display = 'none';
       }
     }
 
@@ -1282,12 +1290,12 @@
 
     function openSizeChartModal() {
       renderSizeChartTable('kids');
-      document.getElementById('sizeChartModalOverlay').classList.add('active');
+      const sc = document.getElementById('sizeChartModalOverlay'); if (sc) { sc.style.display = 'flex'; sc.classList.add('active'); }
     }
 
     function closeSizeChartModal(e) {
       if (!e || e.target.id === 'sizeChartModalOverlay' || e.target.closest('.size-chart-close-btn')) {
-        document.getElementById('sizeChartModalOverlay').classList.remove('active');
+        const sc = document.getElementById('sizeChartModalOverlay'); if (sc) { sc.classList.remove('active'); sc.style.display = 'none'; }
       }
     }
 
@@ -1303,7 +1311,7 @@
   </script>
 
   <!-- Interactive Product Video Overlay Modal -->
-  <div id="productVideoModal" class="size-chart-modal-overlay" onclick="closeProductVideo()">
+  <div id="productVideoModal" class="size-chart-modal-overlay" style="display:none;" onclick="closeProductVideo()">
     <div class="size-chart-modal" style="max-width:800px; padding:15px; background:#000; border-radius:16px; position:relative" onclick="event.stopPropagation()">
       <button class="size-chart-close-btn" onclick="closeProductVideo()" style="top:10px; right:10px; z-index:10; background:rgba(255,255,255,0.2); color:#fff; width:36px; height:36px; border-radius:50%; border:none; cursor:pointer;"><i class="fas fa-times"></i></button>
       <video id="productVideoPlayer" controls style="width:100%; max-height:75vh; border-radius:12px; background:#000;" autoplay muted playsinline webkit-playsinline preload="auto"></video>
@@ -1311,7 +1319,7 @@
   </div>
 
   <!-- Interactive Size Guide Modal (Matching User Screenshot) -->
-  <div id="sizeChartModalOverlay" class="size-chart-modal-overlay" onclick="closeSizeChartModal(event)">
+  <div id="sizeChartModalOverlay" class="size-chart-modal-overlay" style="display:none;" onclick="closeSizeChartModal(event)">
     <div class="size-chart-modal" onclick="event.stopPropagation()">
       <button class="size-chart-close-btn" onclick="closeSizeChartModal()"><i class="fas fa-times"></i></button>
       <h3 style="font-size:1.2rem; font-weight:800; color:var(--primary); margin-bottom:6px; display:flex; align-items:center; gap:8px">

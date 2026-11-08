@@ -477,7 +477,7 @@
         document.getElementById('orderSuccessBanner').style.display = 'block';
         document.getElementById('successOrderText').innerHTML = `
           Thank you for your purchase! Your order number is <strong>#${successId}</strong>. You can track this order in the "My Orders" tab below.<br><br>
-          <button onclick="downloadInvoice(${successId})" class="btn" style="background:#10b981; color:#fff; border:none; padding:0.5rem 1.5rem; border-radius:4px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:8px"><i class="fas fa-file-download"></i> Download Tax Invoice / Bill</button>
+          <button onclick="printInvoicePreview(${successId})" class="btn" style="background:#800020; color:#fff; border:none; padding:0.6rem 1.8rem; border-radius:6px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(128,0,32,0.25);"><i class="fas fa-file-invoice"></i> View &amp; Print Tax Invoice / Bill</button>
         `;
         switchAccountTab(document.querySelector('a[onclick*="ordersTab"]'), 'ordersTab');
       }
@@ -894,7 +894,9 @@
                     ` : ''}
                   </div>
                   <div style="display:flex; gap:10px">
-                    <button class="btn" onclick="downloadInvoice(${o.id})" style="padding:0.4rem 1.2rem; font-size:0.8rem; background:#10b981; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:700; display:flex; align-items:center; gap:5px"><i class="fas fa-file-download"></i> Bill</button>
+                    <button class="btn" onclick="printInvoicePreview(${o.id})" style="padding:0.45rem 1.2rem; font-size:0.82rem; background:#800020; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:700; display:flex; align-items:center; gap:6px;">
+                    <i class="fas fa-file-invoice"></i> Tax Invoice / Bill
+                  </button>
                     <button class="btn btn-primary" onclick="showOrderItemsModal(${o.id})" style="padding:0.4rem 1rem; font-size:0.8rem">View Items</button>
                   </div>
                 </div>
@@ -907,45 +909,16 @@
       }
     }
 
-    async function downloadInvoice(orderId) {
-      try {
-        const token = getToken();
-        const res = await fetch(`/api/orders/${orderId}/invoice`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) {
-          showToast('Failed to fetch invoice', 'error');
-          return;
-        }
-        const htmlText = await res.text();
-        
-        // Parse raw invoice HTML text to DOM element
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlText, 'text/html');
-        const element = doc.querySelector('.invoice-box') || doc.body;
-        
-        // Remove Print button inside PDF for aesthetics
-        const printBtn = element.querySelector('.print-btn');
-        if (printBtn) printBtn.remove();
-
-        const opt = {
-          margin:       0.3,
-          filename:     `Invoice_L2L_#${orderId}.pdf`,
-          image:        { type: 'jpeg', quality: 0.98 },
-          html2canvas:  { scale: 2, useCORS: true },
-          jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-        };
-        
-        showToast('Generating PDF Invoice...', 'info');
-        html2pdf().from(element).set(opt).save().then(() => {
-          showToast('Invoice PDF downloaded successfully!', 'success');
-        }).catch(err => {
-          showToast('PDF conversion failed.', 'error');
-        });
-      } catch (err) {
-        showToast('Error downloading invoice', 'error');
-      }
+    
+    function printInvoicePreview(orderId) {
+      const token = getToken();
+      window.open(`/api/orders/${orderId}/invoice?token=${token}`, '_blank');
     }
+
+    function downloadInvoice(orderId) {
+      printInvoicePreview(orderId);
+    }
+
 
     // Modal display details for single order items
     async function showOrderItemsModal(orderId) {
@@ -1092,22 +1065,36 @@
             container.innerHTML = '<p style="color:var(--text-light)">No family profiles added yet. Add family members to get smart size and outfit recommendations.</p>';
             return;
           }
-          container.innerHTML = data.profiles.map(p => `
-            <div style="border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <h4 style="margin-bottom: 0.2rem; color: var(--primary);"><i class="fas ${p.gender === 'Female' ? 'fa-female' : (p.gender === 'Male' ? 'fa-male' : 'fa-user')}"></i> ${p.name} <span style="font-size:0.8rem; background: #e0e7ff; color: #4338ca; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${p.relationship}</span></h4>
-                <div style="font-size: 0.85rem; color: var(--text-light); margin-top: 8px;">
-                  <strong>Age:</strong> ${p.age || 'N/A'} | 
-                  <strong>Top Size:</strong> ${p.top_size || 'N/A'} | 
-                  <strong>Bottom Size:</strong> ${p.bottom_size || 'N/A'} | 
-                  <strong>Shoe Size:</strong> ${p.shoe_size || 'N/A'}
+          const avatarIcons = {
+            avatar_father: '👨',
+            avatar_mother: '👩',
+            avatar_son: '👦',
+            avatar_daughter: '👧',
+            avatar_grandpa: '👴',
+            avatar_grandma: '👵'
+          };
+          container.innerHTML = data.profiles.map(p => {
+            const avatarHtml = p.avatar_url && p.avatar_url.startsWith('data:image')
+              ? `<img src="${p.avatar_url}" style="width:48px; height:48px; border-radius:50%; object-fit:cover; border:2px solid var(--primary); margin-right:12px; flex-shrink:0;">`
+              : (avatarIcons[p.avatar_url]
+                  ? `<div style="width:48px; height:48px; border-radius:50%; background:#fef3c7; display:flex; align-items:center; justify-content:center; font-size:1.8rem; border:2px solid #f59e0b; margin-right:12px; flex-shrink:0;">${avatarIcons[p.avatar_url]}</div>`
+                  : `<div style="width:48px; height:48px; border-radius:50%; background:#f3f4f6; display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:var(--primary); margin-right:12px; flex-shrink:0;"><i class="fas ${p.gender === 'Female' ? 'fa-female' : (p.gender === 'Male' ? 'fa-male' : 'fa-user')}"></i></div>`
+                );
+            return `
+            <div style="border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+              <div style="display:flex; align-items:center;">
+                ${avatarHtml}
+                <div>
+                  <h4 style="margin-bottom: 0.2rem; color: var(--primary); font-size:1.05rem;">${p.name} <span style="font-size:0.75rem; background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 999px; margin-left: 6px; font-weight:700;">${p.relationship}</span></h4>
+                  <div style="font-size: 0.85rem; color: var(--text-light); margin-top: 4px;">
+                    <strong>Age:</strong> ${p.age || 'N/A'} | 
+                    <strong>Top Size:</strong> <span style="color:#059669; font-weight:700;">${p.top_size || 'N/A'}</span> | 
+                    <strong>Bottom Size:</strong> <span style="color:#059669; font-weight:700;">${p.bottom_size || 'N/A'}</span> | 
+                    <strong>Shoe Size:</strong> ${p.shoe_size || 'N/A'}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <button onclick="deleteFamilyProfile(${p.id})" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 8px;" title="Delete Profile"><i class="fas fa-trash"></i></button>
-              </div>
-            </div>
-          `).join('');
+              </div>`;
+          }).join('');
         }
       } catch (err) {
         container.innerHTML = '<p style="color:var(--danger)">Failed to load family profiles.</p>';
@@ -1136,7 +1123,8 @@
         gender: document.getElementById('fpGender').value,
         top_size: document.getElementById('fpTop').value,
         bottom_size: document.getElementById('fpBottom').value,
-        shoe_size: document.getElementById('fpShoe').value
+        shoe_size: document.getElementById('fpShoe').value,
+        avatar_url: document.getElementById('fpAvatarUrl') ? document.getElementById('fpAvatarUrl').value : 'avatar_father'
       };
 
       try {

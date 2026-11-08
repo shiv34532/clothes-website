@@ -275,8 +275,8 @@
                       <i class="fas fa-undo-alt"></i> Return Order
                     </button>
                   ` : ''}
-                  <button class="btn" onclick="downloadInvoice(${o.id})" style="padding:0.5rem 1.2rem; font-size:0.8rem; background:#10b981; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:700; display:flex; align-items:center; gap:5px">
-                    <i class="fas fa-file-download"></i> Download Invoice
+                  <button class="btn" onclick="printInvoicePreview(${o.id})" style="padding:0.45rem 1.2rem; font-size:0.82rem; background:#800020; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:700; display:flex; align-items:center; gap:6px;">
+                    <i class="fas fa-file-invoice"></i> Tax Invoice / Bill
                   </button>
                   <button class="btn btn-primary" onclick="viewOrderItems(${o.id})" style="padding:0.5rem 1.2rem; font-size:0.8rem; border-radius:6px; font-weight:700">
                     View Outfits Details
@@ -415,34 +415,16 @@
       }
     }
 
-    async function downloadInvoice(orderId) {
-      showToast('Compiling secure PDF invoice...', 'info');
-      try {
-        const res = await fetch(`/api/orders/${orderId}/invoice`, {
-          headers: { 'Authorization': `Bearer ${getToken()}` }
-        });
-        const htmlContent = await res.text();
-        
-        const opt = {
-          margin:       0.3,
-          filename:     `L2L_Invoice_Order_${orderId}.pdf`,
-          image:        { type: 'jpeg', quality: 0.98 },
-          html2canvas:  { scale: 2, useCORS: true },
-          jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-        };
-        
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = htmlContent;
-        document.body.appendChild(tempDiv);
-        
-        html2pdf().from(tempDiv).set(opt).save().then(() => {
-          document.body.removeChild(tempDiv);
-          showToast('🎉 Invoice downloaded successfully!', 'success');
-        });
-      } catch (err) {
-        showToast('Error downloading invoice', 'error');
-      }
+    
+    function printInvoicePreview(orderId) {
+      const token = getToken();
+      window.open(`/api/orders/${orderId}/invoice?token=${token}`, '_blank');
     }
+
+    function downloadInvoice(orderId) {
+      printInvoicePreview(orderId);
+    }
+
   </script>
 </body>
 </html>

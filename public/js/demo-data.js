@@ -1,7 +1,140 @@
-// Demo data used only when the API returns no products/promotions.
+// Demo data used for rich fallback & testing when running in local development environments.
 // This file is client-side only and does NOT modify any server or DB data.
 (function(){
   window.demoProducts = [
+    {
+      id: 12,
+      name: "Peacock Blue Silk Anarkali Gown",
+      category: "Women",
+      subcategory: "Ethnic",
+      price: 2999,
+      discount_price: 2199,
+      stock: 22,
+      description: "Floor-length peacock blue silk anarkali with flared kalis, golden thread work on the yoke, and a sheer organza dupatta. Handcrafted for festive celebrations and family weddings.",
+      size_variants: "S,M,L,XL",
+      image_urls: JSON.stringify([
+        "images/products/Product_19/front.png",
+        "images/products/Product_19/top.png",
+        "images/products/Product_19/bottom.png"
+      ]),
+      rating: 4.9,
+      video_url: "/videos/gemini_generated_video_39a5ecd2.mp4",
+      fabric: "Silk",
+      color: "Blue, Emerald, Maroon",
+      style: "Ethnic",
+      gender: "Women",
+      return_window_days: 7,
+      color_variants: [
+        {
+          id: 12,
+          product_id: 12,
+          color_name: "Blue",
+          color_code: "#2563eb",
+          sku: "LTL-12-BLU",
+          price: 2999,
+          discount_price: 2199,
+          stock: 22,
+          size_variants: "S,M,L,XL",
+          sizes_stock: { "S": 5, "M": 8, "L": 6, "XL": 3 },
+          image_urls: [
+            "images/products/Product_19/front.png",
+            "images/products/Product_19/top.png",
+            "images/products/Product_19/bottom.png"
+          ],
+          is_default: 1
+        },
+        {
+          id: 112,
+          product_id: 12,
+          color_name: "Emerald",
+          color_code: "#16a34a",
+          sku: "LTL-12-EME",
+          price: 2999,
+          discount_price: 2199,
+          stock: 15,
+          size_variants: "S,M,L,XL",
+          sizes_stock: { "S": 3, "M": 5, "L": 4, "XL": 3 },
+          image_urls: [
+            "images/products/Green_Floral_Womens_Kurta/front.png",
+            "images/products/Green_Floral_Womens_Kurta/model_pose.png",
+            "images/products/Green_Floral_Womens_Kurta/back.png"
+          ],
+          is_default: 0
+        },
+        {
+          id: 212,
+          product_id: 12,
+          color_name: "Maroon",
+          color_code: "#800020",
+          sku: "LTL-12-MAR",
+          price: 3199,
+          discount_price: 2399,
+          stock: 10,
+          size_variants: "S,M,L,XL",
+          sizes_stock: { "S": 2, "M": 4, "L": 3, "XL": 1 },
+          image_urls: [
+            "images/products/Product_18/front.png",
+            "images/products/Product_18/top.png"
+          ],
+          is_default: 0
+        }
+      ],
+      variants: [
+        {
+          id: 12,
+          product_id: 12,
+          color_name: "Blue",
+          color_code: "#2563eb",
+          sku: "LTL-12-BLU",
+          price: 2999,
+          discount_price: 2199,
+          stock: 22,
+          size_variants: "S,M,L,XL",
+          sizes_stock: { "S": 5, "M": 8, "L": 6, "XL": 3 },
+          image_urls: [
+            "images/products/Product_19/front.png",
+            "images/products/Product_19/top.png",
+            "images/products/Product_19/bottom.png"
+          ],
+          is_default: 1
+        },
+        {
+          id: 112,
+          product_id: 12,
+          color_name: "Emerald",
+          color_code: "#16a34a",
+          sku: "LTL-12-EME",
+          price: 2999,
+          discount_price: 2199,
+          stock: 15,
+          size_variants: "S,M,L,XL",
+          sizes_stock: { "S": 3, "M": 5, "L": 4, "XL": 3 },
+          image_urls: [
+            "images/products/Green_Floral_Womens_Kurta/front.png",
+            "images/products/Green_Floral_Womens_Kurta/model_pose.png",
+            "images/products/Green_Floral_Womens_Kurta/back.png"
+          ],
+          is_default: 0
+        },
+        {
+          id: 212,
+          product_id: 12,
+          color_name: "Maroon",
+          color_code: "#800020",
+          sku: "LTL-12-MAR",
+          price: 3199,
+          discount_price: 2399,
+          stock: 10,
+          size_variants: "S,M,L,XL",
+          sizes_stock: { "S": 2, "M": 4, "L": 3, "XL": 1 },
+          image_urls: [
+            "images/products/Product_18/front.png",
+            "images/products/Product_18/top.png"
+          ],
+          is_default: 0
+        }
+      ]
+    },
     {
       id: 1001,
       name: 'Family Matching Kurta Set (Demo)',
@@ -14,7 +147,7 @@
       stock: 12,
       color: 'saffron,indigo',
       size_variants: 'S,M,L,XL',
-      video_url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4'
+      video_url: '/videos/gemini_generated_video_55fc5f1d.mp4'
     },
     {
       id: 1002,
@@ -51,7 +184,7 @@
       id: 'demo-promo-1',
       title: 'Festival Twin Sets',
       subtitle: 'Up to 30% off on family twinning outfits',
-      media_url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+      media_url: '/videos/gemini_generated_video_39a5ecd2.mp4',
       bg_color: 'linear-gradient(135deg,#f97316 0%, #fb7185 100%)',
       link_url: '/products?style=Ethnic'
     },
@@ -66,9 +199,9 @@
   ];
 
   window.demoHomepageSettings = {
-    hero_title: 'Summer Vibes - Little to Large (Demo)',
-    hero_subtitle: 'Handpicked family collections for your next trip',
+    hero_title: 'Family Fashion - Little to Large',
+    hero_subtitle: 'Handpicked Indian collections for your entire family',
     media_type: 'video',
-    media_url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4'
+    media_url: '/videos/gemini_generated_video_39a5ecd2.mp4'
   };
 })();

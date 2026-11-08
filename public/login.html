@@ -481,7 +481,7 @@
                 if (data.user.email && data.user.email.toLowerCase() === 'admin@littlelarge.in') {
                   window.location.replace('/admin');
                 } else {
-                  window.location.replace('/');
+                  sessionStorage.setItem('l2l_just_logged_in', 'true'); window.location.replace('/?welcome=true');
                 }
               }, 1000);
             } else {
@@ -594,7 +594,7 @@
           const isAdmin = (cleanEmail === 'indiancloths980@ltl.com' || cleanEmail === 'admin@littlelarge.in' || cleanEmail.includes('indiancloths980') || cleanEmail.includes('admin') || (data.user && (data.user.role === 'admin' || data.user.role === 'staff' || data.user.isStaff)));
           showToast(isAdmin ? `Welcome back Admin!` : `Welcome back, ${data.user ? data.user.name : 'User'}!`, 'success');
           setTimeout(() => {
-            window.location.href = isAdmin ? '/admin' : '/';
+            if (!isAdmin) sessionStorage.setItem('l2l_just_logged_in', 'true'); window.location.href = isAdmin ? '/admin' : '/?welcome=true';
           }, 800);
           return;
         }
@@ -616,7 +616,7 @@
               const isAdmin = (cleanEmail === 'indiancloths980@ltl.com' || cleanEmail === 'admin@littlelarge.in' || cleanEmail.includes('indiancloths980') || cleanEmail.includes('admin') || (fbData.user && (fbData.user.role === 'admin' || fbData.user.role === 'staff')));
               showToast(`Welcome back, ${fbData.user.name}!`, 'success');
               setTimeout(() => {
-                window.location.href = isAdmin ? '/admin' : '/';
+                if (!isAdmin) sessionStorage.setItem('l2l_just_logged_in', 'true'); window.location.href = isAdmin ? '/admin' : '/?welcome=true';
               }, 800);
               return;
             }
@@ -712,7 +712,7 @@
             saveToken(data.token, data.user);
             showToast(`OTP Verified! Welcome, ${data.user.name}!`, 'success');
             setTimeout(() => {
-              window.location.href = '/'; // Redirect to clean home path
+              sessionStorage.setItem('l2l_just_logged_in', 'true'); window.location.href = '/?welcome=true';
             }, 1200);
           } else {
             showToast(data.message || 'Firebase login sync failed', 'error');
@@ -795,7 +795,7 @@
             }
 
             setTimeout(() => {
-              window.location.href = '/';
+              sessionStorage.setItem('l2l_just_logged_in', 'true'); window.location.href = '/?welcome=true';
             }, 800);
             return;
           } else {
@@ -861,7 +861,7 @@
           const cleanEmail = (data.user && data.user.email ? data.user.email : '').trim().toLowerCase();
           const isAdmin = cleanEmail === 'indiancloths980@ltl.com' || cleanEmail === 'admin@littlelarge.in' || cleanEmail.includes('indiancloths980') || cleanEmail.includes('admin') || (data.user && data.user.role === 'admin');
           setTimeout(() => {
-            window.location.href = isAdmin ? '/admin' : '/';
+            if (!isAdmin) sessionStorage.setItem('l2l_just_logged_in', 'true'); window.location.href = isAdmin ? '/admin' : '/?welcome=true';
           }, 800);
         } else {
           showToast(data.message || 'Google Login Sync failed', 'error');

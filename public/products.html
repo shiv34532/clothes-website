@@ -20,8 +20,8 @@
   <meta property="og:url" content="https://littletolargee.com/products">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/ux-premium.css">
+  <link rel="stylesheet" href="/css/style.css?v=25">
+  <link rel="stylesheet" href="/css/ux-premium.css?v=25">
   <link rel="icon" type="image/png" href="/favicon.png?v=4">
   <link rel="shortcut icon" href="/favicon.ico?v=4">
   <script type="application/ld+json">
@@ -494,7 +494,22 @@
 
       try {
         const res = await fetch(`/api/products?${urlParams.toString()}`);
-        const data = await res.json();
+        let data = await res.json();
+
+        // If specific category + search returned 0 items, broaden search across all categories
+        if (data && data.success && Array.isArray(data.products) && data.products.length === 0 && urlParams.get('search') && urlParams.get('category')) {
+          const broadParams = new URLSearchParams(urlParams);
+          broadParams.delete('category');
+          try {
+            const broadRes = await fetch(`/api/products?${broadParams.toString()}`);
+            const broadData = await broadRes.json();
+            if (broadData && broadData.success && broadData.products && broadData.products.length > 0) {
+              data = broadData;
+              const titleEl = document.getElementById('shopPageTitle');
+              if (titleEl) titleEl.textContent = `Search results for "${urlParams.get('search')}"`;
+            }
+          } catch(e) {}
+        }
 
         // If API returns no products, fall back to client-only demo data (no DB changes)
         if ((!data || !data.success || !Array.isArray(data.products) || data.products.length === 0) && window.demoProducts) {
@@ -504,94 +519,109 @@
         completeGlobalProgressBar();
 
         if (data.success) {
-          grid.innerHTML = '';
-          if (data.products.length === 0) {
+          window.catalogProductsMap = new Map();
+          if (!data.products || data.products.length === 0) {
             grid.innerHTML = `
               <div style="grid-column: 1/-1; text-align:center; padding:3rem">
                 <i class="far fa-sad-tear" style="font-size:3rem; color:var(--text-light); margin-bottom:1rem"></i>
-                <h3>No outfits found match these filters</h3>
-                <p style="color:var(--text-light)">Try checking different categories or sizing options.</p>
+                <h3 style="color:var(--primary)">No outfits found matching these filters</h3>
+                <p style="color:var(--text-light); margin-top:8px;">Try clearing filters or checking different categories.</p>
+                <a href="/products" class="btn btn-primary" style="margin-top:1rem; display:inline-block;">View All Collections</a>
               </div>
             `;
             return;
           }
 
-          data.products.forEach(p => {
-            const images = JSON.parse(p.image_urls || '[]');
-            const mainImg = formatLocalPath(images[0] || 'images/products/placeholder.jpg');
-            const oldPriceHtml = p.discount_price ? `<span class="old-price">₹${p.price}</span>` : '';
-            const discountPercentHtml = p.discount_price ? `<span class="discount-pct">${Math.round(((p.price - p.discount_price) / p.price) * 100)}% OFF</span>` : '';
+          const wishlist = getLocalWishlist();
+          const cardsHtml = data.products.map(p => {
+            window.catalogProductsMap.set(p.id, p);
+
+            const images = (typeof safeParseImages === "function") ? safeParseImages(p.image_urls) : (Array.isArray(p.image_urls) ? p.image_urls : [p.image || '/images/products/placeholder.jpg']);
+            const mainImg = formatLocalPath(images[0] || '/images/products/placeholder.jpg');
+            const oldPriceHtml = p.discount_price ? `<span class="old-price" style="text-decoration:line-through; color:#9ca3af; margin-left:6px; font-size:0.85rem;">&#8377;${p.price}</span>` : '';
+            const discountPercentHtml = p.discount_price ? `<span class="discount-pct" style="color:#059669; font-weight:700; margin-left:6px; font-size:0.8rem;">${Math.round(((p.price - p.discount_price) / p.price) * 100)}% OFF</span>` : '';
             const priceVal = p.discount_price || p.price;
 
-            // Build stars
+            // Rating Stars
             let stars = '';
             const floorRating = Math.floor(p.rating || 0);
             for (let i = 1; i <= 5; i++) {
-              if (i <= floorRating) {
-                stars += '<i class="fas fa-star"></i>';
-              } else if (i - 0.5 <= (p.rating || 0)) {
-                stars += '<i class="fas fa-star-half-alt"></i>';
-              } else {
-                stars += '<i class="far fa-star"></i>';
-              }
+              if (i <= floorRating) stars += '<i class="fas fa-star" style="color:#f59e0b; font-size:0.8rem;"></i>';
+              else if (i - 0.5 <= (p.rating || 0)) stars += '<i class="fas fa-star-half-alt" style="color:#f59e0b; font-size:0.8rem;"></i>';
+              else stars += '<i class="far fa-star" style="color:#d1d5db; font-size:0.8rem;"></i>';
             }
 
-            const wishlist = getLocalWishlist();
             const isInWishlist = wishlist.includes(p.id);
-
             const hasValidVideo = p.video_url && typeof p.video_url === 'string' && p.video_url.trim() !== '' && p.video_url.trim() !== 'null' && p.video_url.trim() !== 'undefined';
             const hoverAttrs = hasValidVideo ? 'onmouseenter="handleCardVideoHover(this, true)" onmouseleave="handleCardVideoHover(this, false)"' : '';
 
-            grid.innerHTML += `
-              <div class="product-card tilt-hover">
-                ${p.discount_price ? `<span class="badge-tag">Sale</span>` : ''}
-                <a href="/product-detail?id=${p.id}" class="product-img-wrapper" onclick="handleProductCardClick(event, ${p.id}, this)" ${hoverAttrs} style="cursor:pointer; position:relative">
-                  <img class="lazy-image" src="/images/products/placeholder.svg" data-src="${mainImg}" alt="${p.name}" onerror="this.src='/images/products/placeholder.jpg'">
-                  ${hasValidVideo ? `<video class="card-hover-video" src="${formatLocalPath(p.video_url.trim())}" loop muted playsinline style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:inherit; z-index:4; pointer-events:none; transition:opacity 0.2s ease;"></video>` : ''}
-                </div>
-                <button class="wishlist-btn ${isInWishlist ? 'active' : ''}" onclick="event.stopPropagation(); handleWishlistToggle(${p.id}, this)">
-                  <i class="fas fa-heart"></i>
-                </button>
-                <div class="product-details">
-                  <span class="product-cat">${p.category} | ${p.subcategory}</span>
-                  <a href="/product-detail?id=${p.id}" class="product-name">${p.name}</a>
-                  <div class="product-rating">
-                    ${stars}
-                    <span class="rating-num">(${p.rating || '5.0'})</span>
-                  </div>
-                  
-                  ${(() => {
-                    let colors = [];
-                    if (Array.isArray(p.color_variants) && p.color_variants.length > 0) {
-                      colors = p.color_variants.map(v => typeof v === 'object' ? (v.color_name || v.name) : v).filter(Boolean);
-                    } else if (typeof p.color_variants === 'string' && p.color_variants.trim()) {
-                      colors = p.color_variants.split(',').map(c => c.trim()).filter(Boolean);
-                    } else if (typeof p.color === 'string' && p.color.trim()) {
-                      colors = p.color.split(',').map(c => c.trim()).filter(Boolean);
-                    }
-                    if (colors.length > 0) {
-                      return `<div style="display:flex; gap:6px; margin: 6px 0; align-items:center;">
-                        <span style="font-size:0.75rem; color:var(--text-light)">Colors:</span>
-                        ${colors.map((col, idx) => `<span class="color-dot ${idx === 0 ? 'active' : ''}" style="width:14px; height:14px; border-radius:50%; background:${getColorCssCode(col)}; border:${idx === 0 ? '2px solid var(--primary)' : '1px solid #ccc'}; display:inline-block; cursor:pointer; transition:transform 0.2s ease;" title="${col}" onclick="selectCardColor(event, this, '${col}')"></span>`).join('')}
-                      </div>`;
-                    }
-                    return '';
-                  })()}
+            // Extract Color Variants
+            let colors = [];
+            if (Array.isArray(p.color_variants) && p.color_variants.length > 0) {
+              colors = p.color_variants.map(v => typeof v === 'object' ? (v.color_name || v.name) : v).filter(Boolean);
+            } else if (typeof p.color_variants === 'string' && p.color_variants.trim()) {
+              try {
+                const parsed = JSON.parse(p.color_variants);
+                colors = Array.isArray(parsed) ? parsed.map(v => typeof v === 'object' ? (v.color_name || v.name) : v).filter(Boolean) : [];
+              } catch(e) {
+                colors = p.color_variants.split(',').map(c => c.trim()).filter(Boolean);
+              }
+            } else if (typeof p.color === 'string' && p.color.trim()) {
+              colors = p.color.split(',').map(c => c.trim()).filter(Boolean);
+            }
 
-                  ${p.stock > 0 && p.stock < 10 ? `<span style="color:var(--danger); font-size:0.8rem; font-weight:700; display:block; margin:4px 0">🔴 Only ${p.stock} left!</span>` : ''}
-                  <div class="product-pricing">
-                    <span class="price">₹${priceVal}</span>
-                    ${oldPriceHtml}
-                    ${discountPercentHtml}
-                  </div>
-                  <button class="btn-add-cart" onclick="handleAddCartClick(event, this, ${JSON.stringify(p).replace(/"/g, '&quot;')})">
-                    <i class="fas fa-shopping-basket"></i> Add to Box
+            const colorsHtml = colors.length > 0 ? `
+              <div style="display:flex; gap:6px; margin: 6px 0; align-items:center;">
+                <span style="font-size:0.75rem; color:var(--text-light); font-weight:600;">Colors:</span>
+                ${colors.map((col, idx) => `<span class="color-dot ${idx === 0 ? 'active' : ''}" style="width:14px; height:14px; border-radius:50%; background:${getColorCssCode(col)}; border:${idx === 0 ? '2px solid var(--primary)' : '1px solid #ccc'}; display:inline-block; cursor:pointer; transition:transform 0.2s ease;" title="${col}" onclick="selectCardColor(event, this, '${col}')"></span>`).join('')}
+              </div>
+            ` : '';
+
+            return `
+              <div class="product-card tilt-hover" style="display:flex; flex-direction:column; justify-content:space-between; height:100%; background:#fff; border-radius:12px; overflow:hidden; border:1px solid #e2e8f0; box-shadow:0 2px 10px rgba(0,0,0,0.03);">
+                <div style="position:relative;">
+                  ${p.discount_price ? `<span class="badge-tag" style="position:absolute; top:10px; left:10px; z-index:5; background:#800020; color:#fff; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:999px; text-transform:uppercase;">Sale</span>` : ''}
+                  
+                  <a href="/product-detail?id=${p.id}" class="product-img-wrapper" onclick="handleProductCardClick(event, ${p.id}, this)" ${hoverAttrs} style="display:block; width:100%; height:260px; background:#f8fafc; overflow:hidden; position:relative;">
+                    <img src="${mainImg}" alt="${p.name.replace(/"/g, '&quot;')}" loading="lazy" decoding="async" style="width:100%; height:100%; object-fit:contain; padding:10px; transition:transform 0.3s ease;" onerror="this.src='/images/products/placeholder.jpg'">
+                    ${hasValidVideo ? `<video class="card-hover-video" src="${formatLocalPath(p.video_url.trim())}" loop muted playsinline style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:4; pointer-events:none;"></video>` : ''}
+                  </a>
+
+                  <button class="wishlist-btn ${isInWishlist ? 'active' : ''}" onclick="event.stopPropagation(); handleWishlistToggle(${p.id}, this)" style="position:absolute; top:10px; right:10px; z-index:5; background:#fff; border:none; width:32px; height:32px; border-radius:50%; box-shadow:0 2px 6px rgba(0,0,0,0.1); cursor:pointer;">
+                    <i class="fas fa-heart" style="${isInWishlist ? 'color:#e11d48;' : 'color:#9ca3af;'}"></i>
                   </button>
+                </div>
+
+                <div class="product-details" style="padding:1rem; flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+                  <div>
+                    <span class="product-cat" style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.5px; color:#6b7280; font-weight:700;">${p.category || 'Ethnic'} | ${p.subcategory || 'Collection'}</span>
+                    <a href="/product-detail?id=${p.id}" class="product-name" style="font-size:0.95rem; font-weight:700; color:#1e1b4b; display:block; margin:4px 0 6px; line-height:1.35; text-decoration:none;">${p.name}</a>
+                    
+                    <div class="product-rating" style="display:flex; align-items:center; gap:4px; margin-bottom:6px;">
+                      ${stars}
+                      <span class="rating-num" style="font-size:0.75rem; color:#6b7280;">(${p.rating || '4.9'})</span>
+                    </div>
+
+                    ${colorsHtml}
+                    ${p.stock > 0 && p.stock < 10 ? `<span style="color:#dc2626; font-size:0.78rem; font-weight:700; display:block; margin:4px 0;">⚡ Only ${p.stock} left in stock!</span>` : ''}
+                  </div>
+
+                  <div style="margin-top:10px;">
+                    <div class="product-pricing" style="margin-bottom:8px; display:flex; align-items:baseline;">
+                      <span class="price" style="font-size:1.15rem; font-weight:800; color:#1e1b4b;">&#8377;${priceVal}</span>
+                      ${oldPriceHtml}
+                      ${discountPercentHtml}
+                    </div>
+                    <button class="btn-add-cart" onclick="handleAddCartClick(event, this, ${p.id})" style="width:100%; background:#800020; color:#fff; border:none; padding:8px; border-radius:6px; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:background 0.2s;">
+                      <i class="fas fa-shopping-bag"></i> Add to Box
+                    </button>
+                  </div>
                 </div>
               </div>
             `;
           });
-          setupLazyImages();
+
+          grid.innerHTML = cardsHtml.join('');
         }
       } catch (err) {
         completeGlobalProgressBar();
@@ -620,30 +650,36 @@
       }
     }
 
-    function handleAddToCart(product, button) {
-      const card = button.closest('.product-card');
-      const selectedColor = card ? (card.getAttribute('data-selected-color') || (product.color ? product.color.split(',')[0].trim() : 'Default')) : 'Default';
-      const sizes = product.size_variants.split(',');
-      const defaultSize = sizes[0] || 'M';
+    function handleAddToCart(prodOrId, button) {
+      const product = (typeof prodOrId === 'object' && prodOrId !== null)
+        ? prodOrId
+        : ((window.catalogProductsMap && window.catalogProductsMap.get(Number(prodOrId))) || {});
+      const card = button ? button.closest('.product-card') : null;
+      const selectedColor = card ? (card.getAttribute('data-selected-color') || (product.color ? String(product.color).split(',')[0].trim() : 'Default')) : 'Default';
+      const sizes = product.size_variants ? String(product.size_variants).split(',') : ['M'];
+      const defaultSize = sizes[0] ? sizes[0].trim() : 'M';
       addToCart(product, defaultSize, 1, selectedColor);
     }
 
-    async function handleAddCartClick(event, button, product) {
+    async function handleAddCartClick(event, button, prodOrId) {
       event.stopPropagation();
+      const product = (typeof prodOrId === 'object' && prodOrId !== null)
+        ? prodOrId
+        : ((window.catalogProductsMap && window.catalogProductsMap.get(Number(prodOrId))) || {});
       const card = button.closest('.product-card');
       const img = card ? card.querySelector('.product-img-wrapper img') : null;
-      const selectedColor = card ? (card.getAttribute('data-selected-color') || (product.color ? product.color.split(',')[0].trim() : 'Default')) : 'Default';
+      const selectedColor = card ? (card.getAttribute('data-selected-color') || (product.color ? String(product.color).split(',')[0].trim() : 'Default')) : 'Default';
       
       const addToCartPromise = new Promise((resolve) => {
         setTimeout(() => {
-          const sizes = product.size_variants.split(',');
-          const defaultSize = sizes[0] || 'M';
+          const sizes = product.size_variants ? String(product.size_variants).split(',') : ['M'];
+          const defaultSize = sizes[0] ? sizes[0].trim() : 'M';
           addToCart(product, defaultSize, 1, selectedColor);
-          if (img) {
+          if (img && typeof animateFlyToCart === 'function') {
             animateFlyToCart(img);
           }
           resolve();
-        }, 600);
+        }, 400);
       });
       
       await wrapButtonLoader(button, addToCartPromise);
@@ -767,12 +803,13 @@
       const grid = document.getElementById('catalogGrid');
       grid.innerHTML = '';
 
-      if (products.length === 0) {
+      if (!products || products.length === 0) {
         grid.innerHTML = `
           <div style="grid-column: 1/-1; text-align:center; padding:3rem">
             <i class="far fa-sad-tear" style="font-size:3rem; color:var(--text-light); margin-bottom:1rem"></i>
             <h3>No matching clothing outfits found</h3>
-            <p style="color:var(--text-light)">Try uploading another photo with different color shades.</p>
+            <p style="color:var(--text-light)">Try uploading another photo with clearer clothing view.</p>
+            <a href="/products" class="btn btn-primary" style="margin-top:1rem; display:inline-block;">Browse Full Catalog</a>
           </div>
         `;
         return;
@@ -780,54 +817,65 @@
 
       document.getElementById('shopPageTitle').textContent = `AI Image Match Results (${products.length})`;
 
-      products.forEach(p => {
-        const images = JSON.parse(p.image_urls || '[]');
-        const mainImg = formatLocalPath(images[0] || 'images/products/placeholder.jpg');
-        const oldPriceHtml = p.discount_price ? `<span class="old-price">₹${p.price}</span>` : '';
-        const discountPercentHtml = p.discount_price ? `<span class="discount-pct">${Math.round(((p.price - p.discount_price) / p.price) * 100)}% OFF</span>` : '';
+      if (!window.catalogProductsMap) window.catalogProductsMap = new Map();
+
+      const cardsHtml = products.map(p => {
+        window.catalogProductsMap.set(p.id, p);
+
+        const images = (typeof safeParseImages === "function") ? safeParseImages(p.image_urls) : (Array.isArray(p.image_urls) ? p.image_urls : [p.image || '/images/products/placeholder.jpg']);
+        const mainImg = (typeof formatLocalPath === 'function') ? formatLocalPath(images[0] || '/images/products/placeholder.jpg') : (images[0] || '/images/products/placeholder.jpg');
+        const oldPriceHtml = p.discount_price ? `<span class="old-price" style="text-decoration:line-through; color:#9ca3af; margin-left:6px; font-size:0.85rem;">&#8377;${p.price}</span>` : '';
+        const discountPercentHtml = p.discount_price ? `<span class="discount-pct" style="color:#059669; font-weight:700; margin-left:6px; font-size:0.8rem;">${Math.round(((p.price - p.discount_price) / p.price) * 100)}% OFF</span>` : '';
         const priceVal = p.discount_price || p.price;
 
         let stars = '';
         const floorRating = Math.floor(p.rating || 0);
         for (let i = 1; i <= 5; i++) {
-          if (i <= floorRating) stars += '<i class="fas fa-star"></i>';
-          else if (i - 0.5 <= (p.rating || 0)) stars += '<i class="fas fa-star-half-alt"></i>';
-          else stars += '<i class="far fa-star"></i>';
+          if (i <= floorRating) stars += '<i class="fas fa-star" style="color:#f59e0b; font-size:0.8rem;"></i>';
+          else if (i - 0.5 <= (p.rating || 0)) stars += '<i class="fas fa-star-half-alt" style="color:#f59e0b; font-size:0.8rem;"></i>';
+          else stars += '<i class="far fa-star" style="color:#d1d5db; font-size:0.8rem;"></i>';
         }
 
-        grid.innerHTML += `
-          <div class="product-card">
-            ${p.discount_price ? `<span class="badge-tag">Sale</span>` : ''}
-            <a href="/product-detail?id=${p.id}" class="product-img-wrapper" style="display:block; position:relative">
-              <img src="${mainImg}" alt="${p.name}" onerror="this.src='/images/products/placeholder.jpg'">
-              ${p.video_url ? `<span class="card-video-pill"><i class="fas fa-play"></i> Video</span>` : ''}
+        return `
+          <div class="product-card tilt-hover" style="display:flex; flex-direction:column; justify-content:space-between; height:100%; background:#fff; border-radius:12px; overflow:hidden; border:1px solid #e2e8f0; box-shadow:0 2px 10px rgba(0,0,0,0.03);">
+            <div style="position:relative;">
+              ${p.discount_price ? `<span class="badge-tag" style="position:absolute; top:10px; left:10px; z-index:5; background:#800020; color:#fff; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:999px; text-transform:uppercase;">Sale</span>` : ''}
+              
+              <a href="/product-detail?id=${p.id}" class="product-img-wrapper" style="display:block; width:100%; height:260px; background:#f8fafc; overflow:hidden; position:relative;">
+                <img src="${mainImg}" alt="${(p.name || '').replace(/"/g, '&quot;')}" loading="lazy" decoding="async" style="width:100%; height:100%; object-fit:contain; padding:10px; transition:transform 0.3s ease;" onerror="this.src='/images/products/placeholder.jpg'">
+                ${p.video_url ? `<span class="card-video-pill" style="position:absolute; bottom:10px; left:10px; background:rgba(30,27,75,0.85); color:#fff; font-size:0.7rem; font-weight:700; padding:3px 8px; border-radius:4px;"><i class="fas fa-play"></i> Video</span>` : ''}
+              </a>
             </div>
-            <div class="product-details">
-              <span class="product-cat">${p.category} | ${p.subcategory}</span>
-              <a href="/product-detail?id=${p.id}" class="product-name">${p.name}</a>
-              <div class="product-rating">
-                ${stars}
-                <span class="rating-num">(${p.rating || '5.0'})</span>
+
+            <div class="product-details" style="padding:1rem; flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+              <div>
+                <span class="product-cat" style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.5px; color:#6b7280; font-weight:700;">${p.category || 'Ethnic'} | ${p.subcategory || 'Collection'}</span>
+                <a href="/product-detail?id=${p.id}" class="product-name" style="font-size:0.95rem; font-weight:700; color:#1e1b4b; display:block; margin:4px 0 6px; line-height:1.35; text-decoration:none;">${p.name}</a>
+                
+                <div class="product-rating" style="display:flex; align-items:center; gap:4px; margin-bottom:6px;">
+                  ${stars}
+                  <span class="rating-num" style="font-size:0.75rem; color:#6b7280;">(${p.rating || '4.9'})</span>
+                </div>
+
+                ${p.stock > 0 && p.stock < 10 ? `<span style="color:#dc2626; font-size:0.78rem; font-weight:700; display:block; margin:4px 0;">⚡ Only ${p.stock} left in stock!</span>` : ''}
               </div>
-              ${p.stock > 0 && p.stock < 10 ? `<span style="color:var(--danger); font-size:0.8rem; font-weight:700; display:block; margin:4px 0">🔴 Only ${p.stock} left!</span>` : ''}
-              <div class="product-pricing">
-                <span class="price">₹${priceVal}</span>
-                ${oldPriceHtml}
-                ${discountPercentHtml}
+
+              <div style="margin-top:10px;">
+                <div class="product-pricing" style="margin-bottom:8px; display:flex; align-items:baseline;">
+                  <span class="price" style="font-size:1.15rem; font-weight:800; color:#1e1b4b;">&#8377;${priceVal}</span>
+                  ${oldPriceHtml}
+                  ${discountPercentHtml}
+                </div>
+                <button class="btn-add-cart" onclick="handleAddCartClick(event, this, ${p.id})" style="width:100%; background:#800020; color:#fff; border:none; padding:8px; border-radius:6px; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:background 0.2s;">
+                  <i class="fas fa-shopping-bag"></i> Add to Box
+                </button>
               </div>
-              ${p.stock <= 0 ? `
-                <button class="btn-add-cart out-of-stock" disabled style="background:#cbd5e1 !important; border-color:#cbd5e1 !important; color:#64748b !important; cursor:not-allowed">
-                  <i class="fas fa-ban"></i> Out of Stock
-                </button>
-              ` : `
-                <button class="btn-add-cart" onclick="handleAddToCart(${JSON.stringify(p).replace(/"/g, '&quot;')})">
-                  <i class="fas fa-shopping-basket"></i> Add to Box
-                </button>
-              `}
             </div>
           </div>
         `;
       });
+
+      grid.innerHTML = cardsHtml.join('');
     }
   </script>
 </body>
