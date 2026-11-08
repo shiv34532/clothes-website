@@ -12,11 +12,11 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Little to Large | India's Premium Family Clothing E-Store</title>
-  <meta name="description" content="Shop premium clothing for your entire family online in India. Ethnic wear, western outfits, kids apparel, and handcrafted accessories from Little to Large.">
+  <title>Little to Largee | India's Premium Family Clothing E-Store</title>
+  <meta name="description" content="Shop premium clothing for your entire family online in India. Ethnic wear, western outfits, kids apparel, and handcrafted accessories from Little to Largee.">
   <link rel="canonical" href="https://littletolargee.com/">
-  <meta property="og:title" content="Little to Large | India's Premium Family Clothing E-Store">
-  <meta property="og:description" content="Shop premium clothing for your entire family online in India. Ethnic wear, western outfits, kids apparel, and handcrafted accessories from Little to Large.">
+  <meta property="og:title" content="Little to Largee | India's Premium Family Clothing E-Store">
+  <meta property="og:description" content="Shop premium clothing for your entire family online in India. Ethnic wear, western outfits, kids apparel, and handcrafted accessories from Little to Largee.">
   <meta property="og:url" content="https://littletolargee.com/">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://littletolargee.com/images/hero_ethnic.png">
@@ -29,7 +29,7 @@
     "@graph": [
       {
         "@type": "WebSite",
-        "name": "Little to Large",
+        "name": "Little to Largee",
         "url": "https://littletolargee.com/",
         "potentialAction": {
           "@type": "SearchAction",
@@ -39,7 +39,7 @@
       },
       {
         "@type": "ClothingStore",
-        "name": "Little to Large",
+        "name": "Little to Largee",
         "url": "https://littletolargee.com/",
         "logo": "https://littletolargee.com/images/favicon.png",
         "description": "India's premium family clothing store. Ethnic wear, western outfits, kids apparel, and handcrafted accessories.",
@@ -57,33 +57,379 @@
     ]
   }
   </script>
-  <link rel="stylesheet" href="css/style.css?v=22">
-  <link rel="stylesheet" href="css/ux-premium.css?v=22">
+  <link rel="stylesheet" href="/css/style.css?v=25">
+  <link rel="stylesheet" href="/css/ux-premium.css?v=25">
   <link rel="icon" type="image/png" href="/favicon.png?v=4">
   <link rel="shortcut icon" href="/favicon.ico?v=4">
 </head>
 <body>
 
-  <!-- Dynamic Header Injected by app.js -->
-  <header></header>
+  <!-- Royal Red Gate Entrance with Fireworks & Sky-shots -->
+  <div id="royalGateEntranceOverlay" class="royal-gate-overlay" style="display:flex;">
+    <canvas id="diwaliSkyShotCanvas" class="diwali-skyshot-canvas"></canvas>
 
-  <!-- Hero Section Carousel (Dynamic) -->
-  <section class="hero-slider" id="heroSlider">
-    <div class="slide active" style="background-color: #3b3658;">
-      <div class="slide-overlay"></div>
-      <div class="container hero-slide-grid">
-        <div class="slide-content">
-          <h1>Ethnic Elegance for Every Generation</h1>
-          <p>Handcrafted ethnic wear and modern western styles matching your family lifestyle.</p>
-          <a href="/products" class="btn">Explore Store</a>
-        </div>
-        <div class="slide-image-frame">
-          <img src="images/hero_ethnic.png" alt="Ethnic Family Fashion" class="hero-slide-img">
+    <!-- Left Royal Red Door -->
+    <div class="royal-door royal-door-left" id="royalDoorLeft">
+      <div class="door-inner-panel">
+        <div class="door-ornate-arch"></div>
+        <div class="door-pattern-grid"></div>
+        <div class="door-handle door-handle-left">
+          <div class="handle-ring"></div>
         </div>
       </div>
     </div>
+
+    <!-- Right Royal Red Door -->
+    <div class="royal-door royal-door-right" id="royalDoorRight">
+      <div class="door-inner-panel">
+        <div class="door-ornate-arch"></div>
+        <div class="door-pattern-grid"></div>
+        <div class="door-handle door-handle-right">
+          <div class="handle-ring"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Royal Seal -->
+    <div class="royal-center-seal" id="royalCenterSeal">
+      <div class="royal-seal-emblem">🪔</div>
+      <h1 class="royal-seal-title">LITTLE TO LARGE</h1>
+      <p class="royal-seal-subtitle">India's Royal Family Wardrobe</p>
+      <div class="royal-seal-tag">✨ Festive Grand Reveal ✨</div>
+    </div>
+
+    <!-- Skip Entrance Button -->
+    <button class="royal-skip-btn" id="royalSkipBtn" onclick="closeRoyalGateEntrance()">
+      Skip Entrance <i class="fas fa-forward"></i>
+    </button>
+  </div>
+
+  <!-- Festive Gamified Discount Spinner Wheel Modal -->
+  <div id="discountSpinnerModal" class="spinner-modal-overlay" style="display:none;" onclick="closeSpinnerModal(event)">
+    <div class="spinner-modal-card" onclick="event.stopPropagation()">
+      <button class="spinner-close-btn" onclick="closeSpinnerModal()">&times;</button>
+      
+      <div class="spinner-header">
+        <div class="spinner-festive-badge">🎉 FESTIVE DHAMAKA SPINNER</div>
+        <h3 class="spinner-title">Spin the Wheel of Fortune!</h3>
+        <p class="spinner-subtitle">Unlock an exclusive instant discount for your family wardrobe</p>
+      </div>
+
+      <!-- Wheel Graphic -->
+      <div class="wheel-stage">
+        <div class="wheel-pointer">▼</div>
+        <canvas id="wheelCanvas" width="320" height="320" class="wheel-canvas"></canvas>
+        <button id="spinWheelBtn" class="spin-center-btn" onclick="triggerWheelSpin()">
+          <span>SPIN<br>NOW</span>
+        </button>
+      </div>
+
+      <!-- Win Announcement Section (Hidden until spun) -->
+      <div id="spinnerWinSection" class="spinner-win-section" style="display:none;">
+        <div class="win-sparkle-icon">🎁</div>
+        <h4 class="win-congrats-title">Bumper Win! You unlocked:</h4>
+        <div class="win-discount-tag" id="winDiscountTag">20% OFF</div>
+        <div class="win-code-box">
+          <span>Use Coupon Code:</span>
+          <strong id="winCouponCode">FESTIVE20</strong>
+          <button class="copy-code-btn" id="copyCouponBtn" onclick="copyWinCoupon()"><i class="fas fa-copy"></i> Copy Code</button>
+        </div>
+        <button class="btn btn-primary win-shop-btn" onclick="applyCouponAndShop()">Shop Now With Discount</button>
+      </div>
+
+      <!-- Terms Note -->
+      <div class="spinner-footer-note">
+        <i class="fas fa-shield-alt"></i> Valid on all family coordinates, silk sarees &amp; kids collections.
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Persistent Spinner Wheel Button (Always accessible) -->
+  <button id="floatingSpinBtn" class="floating-spin-btn" onclick="openSpinnerModal()" title="Spin &amp; Win Discount!">
+    <span class="floating-spin-icon">🎁</span>
+    <span class="floating-spin-label">Spin &amp; Win <strong>20% OFF</strong></span>
+    <span class="floating-spin-pulse"></span>
+  </button>
+
+  <!-- Family Wear Story Sequence (Opening / First Visit ~5s, Skippable) -->
+  <div id="familyStoryOverlay" class="family-story-overlay" style="display:none;" onclick="handleStoryOverlayClick(event)">
+    <div class="story-container" onclick="event.stopPropagation()">
+      <!-- 3-Segment Story Progress Bars -->
+      <div class="story-progress-bars">
+        <div class="story-bar"><div class="story-bar-fill" id="storyBar0"></div></div>
+        <div class="story-bar"><div class="story-bar-fill" id="storyBar1"></div></div>
+        <div class="story-bar"><div class="story-bar-fill" id="storyBar2"></div></div>
+      </div>
+
+      <!-- Story Header -->
+      <div class="story-header">
+        <div class="story-brand-badge">
+          <img src="/images/favicon.png" alt="LTL" style="width:20px; height:20px; border-radius:3px;">
+          <span>Little to Largee &bull; Family Story</span>
+        </div>
+        <button class="story-skip-btn" onclick="skipFamilyStory()">
+          Skip <i class="fas fa-forward" style="font-size:0.7rem"></i>
+        </button>
+      </div>
+
+      <!-- Left / Right Tap Targets -->
+      <div class="story-touch-left" onclick="prevStorySlide()" title="Previous slide"></div>
+      <div class="story-touch-right" onclick="nextStorySlide()" title="Next slide"></div>
+
+      <!-- Slides Viewport -->
+      <div class="story-slides-viewport">
+        <!-- Slide 0: For Every Generation -->
+        <div class="story-slide active" id="storySlide0">
+          <img src="/images/brand/pomelli_photoshoot_image_4k_0822 (1).png" alt="Family Outfits" class="story-slide-bg" onerror="this.src='/images/hero_ethnic.png'">
+          <div class="story-slide-gradient"></div>
+          <div class="story-slide-content">
+            <span class="story-slide-tag">✨ 01 &bull; Generation Harmony</span>
+            <h2 class="story-slide-title">Little to Largee: One Wardrobe for All Ages</h2>
+            <p class="story-slide-desc">From newborn infant rompers to regal grand elder kurtas. Thoughtfully sized to dress every generation of your family under one roof.</p>
+            <a href="/products" class="btn" style="background:var(--marigold); color:#1e1b4b; font-weight:800; border-radius:50px; padding:0.6rem 1.4rem; font-size:0.85rem;" onclick="skipFamilyStory()">Shop Collection</a>
+          </div>
+        </div>
+
+        <!-- Slide 1: Pure Indian Fabrics -->
+        <div class="story-slide" id="storySlide1">
+          <img src="/images/brand/1792479024413.png" alt="Pure Indian Fabrics" class="story-slide-bg" onerror="this.src='/images/hero_vacation.png'">
+          <div class="story-slide-gradient"></div>
+          <div class="story-slide-content">
+            <span class="story-slide-tag">🌿 02 &bull; Pure Artisanal Weaves</span>
+            <h2 class="story-slide-title">Breathable Cottons &amp; Rich Banarasi Silks</h2>
+            <p class="story-slide-desc">Zero synthetic compromises. Hypoallergenic natural fibers, crafted by local Gujarat &amp; Indian handlooms for all-day festive comfort.</p>
+            <a href="/products?style=Ethnic" class="btn" style="background:var(--marigold); color:#1e1b4b; font-weight:800; border-radius:50px; padding:0.6rem 1.4rem; font-size:0.85rem;" onclick="skipFamilyStory()">Explore Ethnic Wear</a>
+          </div>
+        </div>
+
+        <!-- Slide 2: Festive Twinning -->
+        <div class="story-slide" id="storySlide2">
+          <img src="/images/brand/1785175552794.png" alt="Family Festive Twinning" class="story-slide-bg" onerror="this.src='/images/cat_kids.png'">
+          <div class="story-slide-gradient"></div>
+          <div class="story-slide-content">
+            <span class="story-slide-tag">🎉 03 &bull; Family Twinning</span>
+            <h2 class="story-slide-title">Celebrate Every Festival Together</h2>
+            <p class="story-slide-desc">Matching coordinates for mothers, fathers, and children. Delivered straight to your doorstep across India and worldwide.</p>
+            <a href="/products?subcategory=Family%20Sets" class="btn" style="background:var(--marigold); color:#1e1b4b; font-weight:800; border-radius:50px; padding:0.6rem 1.4rem; font-size:0.85rem;" onclick="skipFamilyStory()">View Twinning Sets</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Dynamic Header Injected by app.js -->
+  <header></header>
+
+  <!-- Family Stories & Reels Highlight Strip -->
+  <div class="container" style="margin-top: 1.5rem; margin-bottom: 0.8rem;">
+    <div class="family-reels-strip">
+      <div class="family-reel-item" onclick="startFamilyStory(true)">
+        <div class="family-reel-circle">
+          <img src="/images/brand/family_photoshoot_4k.png" alt="Family Story">
+        </div>
+        <span class="family-reel-label">✨ Story (5s)</span>
+      </div>
+      <a href="/products?subcategory=Family%20Sets" class="family-reel-item">
+        <div class="family-reel-circle">
+          <img src="/images/brand/1792479024413.png" alt="Family Twinning">
+        </div>
+        <span class="family-reel-label">Family Twins</span>
+      </a>
+      <a href="/products?category=Women" class="family-reel-item">
+        <div class="family-reel-circle">
+          <img src="/images/brand/1785123711757.png" alt="Women Silk Sarees">
+        </div>
+        <span class="family-reel-label">Silk Sarees</span>
+      </a>
+      <a href="/products?category=Men" class="family-reel-item">
+        <div class="family-reel-circle">
+          <img src="/images/brand/1785126141977.png" alt="Men Kurtas">
+        </div>
+        <span class="family-reel-label">Royal Kurtas</span>
+      </a>
+      <a href="/products?category=Kids" class="family-reel-item">
+        <div class="family-reel-circle">
+          <img src="/images/brand/1787111641442.png" alt="Kids Soft Cotton">
+        </div>
+        <span class="family-reel-label">Kids Cotton</span>
+      </a>
+      <div class="family-reel-item" onclick="openTrustVideoModal('/videos/gemini_generated_video_39a5ecd2.mp4', 'Family Festive Video Shoot', 'Gujarat Heritage Weaves')">
+        <div class="family-reel-circle">
+          <img src="/images/brand/1785175552794.png" alt="Video Shoot">
+        </div>
+        <span class="family-reel-label">🎬 Video Reel</span>
+      </div>
+      <div class="family-reel-item" onclick="openSpinnerModal()">
+        <div class="family-reel-circle" style="background:linear-gradient(45deg, #fbbf24, #d97706, #ef4444);">
+          <div style="font-size:1.6rem; line-height:1; display:flex; align-items:center; justify-content:center; width:100%; height:100%; border-radius:50%; background:#700018; border:2px solid #fff;">🎁</div>
+        </div>
+        <span class="family-reel-label">Spin &amp; Win</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero Section Carousel (Dynamic) -->
+  <section class="hero-slider" id="heroSlider">
+    <!-- Slide 1: Real Family Video & Photoshoot -->
+    <div class="slide active" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #1e1b4b 100%);">
+      <div class="slide-overlay"></div>
+      <div class="container hero-slide-grid">
+        <div class="slide-content">
+          <span style="background:var(--marigold); color:#1e1b4b; padding:4px 14px; border-radius:50px; font-weight:800; font-size:0.75rem; display:inline-block; margin-bottom:12px; letter-spacing:0.5px;">✨ 100% PURE GUJARAT HANDLOOM</span>
+          <h1 style="color:#fff; font-size:2.4rem; font-weight:800; line-height:1.2; margin-bottom:1rem; font-family:'Playfair Display', serif;">Ethnic Elegance for Every Generation</h1>
+          <p style="color:rgba(255,255,255,0.9); font-size:1.05rem; line-height:1.6; margin-bottom:1.8rem;">From newborn cotton rompers to royal grand elder silks. Handcrafted family coordinates designed to dress your whole family together.</p>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+            <a href="/products" class="btn" style="background:var(--marigold); color:#1e1b4b; font-weight:800; padding:0.8rem 1.8rem; border-radius:8px;">Explore Store</a>
+            <button type="button" onclick="startFamilyStory(true)" class="story-trigger-pill" style="margin:0;"><i class="fas fa-play-circle" style="color:var(--marigold); font-size:1rem;"></i> Family Story (5s)</button>
+            <button type="button" onclick="openSpinnerModal()" class="btn" style="background:rgba(255,255,255,0.15); border:1px solid #fbbf24; color:#fef08a; font-weight:800; padding:0.75rem 1.4rem; border-radius:8px;"><i class="fas fa-gift" style="color:#fbbf24"></i> Spin for 20% OFF</button>
+          </div>
+        </div>
+        <div class="slide-image-frame">
+          <div class="hero-media-wrapper">
+            <video id="heroWelcomeVideo" src="/videos/gemini_generated_video_39a5ecd2.mp4" autoplay muted loop playsinline class="hero-video-element" poster="/images/brand/family_photoshoot_4k.png"></video>
+            <div class="hero-video-overlay-badge"><i class="fas fa-film" style="color:#fbbf24"></i> Real Family Video Shoot</div>
+            <button type="button" class="hero-video-sound-toggle" onclick="toggleHeroVideoSound(this)" title="Toggle Sound">
+              <i class="fas fa-volume-mute"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2: Generational Twinning Sets -->
+    <div class="slide" style="background: linear-gradient(135deg, #700018 0%, #991b1b 50%, #4c0519 100%);">
+      <div class="slide-overlay"></div>
+      <div class="container hero-slide-grid">
+        <div class="slide-content">
+          <span style="background:#fbbf24; color:#1e1b4b; padding:4px 14px; border-radius:50px; font-weight:800; font-size:0.75rem; display:inline-block; margin-bottom:12px; letter-spacing:0.5px;">🎉 DIWALI &amp; WEDDING SPECIAL</span>
+          <h1 style="color:#fff; font-size:2.4rem; font-weight:800; line-height:1.2; margin-bottom:1rem; font-family:'Playfair Display', serif;">Celebrate Together in Matching Twinning Sets</h1>
+          <p style="color:rgba(255,255,255,0.9); font-size:1.05rem; line-height:1.6; margin-bottom:1.8rem;">Matching father-son kurtas, mother-daughter anarkalis, and complete parivaar ensembles handcrafted by local Gujarat artisans.</p>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+            <a href="/products?subcategory=Family%20Sets" class="btn" style="background:#fbbf24; color:#1e1b4b; font-weight:800; padding:0.8rem 1.8rem; border-radius:8px;">Shop Twinning Sets</a>
+            <button type="button" onclick="openSpinnerModal()" class="btn" style="background:rgba(255,255,255,0.15); border:1px solid #fbbf24; color:#fef08a; font-weight:800; padding:0.75rem 1.4rem; border-radius:8px;"><i class="fas fa-gift" style="color:#fbbf24"></i> Spin Wheel</button>
+          </div>
+        </div>
+        <div class="slide-image-frame">
+          <div class="hero-media-wrapper">
+            <video src="/videos/gemini_generated_video_55fc5f1d.mp4" autoplay muted loop playsinline class="hero-video-element" poster="/images/brand/1792479024413.png"></video>
+            <div class="hero-video-overlay-badge"><i class="fas fa-users" style="color:#fbbf24"></i> Generational Twinning</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: Pure Organic Cotton Gentle Wear -->
+    <div class="slide" style="background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #022c22 100%);">
+      <div class="slide-overlay"></div>
+      <div class="container hero-slide-grid">
+        <div class="slide-content">
+          <span style="background:#34d399; color:#064e3b; padding:4px 14px; border-radius:50px; font-weight:800; font-size:0.75rem; display:inline-block; margin-bottom:12px; letter-spacing:0.5px;">🌿 100% BREATHABLE NATURAL COTTON</span>
+          <h1 style="color:#fff; font-size:2.4rem; font-weight:800; line-height:1.2; margin-bottom:1rem; font-family:'Playfair Display', serif;">Hypoallergenic Comfort for Delicate Baby Skin</h1>
+          <p style="color:rgba(255,255,255,0.9); font-size:1.05rem; line-height:1.6; margin-bottom:1.8rem;">Zero synthetic compromises or harsh dyes. Organic cotton weaves that stay gentle and rash-free through every festive celebration.</p>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+            <a href="/products?category=Kids" class="btn" style="background:#34d399; color:#064e3b; font-weight:800; padding:0.8rem 1.8rem; border-radius:8px;">Shop Kids Outfits</a>
+            <button type="button" onclick="startFamilyStory(true)" class="story-trigger-pill" style="margin:0;"><i class="fas fa-play-circle" style="color:#34d399; font-size:1rem;"></i> Watch Story</button>
+          </div>
+        </div>
+        <div class="slide-image-frame">
+          <div class="hero-media-wrapper">
+            <video src="/videos/gemini_generated_video_3f612169.mp4" autoplay muted loop playsinline class="hero-video-element" poster="/images/brand/1785175552794.png"></video>
+            <div class="hero-video-overlay-badge"><i class="fas fa-seedling" style="color:#34d399"></i> 100% Cotton Verified</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <!-- Amazon/AJIO Style Hero Slider Arrow Buttons -->
+    <button class="hero-arrow-btn prev-arrow" onclick="changeHeroSlide(-1)" aria-label="Previous Slide" style="position:absolute; left:20px; top:50%; transform:translateY(-50%); z-index:10; background:rgba(255,255,255,0.25); backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,0.4); color:#fff; width:46px; height:46px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1.2rem; transition:all 0.25s;" onmouseover="this.style.background='rgba(255,255,255,0.6)'; this.style.color='#1e1b4b'" onmouseout="this.style.background='rgba(255,255,255,0.25)'; this.style.color='#fff'">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+    <button class="hero-arrow-btn next-arrow" onclick="changeHeroSlide(1)" aria-label="Next Slide" style="position:absolute; right:20px; top:50%; transform:translateY(-50%); z-index:10; background:rgba(255,255,255,0.25); backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,0.4); color:#fff; width:46px; height:46px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1.2rem; transition:all 0.25s;" onmouseover="this.style.background='rgba(255,255,255,0.6)'; this.style.color='#1e1b4b'" onmouseout="this.style.background='rgba(255,255,255,0.25)'; this.style.color='#fff'">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+
     <div class="slider-nav" id="sliderNav">
       <div class="slider-dot active" onclick="setSlide(0)"></div>
+      <div class="slider-dot" onclick="setSlide(1)"></div>
+      <div class="slider-dot" onclick="setSlide(2)"></div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       AJIO / AMAZON STYLE RIGHT-TO-LEFT CLOTHING MARQUEE STRIP
+       ========================================================================== -->
+  <section class="clothes-marquee-section" style="background:#fff; padding:1.8rem 0; overflow:hidden; border-top:1px solid #f1f5f9; border-bottom:1px solid #f1f5f9;">
+    <div class="container" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="background:#fef2f2; color:#b91c1c; font-weight:800; font-size:0.75rem; padding:4px 12px; border-radius:999px; text-transform:uppercase; letter-spacing:0.5px;">🔥 Trending Now</span>
+        <h3 style="font-size:1.3rem; color:#1e1b4b; font-weight:800; margin:0;">Handcrafted Festive Ensembles &bull; Right from the Looms</h3>
+      </div>
+      <a href="/products" style="color:#800020; font-weight:700; font-size:0.88rem; text-decoration:none;">View All Outfits <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <!-- Infinite Scrolling Rail (Right to Left) -->
+    <div class="marquee-wrapper" style="overflow:hidden; white-space:nowrap; position:relative; width:100%;">
+      <div class="marquee-track" style="display:inline-flex; gap:18px; animation: marqueeScroll 28s linear infinite;">
+        <!-- Marquee Items -->
+        <a href="/products?category=Women" class="marquee-item" style="text-decoration:none; display:inline-block; width:190px; background:#fdfefe; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.03); transition:transform 0.25s;">
+          <img src="/images/brand/1792479024413.png" style="width:100%; height:180px; object-fit:cover;" alt="Silk Sarees">
+          <div style="padding:10px; text-align:center;">
+            <div style="font-size:0.85rem; font-weight:700; color:#1e1b4b;">Varanasi Silk Saree</div>
+            <span style="font-size:0.78rem; color:#059669; font-weight:700;">From ₹2,499</span>
+          </div>
+        </a>
+
+        <a href="/products?subcategory=Family%20Sets" class="marquee-item" style="text-decoration:none; display:inline-block; width:190px; background:#fdfefe; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.03); transition:transform 0.25s;">
+          <img src="/images/brand/family_photoshoot_4k.png" style="width:100%; height:180px; object-fit:cover;" alt="Twinning Outfits">
+          <div style="padding:10px; text-align:center;">
+            <div style="font-size:0.85rem; font-weight:700; color:#1e1b4b;">Family Twinning Set</div>
+            <span style="font-size:0.78rem; color:#059669; font-weight:700;">Complete Trio ₹3,999</span>
+          </div>
+        </a>
+
+        <a href="/products?category=Men" class="marquee-item" style="text-decoration:none; display:inline-block; width:190px; background:#fdfefe; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.03); transition:transform 0.25s;">
+          <img src="/images/brand/1785126141977.png" style="width:100%; height:180px; object-fit:cover;" alt="Men Kurtas">
+          <div style="padding:10px; text-align:center;">
+            <div style="font-size:0.85rem; font-weight:700; color:#1e1b4b;">Royal Silk Kurta</div>
+            <span style="font-size:0.78rem; color:#059669; font-weight:700;">From ₹1,499</span>
+          </div>
+        </a>
+
+        <a href="/products?category=Kids" class="marquee-item" style="text-decoration:none; display:inline-block; width:190px; background:#fdfefe; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.03); transition:transform 0.25s;">
+          <img src="/images/brand/1787111641442.png" style="width:100%; height:180px; object-fit:cover;" alt="Kids Cotton">
+          <div style="padding:10px; text-align:center;">
+            <div style="font-size:0.85rem; font-weight:700; color:#1e1b4b;">Toddler Organic Set</div>
+            <span style="font-size:0.78rem; color:#059669; font-weight:700;">From ₹499</span>
+          </div>
+        </a>
+
+        <a href="/products?category=Women" class="marquee-item" style="text-decoration:none; display:inline-block; width:190px; background:#fdfefe; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.03); transition:transform 0.25s;">
+          <img src="/images/brand/1785123711757.png" style="width:100%; height:180px; object-fit:cover;" alt="Festive Anarkali">
+          <div style="padding:10px; text-align:center;">
+            <div style="font-size:0.85rem; font-weight:700; color:#1e1b4b;">Festive Anarkali Suit</div>
+            <span style="font-size:0.78rem; color:#059669; font-weight:700;">From ₹1,999</span>
+          </div>
+        </a>
+
+        <a href="/products?category=Kids" class="marquee-item" style="text-decoration:none; display:inline-block; width:190px; background:#fdfefe; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.03); transition:transform 0.25s;">
+          <img src="/images/brand/1785175552794.png" style="width:100%; height:180px; object-fit:cover;" alt="Kids Kurta Set">
+          <div style="padding:10px; text-align:center;">
+            <div style="font-size:0.85rem; font-weight:700; color:#1e1b4b;">Brocade Kids Sherwani</div>
+            <span style="font-size:0.78rem; color:#059669; font-weight:700;">From ₹899</span>
+          </div>
+        </a>
+
+        <!-- Duplicate rail for continuous loop -->
+        <a href="/products?category=Women" class="marquee-item" style="text-decoration:none; display:inline-block; width:190px; background:#fdfefe; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.03); transition:transform 0.25s;">
+          <img src="/images/brand/pomelli_photoshoot_image_4k_0822 (1).png" style="width:100%; height:180px; object-fit:cover;" alt="Silk Sarees">
+          <div style="padding:10px; text-align:center;">
+            <div style="font-size:0.85rem; font-weight:700; color:#1e1b4b;">Royal Chanderi Silk</div>
+            <span style="font-size:0.78rem; color:#059669; font-weight:700;">From ₹2,899</span>
+          </div>
+        </a>
+      </div>
     </div>
   </section>
 
@@ -166,6 +512,56 @@
     </div>
   </section>
 
+  
+  <!-- Littletolargee Clothes Discussion / Brand Story Section -->
+  <section class="brand-story-section">
+    <div class="container">
+      <div class="brand-story-grid">
+        <div class="brand-story-visual">
+          <img src="/images/brand/pomelli_photoshoot_image_4k_0822 (1).png" alt="Little to Largee Indian Family Heritage" class="brand-story-main-img" onerror="this.src='/images/hero_ethnic.png'">
+          <div class="brand-story-badge-float">
+            <h4 style="font-size:1.05rem; font-weight:800; margin:0 0 4px 0; color:#fff;">Authentic Indian Roots</h4>
+            <p style="font-size:0.82rem; margin:0; color:rgba(255,255,255,0.85);">Crafted with love in Gandhidham, Gujarat &bull; Shipped to families worldwide.</p>
+          </div>
+        </div>
+        <div>
+          <span class="brand-story-kicker">Woven With Family Values</span>
+          <h2 class="brand-story-heading">The Littletolargee Story &amp; Clothes Discussion</h2>
+          <p class="brand-story-p">
+            At <strong>Little to Largee</strong>, we believe family fashion shouldn't be fragmented into separate distant aisles. An Indian family celebrates together — and their clothing should reflect that shared bond.
+          </p>
+          <p class="brand-story-p">
+            Born out of Gujarat's rich textile tradition, we design outfits that bridge generations: from playful, soft organic cotton sets for toddlers (<em>Little</em>) to elegant, regal silks for grandparents (<em>Large</em>).
+          </p>
+
+          <div class="brand-discussion-topics">
+            <div class="discussion-card">
+              <div class="discussion-card-icon"><i class="fas fa-comments"></i></div>
+              <div>
+                <h4>Why Families Love Twinning in Handloom Cottons</h4>
+                <p>"Matching outfits make family festivals feel 10x more magical and look stunning in generational portraits."</p>
+              </div>
+            </div>
+            <div class="discussion-card">
+              <div class="discussion-card-icon"><i class="fas fa-feather-alt"></i></div>
+              <div>
+                <h4>Skin-Safe Dye Discussion &amp; Zero Synthetic Policy</h4>
+                <p>"Our garments undergo hypoallergenic testing so delicate baby skin stays rash-free in any weather."</p>
+              </div>
+            </div>
+            <div class="discussion-card">
+              <div class="discussion-card-icon"><i class="fas fa-hands-helping"></i></div>
+              <div>
+                <h4>Supporting Local Weavers across India</h4>
+                <p>"Every order directly empowers skilled artisan clusters across Kutch, Varanasi, and Chanderi."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- New Arrivals & Recommended Section -->
   <section class="container" style="margin-bottom: 5rem;">
     <div class="section-title">
@@ -180,6 +576,34 @@
     </div>
   </section>
 
+  
+  <!-- Customer Trust Video Section (Unboxings, Reviews & Testimonials) -->
+  <section class="container trust-video-section">
+    <div class="section-title">
+      <h2>Stories of Trust &amp; Real Unboxings</h2>
+      <p>Watch verified customers celebrate, unbox, and twin in Little to Largee across India &amp; globally</p>
+    </div>
+
+    <div class="trust-video-grid" id="customerTrustVideoGrid">
+      <!-- Injected dynamically with placeholder component capability -->
+    </div>
+  </section>
+
+  <!-- Interactive Trust Video Modal Player -->
+  <div id="trustVideoModal" class="trust-video-modal-overlay" onclick="closeTrustVideoModal()">
+    <div class="trust-video-modal-card" onclick="event.stopPropagation()">
+      <button class="trust-video-modal-close" onclick="closeTrustVideoModal()"><i class="fas fa-times"></i></button>
+      <video id="trustVideoPlayer" controls playsinline style="width:100%; max-height:78vh; background:#000; display:block;" preload="metadata"></video>
+      <div style="padding:15px 20px; background:#18181b; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <h4 id="trustModalTitle" style="margin:0 0 4px 0; font-size:1rem; color:#fff;">Customer Story</h4>
+          <p id="trustModalSubtitle" style="margin:0; font-size:0.82rem; color:#a1a1aa;">Verified Buyer Review</p>
+        </div>
+        <span style="background:var(--marigold); color:#1e1b4b; font-weight:800; font-size:0.75rem; padding:4px 10px; border-radius:50px;">Verified Review</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Promotional Banner -->
   <section class="container" style="margin-bottom: 5rem;">
     <div id="promoBannerStrip" style="display:grid; gap:1rem;"></div>
@@ -190,6 +614,7 @@
 
   <!-- Scripts -->
   <script src="js/ux-premium.js"></script>
+  <script src="js/royal-entrance-spinner.js"></script>
   <script src="js/app.js"></script>
   <script src="js/demo-data.js"></script>
   <script src="js/chatbot.js"></script>
@@ -275,49 +700,16 @@
     }
 
     async function loadHeroAndPromotions() {
+      // Initialize our curated family video & photoshoot slider
+      initSliderLogic();
+
       try {
-        const res = await fetch('/api/hero-banners');
-        const data = await res.json();
-        
-        let slidesHtml = '';
-        let dotsHtml = '';
-
-        if (data.success && data.banners && data.banners.length > 0) {
-          data.banners.forEach((b, idx) => {
-            slidesHtml += `
-              <div class="slide ${idx === 0 ? 'active' : ''}" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);">
-                <div class="slide-overlay"></div>
-                <div class="container hero-slide-grid">
-                  <div class="slide-content">
-                    <h1>${b.title}</h1>
-                    <p>${b.subtitle || ''}</p>
-                    <a href="${b.link_url || '/products'}" class="btn">${b.cta_text || 'Shop Now'}</a>
-                  </div>
-                  <div class="slide-image-frame">
-                    ${(b.media_type === 'video' || (b.media_url && (b.media_url.endsWith('.mp4') || b.media_url.endsWith('.webm') || b.media_url.endsWith('.mov') || b.media_url.includes('/video/upload/')))) ? 
-                      `<video src="${formatLocalPath(b.media_url)}" autoplay muted loop playsinline class="hero-slide-img" style="width:100%; height:100%; object-fit:cover; border-radius:12px"></video>` :
-                      `<img src="${formatLocalPath(b.media_url)}" alt="${b.title}" class="hero-slide-img" onerror="this.onerror=null; this.src='images/hero_vacation.png';">`
-                    }
-                  </div>
-                </div>
-              </div>
-            `;
-            dotsHtml += `<div class="slider-dot ${idx === 0 ? 'active' : ''}" onclick="setSlide(${idx})"></div>`;
-          });
-          document.getElementById('heroSlider').innerHTML = slidesHtml + `<div class="slider-nav">${dotsHtml}</div>`;
-          initSliderLogic();
+        const promoRes = await fetch('/api/promotions');
+        const promoData = await promoRes.json();
+        if (promoData.success && promoData.promotions) {
+          renderPromoBannerStrip(promoData.promotions);
         }
-
-        try {
-          const promoRes = await fetch('/api/promotions');
-          const promoData = await promoRes.json();
-          if (promoData.success && promoData.promotions) {
-            renderPromoBannerStrip(promoData.promotions);
-          }
-        } catch (e) {}
-      } catch (err) {
-        console.error('Failed to load hero banners:', err);
-      }
+      } catch (e) {}
     }
 
     // Fetch and render featured products
@@ -332,7 +724,7 @@
           // Show first 4 products as featured
           const featured = data.products.slice(0, 4);
           featured.forEach(p => {
-            const images = JSON.parse(p.image_urls || '[]');
+            const images = (typeof safeParseImages === "function") ? safeParseImages(p.image_urls) : JSON.parse(p.image_urls || "[]");
             const mainImg = images[0] || 'images/products/placeholder.jpg';
             const oldPriceHtml = p.discount_price ? `<span class="old-price">₹${p.price}</span>` : '';
             const discountPercentHtml = p.discount_price ? `<span class="discount-pct">${Math.round(((p.price - p.discount_price) / p.price) * 100)}% OFF</span>` : '';
@@ -414,7 +806,7 @@
             newGrid.innerHTML = '';
             const sortedNew = [...data.products].sort((a, b) => b.id - a.id).slice(0, 4);
             sortedNew.forEach(p => {
-              const images = JSON.parse(p.image_urls || '[]');
+              const images = (typeof safeParseImages === "function") ? safeParseImages(p.image_urls) : JSON.parse(p.image_urls || "[]");
               const mainImg = images[0] || 'images/products/placeholder.jpg';
               const oldPriceHtml = p.discount_price ? `<span class="old-price">₹${p.price}</span>` : '';
               const discountPercentHtml = p.discount_price ? `<span class="discount-pct">${Math.round(((p.price - p.discount_price) / p.price) * 100)}% OFF</span>` : '';
@@ -495,16 +887,299 @@
       addToCart(product, defaultSize, 1);
     }
 
-    function handleFeaturedProductClick(event, productId, wrapper) {
-      try {
-        toggleCardVideo(event, productId, wrapper);
-      } catch (e) {
+     catch (e) {
         window.location.href = `/product-detail?id=${productId}`;
       }
     }
 
+    
+    // --- FAMILY WEAR STORY ANIMATION CONTROLLER (3-slide sequence, ~5s skippable) ---
+    let storyCurrentSlide = 0;
+    const storyTotalSlides = 3;
+    const storySlideDuration = 1650; // ~1.65s per slide -> ~5s total
+    let storySlideTimer = null;
+    let storyProgressTimer = null;
+    let storyStartTime = 0;
+
+    function initFamilyStory() {
+      // Check if user already saw story in this session
+      const alreadySeen = sessionStorage.getItem('l2l_family_story_viewed');
+      if (!alreadySeen) {
+        // Auto-play on first visit after a brief pause
+        setTimeout(() => startFamilyStory(false), 900);
+      }
+    }
+
+    function startFamilyStory(isManual = false) {
+      const overlay = document.getElementById('familyStoryOverlay');
+      if (!overlay) return;
+      overlay.style.display = 'flex';
+      void overlay.offsetWidth;
+      overlay.classList.add('active');
+
+      storyCurrentSlide = 0;
+      resetStoryBars();
+      showStorySlide(0);
+    }
+
+    function resetStoryBars() {
+      for (let i = 0; i < storyTotalSlides; i++) {
+        const bar = document.getElementById('storyBar' + i);
+        if (bar) bar.style.width = '0%';
+      }
+    }
+
+    function showStorySlide(index) {
+      if (index >= storyTotalSlides) {
+        skipFamilyStory();
+        return;
+      }
+
+      storyCurrentSlide = index;
+
+      // Update slide active state
+      for (let i = 0; i < storyTotalSlides; i++) {
+        const slide = document.getElementById('storySlide' + i);
+        const bar = document.getElementById('storyBar' + i);
+        if (slide) {
+          if (i === index) slide.classList.add('active');
+          else slide.classList.remove('active');
+        }
+        if (bar) {
+          if (i < index) bar.style.width = '100%';
+          else if (i > index) bar.style.width = '0%';
+        }
+      }
+
+      // Animate current progress bar
+      clearTimeout(storySlideTimer);
+      clearInterval(storyProgressTimer);
+
+      storyStartTime = Date.now();
+      const currentBar = document.getElementById('storyBar' + index);
+
+      storyProgressTimer = setInterval(() => {
+        const elapsed = Date.now() - storyStartTime;
+        const pct = Math.min(100, (elapsed / storySlideDuration) * 100);
+        if (currentBar) currentBar.style.width = pct + '%';
+        if (pct >= 100) clearInterval(storyProgressTimer);
+      }, 30);
+
+      storySlideTimer = setTimeout(() => {
+        nextStorySlide();
+      }, storySlideDuration);
+    }
+
+    function nextStorySlide() {
+      if (storyCurrentSlide < storyTotalSlides - 1) {
+        showStorySlide(storyCurrentSlide + 1);
+      } else {
+        skipFamilyStory();
+      }
+    }
+
+    function prevStorySlide() {
+      if (storyCurrentSlide > 0) {
+        showStorySlide(storyCurrentSlide - 1);
+      } else {
+        showStorySlide(0);
+      }
+    }
+
+    function skipFamilyStory() {
+      clearTimeout(storySlideTimer);
+      clearInterval(storyProgressTimer);
+      sessionStorage.setItem('l2l_family_story_viewed', 'true');
+      const overlay = document.getElementById('familyStoryOverlay');
+      if (overlay) {
+        overlay.classList.remove('active');
+        setTimeout(() => { overlay.style.display = 'none'; }, 400);
+      }
+    }
+
+    function handleStoryOverlayClick(e) {
+      if (e.target.id === 'familyStoryOverlay') {
+        skipFamilyStory();
+      }
+    }
+
+    // --- CUSTOMER TRUST VIDEO SECTION CONTROLLER (URL-flexible Video Components) ---
+    const customerTrustVideos = [
+      {
+        id: 'trust-vid-1',
+        title: 'Festive Silk Anarkali Real Unboxing & Fit',
+        customerName: 'Pooja & Rohan',
+        location: 'Bengaluru, Karnataka',
+        avatar: '/images/products/placeholder.jpg',
+        thumb: '/images/brand/1785123711757.png',
+        videoUrl: '/videos/gemini_generated_video_39a5ecd2.mp4',
+        rating: 5,
+        badge: 'Verified Unboxing',
+        quote: 'The golden thread work and fall of the anarkali exceeded all expectations! Truly authentic silk.'
+      },
+      {
+        id: 'trust-vid-2',
+        title: 'Diwali Parivaar Twinning Set Try-On',
+        customerName: 'The Varma Family',
+        location: 'New Delhi',
+        avatar: '/images/products/placeholder.jpg',
+        thumb: '/images/brand/1785126141977.png',
+        videoUrl: '/videos/gemini_generated_video_55fc5f1d.mp4',
+        rating: 5,
+        badge: 'Family Combo',
+        quote: 'Finding matching outfits for dad, mom, and both our sons used to take weeks. Little to Largee solved it in 1 order!'
+      },
+      {
+        id: 'trust-vid-3',
+        title: 'Toddler Combed Cotton Comfort & Wash Test',
+        customerName: 'Meera & Baby Ayaan',
+        location: 'Pune, Maharashtra',
+        avatar: '/images/products/placeholder.jpg',
+        thumb: '/images/brand/1787111641442.png',
+        videoUrl: '/videos/gemini_generated_video_3f612169.mp4',
+        rating: 5,
+        badge: '100% Cotton',
+        quote: 'Super gentle on baby skin. After 5 washes, no shrinkage or color fading. A+ quality.'
+      },
+      {
+        id: 'trust-vid-4',
+        title: 'Global Delivery to London in 5 Business Days',
+        customerName: 'Kavita & Dev',
+        location: 'London, United Kingdom',
+        avatar: '/images/products/placeholder.jpg',
+        thumb: '/images/brand/1792479024413.png',
+        videoUrl: '/videos/gemini_generated_video_fcbfec7c.mp4',
+        rating: 5,
+        badge: 'Global Shipping',
+        quote: 'Living abroad, authentic Indian ethnic wear is hard to find. LTL packaging and finish made us feel right at home.'
+      }
+    ];
+
+    function renderCustomerTrustVideos() {
+      const grid = document.getElementById('customerTrustVideoGrid');
+      if (!grid) return;
+
+      grid.innerHTML = customerTrustVideos.map((item, idx) => `
+        <div class="trust-video-card">
+          <div class="trust-video-thumb-wrapper" onclick="openTrustVideoModal('${item.videoUrl}', '${item.title.replace(/'/g, "\\'")}', '${item.customerName} - ${item.location}')">
+            <img src="${item.thumb}" alt="${item.title}" class="trust-video-thumb-img" onerror="this.src='/images/hero_ethnic.png'">
+            <div class="trust-video-badge"><i class="fas fa-check-circle" style="color:var(--marigold)"></i> ${item.badge}</div>
+            <div class="trust-play-overlay-btn"><i class="fas fa-play" style="margin-left:2px"></i></div>
+          </div>
+          <div class="trust-video-info">
+            <div class="trust-reviewer">
+              <img src="${item.avatar}" alt="${item.customerName}" class="trust-reviewer-avatar" onerror="this.src='/favicon.png'">
+              <div class="trust-reviewer-meta">
+                <h5>${item.customerName}</h5>
+                <span>${item.location} &bull; ⭐ 5.0</span>
+              </div>
+            </div>
+            <h4 class="trust-video-title">${item.title}</h4>
+            <p class="trust-video-quote">"${item.quote}"</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openTrustVideoModal(videoUrl, title, subtitle) {
+      const modal = document.getElementById('trustVideoModal');
+      const player = document.getElementById('trustVideoPlayer');
+      const titleEl = document.getElementById('trustModalTitle');
+      const subEl = document.getElementById('trustModalSubtitle');
+
+      if (!modal || !player) return;
+
+      if (titleEl) titleEl.textContent = title || 'Customer Video Story';
+      if (subEl) subEl.textContent = subtitle || 'Verified Little to Largee Customer';
+
+      player.src = videoUrl;
+      modal.classList.add('active');
+      player.play().catch(e => console.log('Autoplay caught:', e));
+    }
+
+    function closeTrustVideoModal() {
+      const modal = document.getElementById('trustVideoModal');
+      const player = document.getElementById('trustVideoPlayer');
+      if (player) {
+        player.pause();
+        player.removeAttribute('src');
+        player.load();
+      }
+      if (modal) modal.classList.remove('active');
+    }
+
+    initFamilyStory();
+    renderCustomerTrustVideos();
+    
+    // Dynamic Stories Loader from /api/stories
+    async function loadDynamicHomeStories() {
+      try {
+        const res = await fetch('/api/stories');
+        const data = await res.json();
+        if (!data.success || !data.stories || data.stories.length === 0) return;
+
+        const strip = document.querySelector('.family-reels-strip');
+        if (!strip) return;
+
+        // Render each dynamic story bubble
+        const storyBubbles = data.stories.map(s => {
+          const isVideo = s.media_type === 'video';
+          return `
+            <div class="family-reel-item" onclick="${isVideo ? `openTrustVideoModal('${s.media_url}', '${s.title.replace(/'/g, "\\'")}', 'Daily Parivaar Story')` : `window.location.href='${s.target_url || '/products'}'`}">
+              <div class="family-reel-circle" style="border: 2px solid #ec4899; box-shadow: 0 0 0 2px #fbcfe8;">
+                ${isVideo 
+                  ? `<video src="${s.media_url}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" muted playsinline></video>`
+                  : `<img src="${s.media_url}" alt="${s.title}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.src='/images/favicon.png'">`
+                }
+              </div>
+              <span class="family-reel-label" style="font-weight:700; color:#9d174d;">${s.title.slice(0, 14)}</span>
+            </div>
+          `;
+        }).join('');
+
+        // Prepend after the first interactive story button
+        const firstBtn = strip.children[0];
+        if (firstBtn) {
+          firstBtn.insertAdjacentHTML('afterend', storyBubbles);
+        }
+      } catch (e) {
+        console.warn('Could not load dynamic stories:', e);
+      }
+    }
+
+    loadDynamicHomeStories();
+
     loadHeroAndPromotions();
     loadFeaturedProducts();
+    
+    function changeHeroSlide(direction) {
+      const slides = document.querySelectorAll('.hero-slider .slide');
+      if (!slides || slides.length === 0) return;
+      let activeIndex = 0;
+      slides.forEach((s, idx) => {
+        if (s.classList.contains('active')) activeIndex = idx;
+      });
+      let nextIndex = (activeIndex + direction + slides.length) % slides.length;
+      setSlide(nextIndex);
+    }
+
+    function scrollCategoryRail(direction) {
+      const rail = document.getElementById('categoryHorizontalRail');
+      if (!rail) return;
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      rail.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+
   </script>
+
+  <!-- ==========================================================================
+       DIRECT 1-CLICK LIVE SQL DATABASE STUDIO FLOATING SHORTCUT
+       ========================================================================== -->
+  <a href="/database" target="_blank" id="liveSqlFloatingPill" title="Open Live SQL Database Server" style="position:fixed; bottom:24px; left:24px; z-index:999999; background:linear-gradient(135deg, #1e1b4b 0%, #7c3aed 100%); color:#ffffff; padding:12px 20px; border-radius:50px; font-weight:800; font-size:0.9rem; text-decoration:none; display:flex; align-items:center; gap:10px; box-shadow:0 8px 24px rgba(124,58,237,0.45); border:2px solid #ffffff; transition:all 0.25s ease;" onmouseover="this.style.transform='scale(1.06)'; this.style.boxShadow='0 12px 30px rgba(124,58,237,0.6)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 24px rgba(124,58,237,0.45)';">
+    <i class="fas fa-database" style="color:#facc15; font-size:1.15rem;"></i>
+    <span>🗄️ SQL Live Server</span>
+    <span style="background:rgba(255,255,255,0.22); font-size:0.72rem; padding:3px 9px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px;">Open Studio</span>
+  </a>
+
 </body>
 </html>

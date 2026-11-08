@@ -143,7 +143,7 @@ function showSection(sectionId) {
     'analyticsSection', 'ordersSection', 'productsSection', 'inquiriesSection',
     'promotionsSection', 'heroBannersSection', 'errorSection', 'lookbookSection', 'settingsSection',
     'intelligenceSection', 'aiProductStudioSection', 'careersSection',
-    'aiAssistantsSection', 'mediaStudioSection', 'policiesSection', 'securitySection'
+    'aiAssistantsSection', 'mediaStudioSection', 'policiesSection', 'securitySection', 'spinnerSection', 'storiesSection', 'mediaLibrarySection', 'dbStudioSection'
   ];
   sections.forEach(id => {
     const el = document.getElementById(id);
@@ -4453,3 +4453,1055 @@ async function deleteHeroBanner(id) {
     showToast('Failed to delete banner', 'error');
   }
 }
+
+
+// ==========================================================================
+// TIERED SPINNER & WIN-CAP ENGINE ADMIN CONTROLLER
+// ==========================================================================
+window.spinnerAdminTiers = [];
+
+async function loadAdminSpinnerSettings() {
+  try {
+    const token = getToken();
+    const res = await fetch('/api/admin/spinner-settings', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (!data.success) {
+      showToast(data.message || 'Failed to load spinner settings', 'error');
+      return;
+    }
+
+    const { settings, stats } = data;
+    window.spinnerAdminTiers = settings || [];
+
+    // Update KPI Badges
+    const monthEl = document.getElementById('spinnerMonthBadge');
+    if (monthEl) monthEl.textContent = stats.current_month || 'Current';
+
+    const jackpotEl = document.getElementById('spinnerJackpotBadge');
+    if (jackpotEl) jackpotEl.textContent = `${stats.jackpot_winners_this_month || 0} / ${stats.jackpot_monthly_cap || 2} Max`;
+
+    const totalSpinsEl = document.getElementById('spinnerTotalSpinsBadge');
+    if (totalSpinsEl) totalSpinsEl.textContent = stats.total_spins_this_month || 0;
+
+    // Render Tiers
+    const tbody = document.getElementById('spinnerTiersTableBody');
+    if (tbody) {
+      tbody.innerHTML = window.spinnerAdminTiers.map((t, idx) => `
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px; font-weight:700; color:${t.color || '#1e1b4b'}">
+            <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${t.color || '#999'}; margin-right:6px;"></span>
+            ${t.tier}
+          </td>
+          <td style="padding:10px; font-weight:700;">${t.discount_percent}%</td>
+          <td style="padding:10px;"><code>${t.coupon_prefix}</code></td>
+          <td style="padding:10px;">
+            <input type="number" step="0.01" min="0" max="1" class="form-control" id="tierProb_${t.id}" value="${t.probability}" style="width:100px; display:inline-block;">
+          </td>
+          <td style="padding:10px;">
+            <input type="number" min="0" class="form-control" id="tierCap_${t.id}" value="${t.monthly_cap || 0}" style="width:90px; display:inline-block;" ${t.discount_percent === 70 ? 'title="Global monthly limit"' : ''}>
+            ${t.discount_percent === 70 ? '<span style="font-size:0.75rem; color:#b91c1c; font-weight:700; display:block;">(Global Cap: 2)</span>' : '<span style="font-size:0.75rem; color:#6b7280; display:block;">(0 = Unlimited)</span>'}
+          </td>
+          <td style="padding:10px;">
+            <label style="display:inline-flex; align-items:center; cursor:pointer;">
+              <input type="checkbox" id="tierActive_${t.id}" ${t.is_active ? 'checked' : ''}>
+              <span style="margin-left:6px; font-size:0.85rem; font-weight:600;">${t.is_active ? 'Active' : 'Disabled'}</span>
+            </label>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Load Audit Logs
+    loadAdminSpinnerLogs();
+  } catch (err) {
+    console.error('loadAdminSpinnerSettings error:', err);
+    showToast('Failed to load spinner settings', 'error');
+  }
+}
+
+async function saveAdminSpinnerSettings() {
+  try {
+    const token = getToken();
+    const updatedTiers = window.spinnerAdminTiers.map(t => {
+      const probInput = document.getElementById(`tierProb_${t.id}`);
+      const capInput = document.getElementById(`tierCap_${t.id}`);
+      const activeInput = document.getElementById(`tierActive_${t.id}`);
+
+      return {
+        id: t.id,
+        probability: probInput ? parseFloat(probInput.value) : t.probability,
+        monthly_cap: capInput ? parseInt(capInput.value) : t.monthly_cap,
+        is_active: activeInput ? activeInput.checked : true
+      };
+    });
+
+    const res = await fetch('/api/admin/spinner-settings', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ tiers: updatedTiers })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('✓ Spinner settings updated successfully!', 'success');
+      loadAdminSpinnerSettings();
+    } else {
+      showToast(data.message || 'Update failed', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to save spinner settings', 'error');
+  }
+}
+
+async function loadAdminSpinnerLogs() {
+  try {
+    const token = getToken();
+    const res = await fetch('/api/admin/spinner-logs', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (!data.success) return;
+
+    const tbody = document.getElementById('spinnerLogsTableBody');
+    if (tbody) {
+      if (!data.logs || data.logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="padding:15px; text-align:center; color:#6b7280;">No spins recorded yet this month.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.logs.map(log => `
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:8px 10px; font-size:0.82rem;">#${log.id}</td>
+          <td style="padding:8px 10px; font-size:0.85rem; font-weight:600;">${log.customer_email || 'Guest User'}</td>
+          <td style="padding:8px 10px; font-weight:700; color:${log.discount_percent === 70 ? '#b91c1c' : '#059669'};">${log.discount_percent}% OFF</td>
+          <td style="padding:8px 10px;"><code>${log.coupon_code}</code></td>
+          <td style="padding:8px 10px; font-size:0.8rem; color:#64748b;">${log.spin_ip}</td>
+          <td style="padding:8px 10px; font-size:0.8rem; color:#64748b;">${new Date(log.created_at).toLocaleString('en-IN')}</td>
+        </tr>
+      `).join('');
+    }
+  } catch (err) {}
+}
+
+// ==========================================================================
+// DAILY BRAND STORIES CMS CONTROLLER
+// ==========================================================================
+function selectStoryPresetMedia(url, type) {
+  const urlInp = document.getElementById('storyMediaUrl');
+  if (urlInp) urlInp.value = url;
+  const typeSel = document.getElementById('storyMediaType');
+  if (typeSel) typeSel.value = type;
+}
+
+function toggleStoryMediaHelper(type) {
+  // Can be extended if upload mode added
+}
+
+async function loadAdminStories() {
+  try {
+    const token = getToken();
+    const res = await fetch('/api/admin/stories', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (!data.success) {
+      showToast('Failed to load stories', 'error');
+      return;
+    }
+
+    const grid = document.getElementById('adminStoriesGrid');
+    if (grid) {
+      if (!data.stories || data.stories.length === 0) {
+        grid.innerHTML = '<p style="color:#64748b; grid-column:span 3;">No daily stories published yet. Use the form above to add one!</p>';
+        return;
+      }
+      grid.innerHTML = data.stories.map(s => `
+        <div style="border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,0.04); display:flex; flex-direction:column;">
+          <div style="height:150px; background:#1e1b4b; position:relative; overflow:hidden;">
+            ${s.media_type === 'video' 
+              ? `<video src="${s.media_url}" style="width:100%; height:100%; object-fit:cover;" muted playsinline onmouseover="this.play()" onmouseout="this.pause()"></video><span style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.7); color:#fff; font-size:0.7rem; padding:2px 6px; border-radius:4px;"><i class="fas fa-video"></i> Video</span>`
+              : `<img src="${s.media_url}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='/images/favicon.png'"><span style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.7); color:#fff; font-size:0.7rem; padding:2px 6px; border-radius:4px;"><i class="fas fa-image"></i> Photo</span>`
+            }
+          </div>
+          <div style="padding:12px; flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <span style="font-size:0.75rem; background:#e0e7ff; color:#3730a3; padding:2px 6px; border-radius:4px; font-weight:700;">Priority: ${s.priority}</span>
+                <span style="font-size:0.75rem; color:#64748b;">${new Date(s.created_at).toLocaleDateString('en-IN')}</span>
+              </div>
+              <h4 style="font-size:0.95rem; font-weight:700; color:var(--primary); margin:6px 0;">${s.title}</h4>
+              <p style="font-size:0.78rem; color:#64748b; word-break:break-all;">${s.target_url || '/'}</p>
+            </div>
+            <div style="margin-top:12px; text-align:right;">
+              <button class="btn" onclick="deleteAdminStory(${s.id})" style="background:#fee2e2; color:#b91c1c; border:none; padding:4px 10px; border-radius:4px; font-size:0.78rem; font-weight:700; cursor:pointer;"><i class="fas fa-trash"></i> Delete Story</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  } catch (err) {
+    showToast('Failed to load stories', 'error');
+  }
+}
+
+async function handleCreateStorySubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('publishStoryBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+  }
+
+  const payload = {
+    title: document.getElementById('storyTitle').value.trim(),
+    media_url: document.getElementById('storyMediaUrl').value.trim(),
+    media_type: document.getElementById('storyMediaType').value,
+    target_url: document.getElementById('storyTargetUrl').value.trim() || '/products',
+    priority: parseInt(document.getElementById('storyPriority').value) || 1
+  };
+
+  try {
+    const token = getToken();
+    const res = await fetch('/api/admin/stories', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('✓ Daily Story published successfully!', 'success');
+      document.getElementById('createStoryForm').reset();
+      loadAdminStories();
+    } else {
+      showToast(data.message || 'Failed to publish story', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to connect to story API', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Publish Daily Story';
+    }
+  }
+}
+
+async function deleteAdminStory(id) {
+  if (!confirm('Are you sure you want to remove this story?')) return;
+  try {
+    const token = getToken();
+    const res = await fetch(`/api/admin/stories/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('✓ Story removed successfully', 'success');
+      loadAdminStories();
+    } else {
+      showToast(data.message || 'Delete failed', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to delete story', 'error');
+  }
+}
+
+
+// ==========================================================================
+// ADMIN STICKY SCROLLER & MULTI-PAGE NAVIGATION CONTROLLER
+// ==========================================================================
+const ALL_ADMIN_SECTIONS = [
+  { id: 'analyticsSection', name: '📊 Analytics' },
+  { id: 'productsSection', name: '👗 Products Inventory' },
+  { id: 'aiProductStudioSection', name: '✨ AI Product Studio' },
+  { id: 'ordersSection', name: '🚚 Order Fulfillment' },
+  { id: 'promotionsSection', name: '🎁 Promotions & Deals' },
+  { id: 'spinnerSection', name: '🎡 Tiered Spinner & Win-Cap' },
+  { id: 'storiesSection', name: '🎬 Daily Story Manager' },
+  { id: 'mediaLibrarySection', name: '📁 Drive Media Explorer' },
+  { id: 'heroBannersSection', name: '🖼️ Hero Banners' },
+  { id: 'lookbookSection', name: '📖 Lookbook Manager' },
+  { id: 'inquiriesSection', name: '✉️ Customer Inquiries' },
+  { id: 'errorSection', name: '🐞 Error Diagnostics' },
+  { id: 'policiesSection', name: '📜 Store Policies' },
+  { id: 'securitySection', name: '🛡️ Security & 2FA' },
+  { id: 'settingsSection', name: '⚙️ Shipping Settings' }
+];
+
+window.currentAdminSectionIndex = 0;
+
+function adminScrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function adminScrollToBottom() {
+  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+
+function adminNavigateSection(direction) {
+  if (direction === 'next') {
+    window.currentAdminSectionIndex = (window.currentAdminSectionIndex + 1) % ALL_ADMIN_SECTIONS.length;
+  } else {
+    window.currentAdminSectionIndex = (window.currentAdminSectionIndex - 1 + ALL_ADMIN_SECTIONS.length) % ALL_ADMIN_SECTIONS.length;
+  }
+  const target = ALL_ADMIN_SECTIONS[window.currentAdminSectionIndex];
+  if (target) {
+    showSection(target.id);
+    adminScrollToTop();
+    showToast('Navigated to ' + target.name);
+  }
+}
+
+function toggleAdminQuickMenu() {
+  const menu = document.getElementById('adminQuickMenuDropdown');
+  if (!menu) return;
+  const isHidden = menu.style.display === 'none' || menu.style.display === '';
+  menu.style.display = isHidden ? 'block' : 'none';
+
+  if (isHidden) {
+    const list = document.getElementById('adminQuickMenuList');
+    if (list) {
+      list.innerHTML = ALL_ADMIN_SECTIONS.map((s, idx) => `
+        <button type="button" onclick="showSection('${s.id}'); toggleAdminQuickMenu(); adminScrollToTop();" style="text-align:left; background:none; border:none; padding:8px 10px; border-radius:6px; font-size:0.84rem; cursor:pointer; color:#1e1b4b; transition:background 0.2s;" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'">
+          ${s.name}
+        </button>
+      `).join('');
+    }
+  }
+}
+
+// ==========================================================================
+// MEDIA LIBRARY & DRIVE FILE SYSTEM CONTROLLER
+// ==========================================================================
+window.loadedMediaLibraryFiles = [];
+window.selectedMediaLibraryIds = new Set();
+
+async function loadAdminMediaLibrary(driveKey = null) {
+  const drive = driveKey || (document.getElementById('mediaDriveSelector') ? document.getElementById('mediaDriveSelector').value : 'drive_download');
+  const grid = document.getElementById('mediaLibraryGrid');
+  if (grid) grid.innerHTML = '<p style="color:#64748b; padding:2rem; grid-column:1/-1; text-align:center;"><i class="fas fa-spinner fa-spin"></i> Scanning files from selected drive...</p>';
+
+  try {
+    const token = getToken();
+    const res = await fetch(`/api/admin/media-library?drive=${encodeURIComponent(drive)}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (!data.success) {
+      showToast(data.message || 'Error loading media drive', 'error');
+      return;
+    }
+
+    window.loadedMediaLibraryFiles = data.files || [];
+    window.selectedMediaLibraryIds.clear();
+    updateSelectedMediaCountBadge();
+
+    if (window.loadedMediaLibraryFiles.length === 0) {
+      grid.innerHTML = '<p style="color:#64748b; padding:2rem; grid-column:1/-1; text-align:center;">No images or videos found in this drive folder.</p>';
+      return;
+    }
+
+    grid.innerHTML = window.loadedMediaLibraryFiles.map(file => {
+      const isVideo = file.type === 'video';
+      return `
+        <div class="media-file-card" id="mediaCard_${file.id}" style="border:2px solid #e2e8f0; border-radius:10px; overflow:hidden; background:#fff; position:relative; display:flex; flex-direction:column; transition:border-color 0.2s;">
+          <!-- Top Checkbox Overlay -->
+          <div style="position:absolute; top:8px; left:8px; z-index:10; background:rgba(255,255,255,0.9); border-radius:4px; padding:3px 6px;">
+            <input type="checkbox" id="mediaChk_${file.id}" onchange="toggleMediaFileSelection(${file.id}, this.checked)" style="cursor:pointer; width:16px; height:16px;">
+          </div>
+          
+          <span style="position:absolute; top:8px; right:8px; z-index:10; background:rgba(0,0,0,0.7); color:#fff; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:4px;">
+            ${isVideo ? '🎬 Video' : '📷 Image'}
+          </span>
+
+          <!-- Preview Wrapper -->
+          <div style="height:140px; background:#0f172a; overflow:hidden; position:relative; cursor:pointer;" onclick="document.getElementById('mediaChk_${file.id}').click()">
+            ${isVideo 
+              ? `<video src="${file.url}" style="width:100%; height:100%; object-fit:cover;" muted playsinline onmouseover="this.play()" onmouseout="this.pause()"></video>`
+              : `<img src="${file.url}" alt="${file.name}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='/images/favicon.png'">`
+            }
+          </div>
+
+          <!-- Meta -->
+          <div style="padding:10px; flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+            <div style="font-size:0.8rem; font-weight:700; color:#1e1b4b; word-break:break-all; line-height:1.3;" title="${file.name}">
+              ${file.name.length > 25 ? file.name.slice(0, 22) + '...' : file.name}
+            </div>
+            <div style="font-size:0.72rem; color:#64748b; margin-top:6px; display:flex; justify-content:space-between;">
+              <span>${file.size_kb} KB</span>
+              <a href="${file.url}" target="_blank" style="color:var(--primary); font-weight:600; text-decoration:none;" onclick="event.stopPropagation()">View Full</a>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    showToast('Failed to load media files', 'error');
+  }
+}
+
+function toggleMediaFileSelection(fileId, isChecked) {
+  const card = document.getElementById('mediaCard_' + fileId);
+  if (isChecked) {
+    window.selectedMediaLibraryIds.add(fileId);
+    if (card) card.style.borderColor = '#10b981';
+  } else {
+    window.selectedMediaLibraryIds.delete(fileId);
+    if (card) card.style.borderColor = '#e2e8f0';
+  }
+  updateSelectedMediaCountBadge();
+}
+
+function toggleSelectAllMedia(selectAll) {
+  window.loadedMediaLibraryFiles.forEach(file => {
+    const chk = document.getElementById('mediaChk_' + file.id);
+    if (chk) chk.checked = selectAll;
+    toggleMediaFileSelection(file.id, selectAll);
+  });
+}
+
+function updateSelectedMediaCountBadge() {
+  const badge = document.getElementById('selectedMediaCountBadge');
+  if (badge) {
+    badge.textContent = `${window.selectedMediaLibraryIds.size} items selected`;
+  }
+}
+
+async function batchPublishSelectedToStories() {
+  if (window.selectedMediaLibraryIds.size === 0) {
+    showToast('Please select at least 1 image or video from the grid above', 'warning');
+    return;
+  }
+
+  const selectedItems = window.loadedMediaLibraryFiles.filter(f => window.selectedMediaLibraryIds.has(f.id)).map((f, i) => ({
+    title: f.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
+    type: f.type,
+    url: f.url,
+    target_url: '/products',
+    priority: i + 1
+  }));
+
+  const btn = document.getElementById('batchPublishStoriesBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+  }
+
+  try {
+    const token = getToken();
+    const res = await fetch('/api/admin/media-library/batch-story', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ items: selectedItems })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`✓ Published ${selectedItems.length} stories! They are now live on Home Page.`, 'success');
+      window.selectedMediaLibraryIds.clear();
+      updateSelectedMediaCountBadge();
+      loadAdminMediaLibrary();
+    } else {
+      showToast(data.message || 'Batch publish failed', 'error');
+    }
+  } catch (err) {
+    showToast('Error publishing stories', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-magic"></i> Publish Selected to Daily Stories';
+    }
+  }
+}
+
+
+/* ==========================================================================
+   LIVE DATABASE STUDIO & MONITOR CLIENT CONTROLLER
+   ========================================================================== */
+
+let activeDbTable = 'products';
+let activeDbSchema = [];
+let activeDbPrimaryKey = 'id';
+let activeDbCurrentPage = 1;
+let activeDbCurrentSearch = '';
+let activeDbLoadedRows = [];
+let activeRecordMode = 'add'; // 'add' or 'edit'
+let activeEditRecordId = null;
+
+// 1. Load all tables
+async function loadDbStudioTables() {
+  const pillsContainer = document.getElementById('dbTablePillsContainer');
+  if (!pillsContainer) return;
+
+  pillsContainer.innerHTML = '<div style="color:#64748b; font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Reading database schema...</div>';
+
+  try {
+    const token = getToken();
+    const res = await fetch('/api/admin/db/tables', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+
+    if (!data.success || !data.tables) {
+      pillsContainer.innerHTML = '<div style="color:var(--danger); font-size:0.85rem;">Failed to fetch database tables.</div>';
+      return;
+    }
+
+    const countEl = document.getElementById('dbTotalTablesCount');
+    if (countEl) countEl.textContent = data.tables.length;
+
+    pillsContainer.innerHTML = '';
+    data.tables.forEach(t => {
+      const isCurrent = t.name === activeDbTable;
+      const pill = document.createElement('button');
+      pill.type = 'button';
+      pill.className = `db-table-pill ${isCurrent ? 'active' : ''}`;
+      pill.setAttribute('data-table', t.name);
+      pill.style.cssText = `
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: ${isCurrent ? '800' : '600'};
+        border: 1px solid ${isCurrent ? '#8b5cf6' : '#cbd5e1'};
+        background: ${isCurrent ? '#8b5cf6' : '#ffffff'};
+        color: ${isCurrent ? '#ffffff' : '#334155'};
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+      `;
+      pill.innerHTML = `
+        <span>${t.name}</span>
+        <span style="font-size:0.7rem; background:${isCurrent ? 'rgba(255,255,255,0.25)' : '#e2e8f0'}; color:${isCurrent ? '#fff' : '#475569'}; padding:1px 6px; border-radius:10px;">${t.count}</span>
+      `;
+      pill.onclick = () => selectDbTable(t.name, 1, '');
+      pillsContainer.appendChild(pill);
+    });
+
+    // Load active table data
+    selectDbTable(activeDbTable, 1, '');
+  } catch (err) {
+    pillsContainer.innerHTML = '<div style="color:var(--danger); font-size:0.85rem;">Error connecting to database server.</div>';
+  }
+}
+
+// 2. Select and display table records
+async function selectDbTable(tableName, page = 1, search = '') {
+  activeDbTable = tableName;
+  activeDbCurrentPage = page;
+  activeDbCurrentSearch = search;
+
+  // Update pill styles
+  document.querySelectorAll('.db-table-pill').forEach(pill => {
+    const isCurrent = pill.getAttribute('data-table') === tableName;
+    pill.style.background = isCurrent ? '#8b5cf6' : '#ffffff';
+    pill.style.color = isCurrent ? '#ffffff' : '#334155';
+    pill.style.borderColor = isCurrent ? '#8b5cf6' : '#cbd5e1';
+    pill.style.fontWeight = isCurrent ? '800' : '600';
+    const badge = pill.querySelector('span:last-child');
+    if (badge) {
+      badge.style.background = isCurrent ? 'rgba(255,255,255,0.25)' : '#e2e8f0';
+      badge.style.color = isCurrent ? '#fff' : '#475569';
+    }
+  });
+
+  const activeNameEl = document.getElementById('currentActiveTableName');
+  if (activeNameEl) activeNameEl.textContent = tableName;
+
+  const thead = document.getElementById('dbRecordsTableHead');
+  const tbody = document.getElementById('dbRecordsTableBody');
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="15" style="text-align:center; padding:3rem; color:#64748b;">
+          <i class="fas fa-spinner fa-spin" style="font-size:2rem; color:#8b5cf6;"></i>
+          <p style="margin-top:10px;">Loading records from "${tableName}"...</p>
+        </td>
+      </tr>
+    `;
+  }
+
+  try {
+    const token = getToken();
+    const url = `/api/admin/db/table/${encodeURIComponent(tableName)}?page=${page}&limit=50&search=${encodeURIComponent(search)}`;
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding:2rem; color:var(--danger)">${data.message || 'Error loading records.'}</td></tr>`;
+      return;
+    }
+
+    activeDbSchema = data.columns || [];
+    activeDbPrimaryKey = data.primaryKey || 'id';
+    activeDbLoadedRows = data.rows || [];
+
+    const rowsCountEl = document.getElementById('currentActiveTableRows');
+    if (rowsCountEl) rowsCountEl.textContent = data.total;
+
+    // Render Table Headers
+    let headerHtml = '<tr><th style="padding:10px 14px; width:90px; text-align:center;">Actions</th>';
+    activeDbSchema.forEach(c => {
+      const isPk = c.pk === 1 || c.name === activeDbPrimaryKey;
+      headerHtml += `<th style="padding:10px 14px; white-space:nowrap; border-left:1px solid rgba(255,255,255,0.1);">
+        ${c.name} ${isPk ? '<span style="color:#f59e0b; font-size:0.7rem;">[PK]</span>' : ''}
+        <span style="display:block; font-size:0.68rem; color:#cbd5e1; font-weight:400; text-transform:none;">${c.type || 'TEXT'}</span>
+      </th>`;
+    });
+    headerHtml += '</tr>';
+    thead.innerHTML = headerHtml;
+
+    // Render Table Rows
+    if (data.rows.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="${activeDbSchema.length + 1}" style="text-align:center; padding:3rem; color:#64748b;">
+            <i class="far fa-folder-open" style="font-size:2.5rem; margin-bottom:0.8rem; color:#cbd5e1; display:block;"></i>
+            <strong>No records found in table "${tableName}"</strong>
+            ${search ? `<p style="margin-top:4px; font-size:0.8rem;">No rows match filter "${escapeHTML(search)}"</p>` : ''}
+          </td>
+        </tr>
+      `;
+      renderDbPagination(0, 1, 1);
+      return;
+    }
+
+    let rowsHtml = '';
+    data.rows.forEach(r => {
+      const pkVal = r[activeDbPrimaryKey] !== undefined ? r[activeDbPrimaryKey] : (r.id !== undefined ? r.id : null);
+      const rowJsonEscaped = escapeHTML(JSON.stringify(r));
+
+      rowsHtml += `<tr style="border-bottom:1px solid #f1f5f9; transition:background 0.15s;" onmouseover="this.style.background='#fdf4ff'" onmouseout="this.style.background='#fff'">
+        <td style="padding:8px 10px; text-align:center; white-space:nowrap;">
+          <div style="display:flex; gap:6px; justify-content:center;">
+            <button type="button" class="btn" onclick="openDbEditRecordModal('${rowJsonEscaped}')" style="background:#f3e8ff; color:#7c3aed; border:1px solid #d8b4fe; padding:4px 8px; border-radius:6px; font-size:0.75rem; cursor:pointer;" title="Edit Record">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="btn" onclick="deleteDbRecord('${pkVal}')" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; padding:4px 8px; border-radius:6px; font-size:0.75rem; cursor:pointer;" title="Delete Record">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+        </td>`;
+
+      activeDbSchema.forEach(c => {
+        let val = r[c.name];
+        let displayVal = '';
+
+        if (val === null || val === undefined) {
+          displayVal = '<span style="color:#94a3b8; font-style:italic;">null</span>';
+        } else if (typeof val === 'string' && (c.name.includes('image') || c.name.includes('avatar') || c.name.includes('url')) && (val.includes('.jpg') || val.includes('.png') || val.includes('.webp'))) {
+          const firstImg = val.startsWith('[') ? (JSON.parse(val || '[]')[0] || '') : val;
+          displayVal = `<div style="display:flex; align-items:center; gap:6px;">
+            <img src="${firstImg}" style="width:30px; height:30px; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1;" onerror="this.style.display='none'">
+            <span style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHTML(val)}">${escapeHTML(val)}</span>
+          </div>`;
+        } else if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) {
+          displayVal = `<span style="font-family:monospace; font-size:0.78rem; background:#f1f5f9; padding:2px 6px; border-radius:4px; max-width:240px; display:inline-block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHTML(val)}">${escapeHTML(val)}</span>`;
+        } else {
+          const str = String(val);
+          displayVal = str.length > 80 ? `<span title="${escapeHTML(str)}">${escapeHTML(str.slice(0, 80))}...</span>` : escapeHTML(str);
+        }
+
+        rowsHtml += `<td style="padding:8px 12px; vertical-align:middle; border-left:1px solid #f1f5f9;">${displayVal}</td>`;
+      });
+
+      rowsHtml += '</tr>';
+    });
+
+    tbody.innerHTML = rowsHtml;
+    renderDbPagination(data.total, data.page, data.totalPages);
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding:2rem; color:var(--danger)">Connection error.</td></tr>`;
+  }
+}
+
+// 3. Pagination renderer
+function renderDbPagination(total, page, totalPages) {
+  const infoEl = document.getElementById('dbPaginationInfo');
+  const controlsEl = document.getElementById('dbPaginationControls');
+  if (!infoEl || !controlsEl) return;
+
+  infoEl.textContent = `Showing page ${page} of ${totalPages || 1} (${total} total records)`;
+  controlsEl.innerHTML = '';
+
+  if (totalPages <= 1) return;
+
+  const prevBtn = document.createElement('button');
+  prevBtn.type = 'button';
+  prevBtn.className = 'btn';
+  prevBtn.disabled = page <= 1;
+  prevBtn.style.cssText = 'padding:4px 10px; font-size:0.8rem; background:#fff; border:1px solid #cbd5e1; border-radius:6px; cursor:pointer;';
+  prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i> Prev';
+  prevBtn.onclick = () => selectDbTable(activeDbTable, page - 1, activeDbCurrentSearch);
+  controlsEl.appendChild(prevBtn);
+
+  const nextBtn = document.createElement('button');
+  nextBtn.type = 'button';
+  nextBtn.className = 'btn';
+  nextBtn.disabled = page >= totalPages;
+  nextBtn.style.cssText = 'padding:4px 10px; font-size:0.8rem; background:#fff; border:1px solid #cbd5e1; border-radius:6px; cursor:pointer;';
+  nextBtn.innerHTML = 'Next <i class="fas fa-chevron-right"></i>';
+  nextBtn.onclick = () => selectDbTable(activeDbTable, page + 1, activeDbCurrentSearch);
+  controlsEl.appendChild(nextBtn);
+}
+
+// 4. Search debouncer
+let dbSearchTimeout = null;
+function handleDbTableSearch(query) {
+  clearTimeout(dbSearchTimeout);
+  dbSearchTimeout = setTimeout(() => {
+    selectDbTable(activeDbTable, 1, query.trim());
+  }, 350);
+}
+
+function refreshCurrentDbTable() {
+  selectDbTable(activeDbTable, activeDbCurrentPage, activeDbCurrentSearch);
+  showToast(`Refreshed table "${activeDbTable}"`, 'info');
+}
+
+// 5. Open Add Modal
+function openDbAddRecordModal() {
+  activeRecordMode = 'add';
+  activeEditRecordId = null;
+
+  document.getElementById('dbRecordModalTitle').textContent = `➕ Add New Record to "${activeDbTable}"`;
+  document.getElementById('dbModalTableName').textContent = activeDbTable;
+  document.getElementById('btnSubmitDbRecord').textContent = 'Insert Record';
+
+  buildModalFormFields({});
+  const modal = document.getElementById('dbRecordModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+// 6. Open Edit Modal
+function openDbEditRecordModal(rowJsonStr) {
+  activeRecordMode = 'edit';
+  let row = {};
+  try {
+    row = JSON.parse(rowJsonStr);
+  } catch (e) {
+    showToast('Failed to parse row data', 'error');
+    return;
+  }
+
+  activeEditRecordId = row[activeDbPrimaryKey] !== undefined ? row[activeDbPrimaryKey] : row.id;
+
+  document.getElementById('dbRecordModalTitle').textContent = `✏️ Edit Record #${activeEditRecordId} in "${activeDbTable}"`;
+  document.getElementById('dbModalTableName').textContent = activeDbTable;
+  document.getElementById('btnSubmitDbRecord').textContent = 'Save Changes';
+
+  buildModalFormFields(row);
+  const modal = document.getElementById('dbRecordModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeDbRecordModal() {
+  const modal = document.getElementById('dbRecordModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// 7. Dynamically generate inputs matching table columns
+function buildModalFormFields(currentValues = {}) {
+  const container = document.getElementById('dbModalFieldsContainer');
+  if (!container) return;
+  container.innerHTML = '';
+
+  activeDbSchema.forEach(c => {
+    const isPk = (c.pk === 1 || c.name === activeDbPrimaryKey);
+    const val = currentValues[c.name] !== undefined ? currentValues[c.name] : '';
+
+    const fieldWrapper = document.createElement('div');
+    fieldWrapper.className = 'form-group';
+    fieldWrapper.style.cssText = 'display:flex; flex-direction:column; gap:4px;';
+
+    const label = document.createElement('label');
+    label.style.cssText = 'font-weight:700; font-size:0.8rem; color:#334155;';
+    label.innerHTML = `${c.name} ${isPk ? '<span style="color:#f59e0b;">(Primary Key)</span>' : ''} <small style="color:#94a3b8; font-weight:400;">${c.type || 'TEXT'}</small>`;
+    fieldWrapper.appendChild(label);
+
+    let input;
+    const colTypeUpper = (c.type || '').toUpperCase();
+
+    if (isPk && activeRecordMode === 'add') {
+      input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'form-input';
+      input.placeholder = '(Auto-generated)';
+      input.disabled = true;
+      input.style.background = '#f1f5f9';
+    } else if (isPk && activeRecordMode === 'edit') {
+      input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'form-input';
+      input.value = val;
+      input.disabled = true;
+      input.style.background = '#f1f5f9';
+    } else if (colTypeUpper.includes('INT') || colTypeUpper.includes('REAL') || colTypeUpper.includes('NUM') || colTypeUpper.includes('DECIMAL')) {
+      input = document.createElement('input');
+      input.type = 'number';
+      input.step = colTypeUpper.includes('INT') ? '1' : '0.01';
+      input.className = 'form-input';
+      input.name = c.name;
+      input.value = (val !== null && val !== undefined) ? val : '';
+      input.style.width = '100%';
+    } else if (c.name.includes('description') || c.name.includes('json') || c.name.includes('content') || c.name.includes('urls') || c.name.includes('body')) {
+      input = document.createElement('textarea');
+      input.rows = 3;
+      input.className = 'form-input';
+      input.name = c.name;
+      input.value = (val !== null && val !== undefined) ? (typeof val === 'object' ? JSON.stringify(val, null, 2) : val) : '';
+      input.style.cssText = 'width:100%; font-family:monospace; font-size:0.82rem;';
+    } else {
+      input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'form-input';
+      input.name = c.name;
+      input.value = (val !== null && val !== undefined) ? val : '';
+      input.style.width = '100%';
+    }
+
+    fieldWrapper.appendChild(input);
+    container.appendChild(fieldWrapper);
+  });
+}
+
+// 8. Submit Add / Edit Form
+async function handleDbRecordFormSubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
+  const payload = {};
+
+  formData.forEach((value, key) => {
+    payload[key] = value;
+  });
+
+  const submitBtn = document.getElementById('btnSubmitDbRecord');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+  }
+
+  try {
+    const token = getToken();
+    let res;
+    if (activeRecordMode === 'add') {
+      res = await fetch(`/api/admin/db/table/${encodeURIComponent(activeDbTable)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+    } else {
+      res = await fetch(`/api/admin/db/table/${encodeURIComponent(activeDbTable)}/${encodeURIComponent(activeEditRecordId)}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    const data = await res.json();
+    if (data.success) {
+      showToast(`✓ ${data.message || 'Record saved successfully!'}`, 'success');
+      closeDbRecordModal();
+      selectDbTable(activeDbTable, activeDbCurrentPage, activeDbCurrentSearch);
+    } else {
+      showToast(data.message || 'Error saving record', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to save record', 'error');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = activeRecordMode === 'add' ? 'Insert Record' : 'Save Changes';
+    }
+  }
+}
+
+// 9. Delete Record
+async function deleteDbRecord(rowId) {
+  if (!confirm(`Are you sure you want to permanently delete record #${rowId} from table "${activeDbTable}"?\n\nThis action cannot be undone.`)) {
+    return;
+  }
+
+  try {
+    const token = getToken();
+    const res = await fetch(`/api/admin/db/table/${encodeURIComponent(activeDbTable)}/${encodeURIComponent(rowId)}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      showToast(`✓ Record #${rowId} deleted successfully!`, 'success');
+      selectDbTable(activeDbTable, activeDbCurrentPage, activeDbCurrentSearch);
+    } else {
+      showToast(data.message || 'Failed to delete record', 'error');
+    }
+  } catch (err) {
+    showToast('Error connecting to server', 'error');
+  }
+}
+
+// 10. SQL Query Runner Console
+function toggleSqlRunnerModal() {
+  const modal = document.getElementById('dbSqlRunnerModal');
+  if (!modal) return;
+  modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+}
+
+function setSqlTemplate(sql) {
+  const textarea = document.getElementById('customSqlInput');
+  if (textarea) textarea.value = sql;
+}
+
+async function runCustomSql() {
+  const sqlInput = document.getElementById('customSqlInput');
+  const statusEl = document.getElementById('sqlExecutionStatus');
+  const resultsContainer = document.getElementById('sqlResultsContainer');
+  if (!sqlInput) return;
+
+  const sql = sqlInput.value.trim();
+  if (!sql) {
+    showToast('Please type a SQL query to execute', 'error');
+    return;
+  }
+
+  if (statusEl) {
+    statusEl.style.color = '#8b5cf6';
+    statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Executing query...';
+  }
+
+  try {
+    const token = getToken();
+    const res = await fetch('/api/admin/db/query', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ sql })
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      if (statusEl) {
+        statusEl.style.color = 'var(--danger)';
+        statusEl.textContent = `❌ Error: ${data.message}`;
+      }
+      return;
+    }
+
+    if (statusEl) {
+      statusEl.style.color = '#059669';
+      statusEl.textContent = data.type === 'select' ? `✓ Returned ${data.rowCount} row(s)` : `✓ ${data.message}`;
+    }
+
+    if (data.type === 'select' && data.rows && data.rows.length > 0) {
+      resultsContainer.style.display = 'block';
+      const cols = Object.keys(data.rows[0]);
+      let tableHtml = '<table style="width:100%; border-collapse:collapse; font-size:0.8rem; background:#fff;"><thead style="background:#1e1b4b; color:#fff;"><tr>';
+      cols.forEach(c => tableHtml += `<th style="padding:6px 10px; border:1px solid #cbd5e1;">${escapeHTML(c)}</th>`);
+      tableHtml += '</tr></thead><tbody>';
+
+      data.rows.forEach(r => {
+        tableHtml += '<tr style="border-bottom:1px solid #e2e8f0;">';
+        cols.forEach(c => {
+          const val = r[c] !== null && r[c] !== undefined ? String(r[c]) : '<span style="color:#94a3b8">null</span>';
+          tableHtml += `<td style="padding:6px 10px; border:1px solid #e2e8f0; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${val}</td>`;
+        });
+        tableHtml += '</tr>';
+      });
+
+      tableHtml += '</tbody></table>';
+      resultsContainer.innerHTML = tableHtml;
+    } else if (data.type === 'select') {
+      resultsContainer.style.display = 'block';
+      resultsContainer.innerHTML = '<div style="padding:1rem; text-align:center; color:#64748b;">(0 rows returned)</div>';
+    } else {
+      resultsContainer.style.display = 'none';
+      // Refresh current table if mutation occurred
+      selectDbTable(activeDbTable, activeDbCurrentPage, activeDbCurrentSearch);
+    }
+  } catch (err) {
+    if (statusEl) {
+      statusEl.style.color = 'var(--danger)';
+      statusEl.textContent = '❌ Execution failed.';
+    }
+  }
+}
+
+// 11. Export Current Table as JSON
+function exportCurrentTableJson() {
+  if (!activeDbLoadedRows || activeDbLoadedRows.length === 0) {
+    showToast('No records to export in active view', 'info');
+    return;
+  }
+  const blob = new Blob([JSON.stringify(activeDbLoadedRows, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${activeDbTable}_${Date.now()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`✓ Exported ${activeDbLoadedRows.length} records as JSON!`, 'success');
+}
+
+
+async function handleAdminChangePassword(e) {
+  e.preventDefault();
+  const oldPassword = document.getElementById('adminOldPassword').value;
+  const newPassword = document.getElementById('adminNewPassword').value;
+  const confirmPassword = document.getElementById('adminConfirmPassword').value;
+  const statusEl = document.getElementById('adminPasswordChangeStatus');
+
+  if (newPassword !== confirmPassword) {
+    statusEl.style.color = '#ef4444';
+    statusEl.textContent = '❌ Passwords do not match!';
+    return;
+  }
+
+  statusEl.style.color = '#0284c7';
+  statusEl.textContent = 'Updating password...';
+
+  try {
+    const res = await fetch('/api/admin/change-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + (localStorage.getItem('token') || localStorage.getItem('l2l_admin_token') || '')
+      },
+      body: JSON.stringify({ oldPassword, newPassword })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      statusEl.style.color = '#059669';
+      statusEl.textContent = '✅ Password successfully updated! Use this new password to sign into web and mobile app.';
+      document.getElementById('adminChangePasswordForm').reset();
+    } else {
+      statusEl.style.color = '#ef4444';
+      statusEl.textContent = '❌ ' + (data.message || 'Failed to update password');
+    }
+  } catch (err) {
+    statusEl.style.color = '#ef4444';
+    statusEl.textContent = '❌ Network error: ' + err.message;
+  }
+}
+window.handleAdminChangePassword = handleAdminChangePassword;

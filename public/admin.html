@@ -115,6 +115,11 @@
       <li><a href="#" data-section="policiesSection"><i class="fas fa-file-contract"></i> Store Policies & Terms</a></li>
       <li><a href="#" data-section="securitySection"><i class="fas fa-user-shield"></i> Security & Staff Roles</a></li>
       <li><a href="#" data-section="settingsSection"><i class="fas fa-sliders-h"></i> Shipping Settings</a></li>
+      <li><a href="#" data-section="spinnerSection" style="color:#d97706; font-weight:700;"><i class="fas fa-dharmachakra"></i> Tiered Spinner & Win-Cap</a></li>
+      <li><a href="#" data-section="storiesSection" style="color:#0284c7; font-weight:700;"><i class="fas fa-play-circle"></i> Daily Story Manager</a></li>
+      <li><a href="#" data-section="mediaLibrarySection" style="color:#10b981; font-weight:700;"><i class="fas fa-folder-open"></i> Drive Media Explorer</a></li>
+      <li><a href="#" data-section="dbStudioSection" style="color:#8b5cf6; font-weight:700;"><i class="fas fa-database"></i> Live Database Studio</a></li>
+      <li><a href="/downloads/LittleToLargee-Admin.apk" download style="color:#06b6d4; font-weight:700;"><i class="fas fa-mobile-alt"></i> 📱 Download Android APK</a></li>
       <li><a href="/" style="color:var(--marigold); margin-top:2rem"><i class="fas fa-home"></i> View Website</a></li>
     </ul>
   </aside>
@@ -130,7 +135,12 @@
           <h1 style="font-size:1.8rem; color:var(--primary); font-weight:800">Admin Control Center</h1>
           <span style="font-size:0.85rem; color:var(--text-light)">Logged in as Little to Large Administrator</span>
         </div>
-        <button class="btn btn-accent" onclick="logout()" style="padding:0.5rem 1.2rem; font-size:0.85rem">Sign Out</button>
+        <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
+          <a href="/downloads/LittleToLargee-Admin.apk" download class="btn" style="background:#059669; color:#fff; padding:0.5rem 1rem; font-size:0.85rem; border-radius:6px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem; box-shadow:0 2px 8px rgba(5,150,105,0.3);">
+            <i class="fas fa-download"></i> 📱 Download Android APK
+          </a>
+          <button class="btn btn-accent" onclick="logout()" style="padding:0.5rem 1.2rem; font-size:0.85rem">Sign Out</button>
+        </div>
       </div>
 
       <!-- AI Merchant Intelligence Section -->
@@ -1712,6 +1722,284 @@
         </div>
       </section>
 
+    
+      <!-- ==========================================================================
+           15. TIERED DISCOUNT SPINNER & ANTI-CHEAT WIN-LOGIC SECTION
+           ========================================================================== -->
+      <section id="spinnerSection" style="display: none;">
+        <div style="background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:2rem; margin-bottom:2rem; border-top:4px solid #d97706;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; border-bottom:1px solid #e2e8f0; padding-bottom:1rem;">
+            <div>
+              <h2 style="font-size:1.5rem; color:var(--primary); font-weight:800; margin:0;"><i class="fas fa-dharmachakra" style="color:#d97706;"></i> Tiered Discount Spinner & Win-Cap Manager</h2>
+              <p style="font-size:0.85rem; color:var(--text-light); margin-top:4px;">Cryptographically controlled prize wheel with backend verification and 70% monthly jackpot anti-cheat enforcement.</p>
+            </div>
+            <button class="btn btn-primary" onclick="loadAdminSpinnerSettings()"><i class="fas fa-sync-alt"></i> Refresh Stats</button>
+          </div>
+
+          <!-- KPI Cards -->
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.2rem; margin-bottom:2rem;">
+            <div style="background:#fef3c7; border:1px solid #fde68a; border-radius:10px; padding:1.2rem; text-align:center;">
+              <span style="font-size:0.8rem; font-weight:700; color:#b45309; text-transform:uppercase;">Active Period</span>
+              <div id="spinnerMonthBadge" style="font-size:1.6rem; font-weight:800; color:#92400e; margin-top:4px;">2026-11</div>
+            </div>
+            <div style="background:#fee2e2; border:1px solid #fecaca; border-radius:10px; padding:1.2rem; text-align:center;">
+              <span style="font-size:0.8rem; font-weight:700; color:#b91c1c; text-transform:uppercase;">70% Jackpot Winners</span>
+              <div id="spinnerJackpotBadge" style="font-size:1.6rem; font-weight:800; color:#991b1b; margin-top:4px;">0 / 2 Max</div>
+            </div>
+            <div style="background:#e0e7ff; border:1px solid #c7d2fe; border-radius:10px; padding:1.2rem; text-align:center;">
+              <span style="font-size:0.8rem; font-weight:700; color:#4338ca; text-transform:uppercase;">Total Spins This Month</span>
+              <div id="spinnerTotalSpinsBadge" style="font-size:1.6rem; font-weight:800; color:#3730a3; margin-top:4px;">0</div>
+            </div>
+            <div style="background:#dcfce7; border:1px solid #bbf7d0; border-radius:10px; padding:1.2rem; text-align:center;">
+              <span style="font-size:0.8rem; font-weight:700; color:#15803d; text-transform:uppercase;">Anti-Cheat Status</span>
+              <div style="font-size:1.3rem; font-weight:800; color:#166534; margin-top:4px;">✓ Cap Enforced</div>
+            </div>
+          </div>
+
+          <!-- Tiers Configuration Table -->
+          <h3 style="font-size:1.15rem; color:var(--primary); font-weight:700; margin-bottom:1rem;">Reward Tiers & Probability Distribution</h3>
+          <div style="overflow-x:auto; margin-bottom:1.5rem;">
+            <table class="admin-table" style="width:100%; border-collapse:collapse;">
+              <thead>
+                <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; text-align:left;">
+                  <th style="padding:10px;">Tier Label</th>
+                  <th style="padding:10px;">Discount %</th>
+                  <th style="padding:10px;">Coupon Prefix</th>
+                  <th style="padding:10px;">Probability Weight (0.01 - 1.0)</th>
+                  <th style="padding:10px;">Monthly Cap</th>
+                  <th style="padding:10px;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="spinnerTiersTableBody">
+                <!-- Injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+          <div style="text-align:right;">
+            <button class="btn btn-primary" onclick="saveAdminSpinnerSettings()" style="padding:0.6rem 2rem;"><i class="fas fa-save"></i> Save Spinner Settings</button>
+          </div>
+
+          <!-- Spin Logs Audit Table -->
+          <h3 style="font-size:1.15rem; color:var(--primary); font-weight:700; margin-top:2.5rem; margin-bottom:1rem;"><i class="fas fa-history"></i> Recent Spin Audit Logs (Anti-Cheat Verification)</h3>
+          <div style="overflow-x:auto; max-height:400px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">
+            <table class="admin-table" style="width:100%; border-collapse:collapse;">
+              <thead>
+                <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; text-align:left; position:sticky; top:0;">
+                  <th style="padding:10px;">ID</th>
+                  <th style="padding:10px;">Customer / Guest</th>
+                  <th style="padding:10px;">Discount</th>
+                  <th style="padding:10px;">Coupon Code</th>
+                  <th style="padding:10px;">IP Address</th>
+                  <th style="padding:10px;">Timestamp</th>
+                </tr>
+              </thead>
+              <tbody id="spinnerLogsTableBody">
+                <!-- Injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================================================
+           16. DAILY BRAND STORIES CMS (ADMIN STORY MANAGER - NO CODING REQUIRED)
+           ========================================================================== -->
+      <section id="storiesSection" style="display: none;">
+        <div style="background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:2rem; margin-bottom:2rem; border-top:4px solid #0284c7;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; border-bottom:1px solid #e2e8f0; padding-bottom:1rem;">
+            <div>
+              <h2 style="font-size:1.5rem; color:var(--primary); font-weight:800; margin:0;"><i class="fas fa-play-circle" style="color:#0284c7;"></i> Daily Brand Story Manager (Zero Coding)</h2>
+              <p style="font-size:0.85rem; color:var(--text-light); margin-top:4px;">Publish daily engaging visual stories (images or videos) to the homepage header without editing any code.</p>
+            </div>
+            <button class="btn btn-primary" onclick="loadAdminStories()"><i class="fas fa-sync-alt"></i> Refresh Stories</button>
+          </div>
+
+          <!-- Add New Story Form -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:1.5rem; margin-bottom:2rem;">
+            <h3 style="font-size:1.15rem; color:var(--primary); font-weight:700; margin-bottom:1rem;"><i class="fas fa-plus-circle" style="color:#0284c7;"></i> Add New Daily Story</h3>
+            <form id="createStoryForm" onsubmit="handleCreateStorySubmit(event)" style="display:grid; grid-template-columns:1.5fr 1fr 1fr; gap:1rem;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:0.85rem; font-weight:700;">Story Title</label>
+                <input type="text" id="storyTitle" class="form-control" placeholder="e.g. Royal Diwali Family Twinning" required>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:0.85rem; font-weight:700;">Media Type</label>
+                <select id="storyMediaType" class="form-control" onchange="toggleStoryMediaHelper(this.value)">
+                  <option value="image">Image (High-Res Photo)</option>
+                  <option value="video">Video (Short Clip / Reel)</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:0.85rem; font-weight:700;">Story Priority</label>
+                <input type="number" id="storyPriority" class="form-control" value="1" min="1" max="99">
+              </div>
+
+              <div class="form-group" style="grid-column: span 2; margin-bottom:0;">
+                <label style="font-size:0.85rem; font-weight:700;">Media URL (Image or Video Path)</label>
+                <input type="text" id="storyMediaUrl" class="form-control" placeholder="/images/brand/family_photoshoot_4k.png" required>
+                <!-- Quick Asset Selection Chips -->
+                <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;" id="storyMediaChips">
+                  <span style="font-size:0.75rem; color:#64748b; align-self:center;">Quick Select:</span>
+                  <button type="button" class="btn" style="padding:2px 8px; font-size:0.75rem; background:#e2e8f0; border:none; border-radius:4px;" onclick="selectStoryPresetMedia('/images/brand/1792479024413.png', 'image')">📷 Silk Saree Shoot</button>
+                  <button type="button" class="btn" style="padding:2px 8px; font-size:0.75rem; background:#e2e8f0; border:none; border-radius:4px;" onclick="selectStoryPresetMedia('/images/brand/pomelli_photoshoot_image_4k_0822 (1).png', 'image')">📷 4K Family Shoot</button>
+                  <button type="button" class="btn" style="padding:2px 8px; font-size:0.75rem; background:#e2e8f0; border:none; border-radius:4px;" onclick="selectStoryPresetMedia('/videos/gemini_generated_video_39a5ecd2.mp4', 'video')">🎬 Customer Trust Reel 1</button>
+                  <button type="button" class="btn" style="padding:2px 8px; font-size:0.75rem; background:#e2e8f0; border:none; border-radius:4px;" onclick="selectStoryPresetMedia('/videos/gemini_generated_video_55fc5f1d.mp4', 'video')">🎬 Customer Trust Reel 2</button>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:0.85rem; font-weight:700;">Target Link (Optional)</label>
+                <input type="text" id="storyTargetUrl" class="form-control" placeholder="/products?subcategory=Family%20Sets" value="/products">
+              </div>
+
+              <div style="grid-column:span 3; text-align:right; margin-top:0.5rem;">
+                <button type="submit" class="btn btn-primary" id="publishStoryBtn" style="padding:0.6rem 2rem;"><i class="fas fa-paper-plane"></i> Publish Daily Story</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Active Stories List -->
+          <h3 style="font-size:1.15rem; color:var(--primary); font-weight:700; margin-bottom:1rem;">Current Published Stories</h3>
+          <div id="adminStoriesGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:1.2rem;">
+            <!-- Injected dynamically -->
+          </div>
+        </div>
+      </section>
+
+    
+      <!-- ==========================================================================
+           17. DRIVE MEDIA EXPLORER & STORY ASSET MANAGER
+           ========================================================================== -->
+      <section id="mediaLibrarySection" style="display: none;">
+        <div style="background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:2rem; margin-bottom:2rem; border-top:4px solid #10b981;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; border-bottom:1px solid #e2e8f0; padding-bottom:1rem;">
+            <div>
+              <h2 style="font-size:1.5rem; color:var(--primary); font-weight:800; margin:0;"><i class="fas fa-folder-open" style="color:#10b981;"></i> Drive Media Explorer &amp; File Manager</h2>
+              <p style="font-size:0.85rem; color:var(--text-light); margin-top:4px;">Browse system files, customer shoots, Google Drive folder, and select multiple images or videos to publish directly to stories.</p>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <select id="mediaDriveSelector" class="form-control" style="font-weight:700; width:auto;" onchange="loadAdminMediaLibrary(this.value)">
+                <option value="drive_download">📁 Google Drive Package (4K Shoots &amp; Videos)</option>
+                <option value="brand_photos">📷 Brand &amp; Family Shoots (/images/brand)</option>
+                <option value="videos">🎬 Video Reels &amp; Unboxings (/videos)</option>
+                <option value="products">👗 Product Catalog Media (/images/products)</option>
+              </select>
+              <button class="btn btn-primary" onclick="loadAdminMediaLibrary()"><i class="fas fa-sync-alt"></i> Refresh Drive</button>
+            </div>
+          </div>
+
+          <!-- Selection Action Toolbar -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 18px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <label style="display:inline-flex; align-items:center; cursor:pointer; font-weight:700; font-size:0.85rem; margin:0;">
+                <input type="checkbox" id="selectAllMediaCheckbox" onchange="toggleSelectAllMedia(this.checked)" style="margin-right:6px;"> Select All
+              </label>
+              <span id="selectedMediaCountBadge" style="background:#dcfce7; color:#15803d; font-size:0.8rem; font-weight:700; padding:2px 10px; border-radius:999px;">0 items selected</span>
+            </div>
+            <div style="display:flex; gap:10px;">
+              <button type="button" class="btn btn-primary" id="batchPublishStoriesBtn" onclick="batchPublishSelectedToStories()" style="background:#10b981; border:none; padding:8px 18px; font-weight:700; font-size:0.85rem;">
+                <i class="fas fa-magic"></i> Publish Selected to Daily Stories
+              </button>
+            </div>
+          </div>
+
+          <!-- Media Files Grid -->
+          <div id="mediaLibraryGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:1.2rem;">
+            <!-- Injected dynamically -->
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ==========================================================================
+           LIVE DATABASE STUDIO & MONITOR SECTION
+           ========================================================================== -->
+      <section id="dbStudioSection" style="display: none;">
+        <div style="background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:2rem; margin-bottom:2rem; border-top:4px solid #8b5cf6;">
+          
+          <!-- Header Bar -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; border-bottom:1px solid #e2e8f0; padding-bottom:1rem;">
+            <div>
+              <h2 style="font-size:1.5rem; color:var(--primary); font-weight:800; margin:0; display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-database" style="color:#8b5cf6;"></i> Live Database Studio &amp; Monitor
+              </h2>
+              <p style="font-size:0.85rem; color:var(--text-light); margin-top:4px;">
+                Direct browser-level database control. View live records, insert new rows, edit columns, delete records, or run custom SQL queries.
+              </p>
+            </div>
+            
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button type="button" class="btn" onclick="toggleSqlRunnerModal()" style="background:#f3e8ff; color:#7c3aed; border:1px solid #d8b4fe; font-weight:700; padding:0.55rem 1rem; border-radius:8px; font-size:0.85rem; cursor:pointer;">
+                <i class="fas fa-terminal"></i> SQL Query Runner
+              </button>
+              <button type="button" class="btn" onclick="openDbAddRecordModal()" style="background:#8b5cf6; color:#fff; border:none; font-weight:700; padding:0.55rem 1.2rem; border-radius:8px; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                <i class="fas fa-plus"></i> Add New Record
+              </button>
+              <button type="button" class="btn" onclick="refreshCurrentDbTable()" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; padding:0.55rem 0.9rem; border-radius:8px; font-size:0.85rem; cursor:pointer;" title="Refresh Data">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Table Selector Pills Bar -->
+          <div style="margin-bottom:1.2rem;">
+            <label style="font-weight:700; font-size:0.8rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.5rem;">
+              Select Database Table (<span id="dbTotalTablesCount">0</span> tables):
+            </label>
+            <div id="dbTablePillsContainer" style="display:flex; flex-wrap:wrap; gap:8px; max-height:140px; overflow-y:auto; padding:8px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0;">
+              <!-- Injected dynamically -->
+            </div>
+          </div>
+
+          <!-- Search & Table Controls -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
+            <div style="display:flex; align-items:center; gap:10px; flex:1; max-width:420px;">
+              <div style="position:relative; width:100%;">
+                <i class="fas fa-search" style="position:absolute; left:12px; top:11px; color:#94a3b8; font-size:0.85rem;"></i>
+                <input type="text" id="dbTableSearchInput" placeholder="Search records in active table..." oninput="handleDbTableSearch(this.value)" style="width:100%; padding:0.5rem 1rem 0.5rem 2.2rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.85rem;">
+              </div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span id="dbTableStatsBadge" style="font-size:0.82rem; font-weight:700; color:#475569; background:#f1f5f9; padding:6px 14px; border-radius:20px; border:1px solid #e2e8f0;">
+                Table: <span id="currentActiveTableName" style="color:#8b5cf6;">--</span> &bull; <span id="currentActiveTableRows">0</span> records
+              </span>
+              <button type="button" class="btn" onclick="exportCurrentTableJson()" style="background:#fff; border:1px solid #cbd5e1; font-size:0.82rem; padding:0.45rem 0.9rem; border-radius:6px; color:#475569; cursor:pointer;" title="Export Table as JSON">
+                <i class="fas fa-download"></i> Export JSON
+              </button>
+            </div>
+          </div>
+
+          <!-- Data Table View -->
+          <div style="overflow-x:auto; border:1px solid #e2e8f0; border-radius:10px; max-height:650px; overflow-y:auto; background:#fff;">
+            <table id="dbRecordsTable" style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:left;">
+              <thead id="dbRecordsTableHead" style="position:sticky; top:0; background:#1e1b4b; color:#fff; z-index:10;">
+                <!-- Injected dynamically -->
+              </thead>
+              <tbody id="dbRecordsTableBody">
+                <tr>
+                  <td colspan="10" style="text-align:center; padding:3rem; color:#64748b;">
+                    <i class="fas fa-spinner fa-spin" style="font-size:2rem; color:#8b5cf6;"></i>
+                    <p style="margin-top:10px;">Loading database records...</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Footer -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; flex-wrap:wrap; gap:10px;">
+            <div id="dbPaginationInfo" style="font-size:0.82rem; color:#64748b;">
+              Showing page 1 of 1
+            </div>
+            <div style="display:flex; gap:6px;" id="dbPaginationControls">
+              <!-- Injected dynamically -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -2073,5 +2361,109 @@
       container.appendChild(card);
     }
   </script>
+
+  <!-- ==========================================================================
+       STICKY FLOATING SCROLLER & QUICK PAGE NAVIGATION WIDGET
+       ========================================================================== -->
+  <div id="adminStickyScrollerWidget" style="position:fixed; bottom:24px; right:24px; z-index:99999; display:flex; flex-direction:column; gap:8px; align-items:center;">
+    <!-- Quick Section Dropdown Modal/Menu -->
+    <div id="adminQuickMenuDropdown" style="display:none; position:absolute; bottom:240px; right:0; width:260px; max-height:360px; overflow-y:auto; background:#ffffff; border:1px solid #cbd5e1; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.15); padding:8px; z-index:100000;">
+      <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px; font-weight:800; color:#800020; padding:6px 10px; border-bottom:1px solid #f1f5f9;">
+        ⚡ Jump to Admin Page / Section
+      </div>
+      <div id="adminQuickMenuList" style="display:flex; flex-direction:column; gap:2px; margin-top:4px;">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+
+    <!-- Scroller Control Buttons -->
+    <button onclick="adminScrollToTop()" class="btn" title="Scroll to Top" style="width:44px; height:44px; border-radius:50%; background:#800020; color:#ffffff; border:none; box-shadow:0 4px 14px rgba(0,0,0,0.2); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1.1rem; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='none'">
+      <i class="fas fa-chevron-up"></i>
+    </button>
+    <button onclick="adminNavigateSection('prev')" class="btn" title="Previous Page / Section" style="width:40px; height:40px; border-radius:50%; background:#ffffff; color:#1e1b4b; border:1px solid #cbd5e1; box-shadow:0 2px 8px rgba(0,0,0,0.1); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.95rem;">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <button onclick="toggleAdminQuickMenu()" class="btn" title="Quick Pages Menu" style="width:40px; height:40px; border-radius:50%; background:#10b981; color:#ffffff; border:none; box-shadow:0 2px 8px rgba(16,185,129,0.3); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1rem;">
+      <i class="fas fa-th-list"></i>
+    </button>
+    <button onclick="adminNavigateSection('next')" class="btn" title="Next Page / Section" style="width:40px; height:40px; border-radius:50%; background:#ffffff; color:#1e1b4b; border:1px solid #cbd5e1; box-shadow:0 2px 8px rgba(0,0,0,0.1); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.95rem;">
+      <i class="fas fa-arrow-right"></i>
+    </button>
+    <button onclick="adminScrollToBottom()" class="btn" title="Scroll to Bottom" style="width:44px; height:44px; border-radius:50%; background:#800020; color:#ffffff; border:none; box-shadow:0 4px 14px rgba(0,0,0,0.2); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1.1rem; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='none'">
+      <i class="fas fa-chevron-down"></i>
+    </button>
+  </div>
+
+
+  <!-- ==========================================================================
+       DATABASE RECORD ADD / EDIT MODAL
+       ========================================================================== -->
+  <div class="modal-backdrop" id="dbRecordModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:100005; align-items:center; justify-content:center;">
+    <div class="modal-content" style="background:#fff; border-radius:14px; max-width:850px; width:95vw; max-height:90vh; overflow-y:auto; padding:2rem; box-shadow:0 20px 40px rgba(0,0,0,0.2); position:relative;">
+      <button class="modal-close" onclick="closeDbRecordModal()" style="position:absolute; top:1rem; right:1rem; background:none; border:none; font-size:1.4rem; color:#64748b; cursor:pointer;"><i class="fas fa-times"></i></button>
+      
+      <div style="border-bottom:1px solid #e2e8f0; padding-bottom:1rem; margin-bottom:1.5rem;">
+        <h3 id="dbRecordModalTitle" style="font-size:1.3rem; color:var(--primary); font-weight:800; margin:0;">Edit Record</h3>
+        <p style="font-size:0.85rem; color:#64748b; margin-top:4px;">Table: <strong id="dbModalTableName" style="color:#8b5cf6;">--</strong></p>
+      </div>
+
+      <form id="dbRecordForm" onsubmit="handleDbRecordFormSubmit(event)" style="display:flex; flex-direction:column; gap:1.2rem;">
+        <div id="dbModalFieldsContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:1rem;">
+          <!-- Dynamically generated fields -->
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; border-top:1px solid #e2e8f0; padding-top:1rem; margin-top:1rem;">
+          <button type="button" class="btn" onclick="closeDbRecordModal()" style="background:#f1f5f9; color:#475569; padding:0.6rem 1.4rem; border-radius:8px;">Cancel</button>
+          <button type="submit" id="btnSubmitDbRecord" class="btn btn-primary" style="background:#8b5cf6; padding:0.6rem 1.8rem; font-weight:700; border-radius:8px;">Save Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       DATABASE SQL QUERY RUNNER MODAL
+       ========================================================================== -->
+  <div class="modal-backdrop" id="dbSqlRunnerModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:100005; align-items:center; justify-content:center;">
+    <div class="modal-content" style="background:#fff; border-radius:14px; max-width:960px; width:95vw; max-height:92vh; overflow-y:auto; padding:2rem; box-shadow:0 20px 40px rgba(0,0,0,0.25); position:relative;">
+      <button class="modal-close" onclick="toggleSqlRunnerModal()" style="position:absolute; top:1rem; right:1rem; background:none; border:none; font-size:1.4rem; color:#64748b; cursor:pointer;"><i class="fas fa-times"></i></button>
+      
+      <div style="border-bottom:1px solid #e2e8f0; padding-bottom:1rem; margin-bottom:1.5rem;">
+        <h3 style="font-size:1.3rem; color:var(--primary); font-weight:800; margin:0; display:flex; align-items:center; gap:8px;">
+          <i class="fas fa-terminal" style="color:#8b5cf6;"></i> Live SQL Console &amp; Runner
+        </h3>
+        <p style="font-size:0.85rem; color:#64748b; margin-top:4px;">Execute SELECT, UPDATE, INSERT, or DELETE queries directly on SQLite.</p>
+      </div>
+
+      <!-- Quick query templates -->
+      <div style="margin-bottom:1rem;">
+        <span style="font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase; display:block; margin-bottom:6px;">Quick Query Templates:</span>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <button type="button" class="btn" onclick="setSqlTemplate('SELECT * FROM products ORDER BY id DESC LIMIT 10')" style="background:#f8fafc; border:1px solid #cbd5e1; font-size:0.75rem; padding:4px 8px; border-radius:6px; cursor:pointer;">products (latest 10)</button>
+          <button type="button" class="btn" onclick="setSqlTemplate('SELECT * FROM orders ORDER BY id DESC LIMIT 10')" style="background:#f8fafc; border:1px solid #cbd5e1; font-size:0.75rem; padding:4px 8px; border-radius:6px; cursor:pointer;">orders (latest 10)</button>
+          <button type="button" class="btn" onclick="setSqlTemplate('SELECT * FROM customers ORDER BY id DESC')" style="background:#f8fafc; border:1px solid #cbd5e1; font-size:0.75rem; padding:4px 8px; border-radius:6px; cursor:pointer;">customers</button>
+          <button type="button" class="btn" onclick="setSqlTemplate('SELECT * FROM settings')" style="background:#f8fafc; border:1px solid #cbd5e1; font-size:0.75rem; padding:4px 8px; border-radius:6px; cursor:pointer;">settings</button>
+          <button type="button" class="btn" onclick="setSqlTemplate('SELECT * FROM coupons')" style="background:#f8fafc; border:1px solid #cbd5e1; font-size:0.75rem; padding:4px 8px; border-radius:6px; cursor:pointer;">coupons</button>
+        </div>
+      </div>
+
+      <!-- Query input area -->
+      <div style="margin-bottom:1rem;">
+        <textarea id="customSqlInput" rows="5" placeholder="SELECT * FROM products WHERE stock < 10;" style="width:100%; font-family:monospace; font-size:0.9rem; padding:12px; border:1px solid #cbd5e1; border-radius:8px; line-height:1.5; background:#0f172a; color:#38bdf8;"></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+        <span id="sqlExecutionStatus" style="font-size:0.85rem; font-weight:700;"></span>
+        <button type="button" class="btn btn-primary" onclick="runCustomSql()" style="background:#8b5cf6; padding:0.6rem 1.6rem; font-weight:700; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
+          <i class="fas fa-play"></i> Run SQL Query
+        </button>
+      </div>
+
+      <!-- Query results output -->
+      <div id="sqlResultsContainer" style="overflow-x:auto; border:1px solid #e2e8f0; border-radius:8px; max-height:400px; overflow-y:auto; background:#f8fafc; padding:10px; display:none;">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

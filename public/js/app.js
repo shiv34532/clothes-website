@@ -21,6 +21,26 @@ window.escapeHTML = function(str) {
 };
 function escapeHTML(str) { return window.escapeHTML(str); }
 
+window.safeParseImages = function(data) {
+  if (!data) return [];
+  if (Array.isArray(data)) return data.filter(Boolean);
+  if (typeof data === 'string') {
+    data = data.trim();
+    if (data.startsWith('[') && data.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed)) return parsed.filter(Boolean);
+      } catch (e) {}
+    }
+    if (data.includes(',')) {
+      return data.split(',').map(s => s.trim()).filter(Boolean);
+    }
+    return [data];
+  }
+  return [];
+};
+function safeParseImages(data) { return window.safeParseImages(data); }
+
 // Global Fetch Interceptor to handle JWT token expiration and redirect to login page
 const originalFetch = window.fetch;
 window.fetch = async function(...args) {
@@ -520,15 +540,20 @@ function renderHeaderFooter() {
     const avatarImg = user && user.avatar_url ? user.avatar_url : 'https://cdn-icons-png.flaticon.com/512/147/147144.png';
     headerTag.innerHTML = `
       <div class="top-bar">
-        <span class="topbar-desktop">🚚 Free Shipping across India on orders above ₹999 | <span class="topbar-highlight">Festive Sale: Up to 40% OFF</span></span>
-        <span class="topbar-mobile">🚚 Free Shipping > ₹999 &nbsp;•&nbsp; <span>40% OFF FESTIVE SALE</span></span>
+        ${user ? `
+          <span class="topbar-desktop">👋 Welcome back, <strong style="color:var(--marigold)">${user.name}</strong>! &bull; Free Shipping on orders > ₹999 | <span class="topbar-highlight">Festive Sale: Up to 40% OFF</span></span>
+          <span class="topbar-mobile">👋 Hi, <strong>${user.name ? user.name.split(' ')[0] : 'Member'}</strong> &bull; <span>40% OFF FESTIVE SALE</span></span>
+        ` : `
+          <span class="topbar-desktop">🚚 Free Shipping across India on orders above ₹999 | <span class="topbar-highlight">Festive Sale: Up to 40% OFF</span></span>
+          <span class="topbar-mobile">🚚 Free Shipping > ₹999 &nbsp;•&nbsp; <span>40% OFF FESTIVE SALE</span></span>
+        `}
       </div>
       <div class="container navbar" style="max-width: 1400px; width: 100%; box-sizing: border-box;">
         <button class="hamburger-btn" onclick="toggleNavDrawer()"><i class="fas fa-bars"></i></button>
         
         <a href="/" class="logo" style="display: inline-flex; align-items: center; gap: 8px;">
-          <img src="images/favicon.png" alt="Little to Large Logo" style="height: 32px; width: 32px; border-radius: 4px; object-fit: cover;">
-          <span>Little <span class="logo-accent">to</span> Large</span>
+          <img src="images/favicon.png" alt="Little to Largee Logo" style="height: 32px; width: 32px; border-radius: 4px; object-fit: cover;">
+          <span>Little <span class="logo-accent">to</span> Largee</span>
         </a>
         
         <nav class="nav-links" style="display:flex; align-items:center; gap:16px; font-size:0.92rem; font-weight:600;">
@@ -554,8 +579,8 @@ function renderHeaderFooter() {
           </div>
           <input type="file" id="visualSearchInput" accept="image/*" style="display:none;" onchange="handleVisualSearch(this)">
           
-          <a href="/account" class="action-icon" title="My Account" style="display:flex; align-items:center">
-            ${user ? `<img src="${avatarImg}" class="header-avatar" alt="Avatar">` : `<i class="far fa-user"></i>`}
+          <a href="/account" class="action-icon ${user ? 'user-greeting-pill' : ''}" title="My Account" style="display:flex; align-items:center; text-decoration:none;">
+            ${user ? `<img src="${avatarImg}" class="header-avatar" alt="Avatar"><span class="desktop-only-btn" style="font-size:0.82rem; font-weight:700; color:var(--primary); margin-left:3px">${user.name ? user.name.split(' ')[0] : 'Profile'}</span>` : `<i class="far fa-user"></i>`}
           </a>
           
           <a href="/account?tab=wishlist" class="action-icon desktop-only-icon" title="Wishlist">
@@ -592,7 +617,8 @@ function renderHeaderFooter() {
     
     // Show a loading overlay
     const overlay = document.createElement('div');
-    overlay.innerHTML = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.9);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center"><i class="fas fa-spinner fa-spin" style="font-size:3rem;color:var(--primary);margin-bottom:1rem"></i><h2 style="color:var(--primary)">AI is analyzing your style...</h2></div>';
+    overlay.id = 'visualSearchLoadingOverlay';
+    overlay.innerHTML = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.92);backdrop-filter:blur(6px);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center"><i class="fas fa-camera-retro" style="font-size:3.5rem;color:var(--primary);margin-bottom:1rem;animation:pulse 1.2s infinite"></i><h3 style="color:var(--primary);font-weight:800">AI is analyzing your style &amp; colors...</h3><p style="color:var(--text-light);font-size:0.9rem">Matching premium Indian family outfits from catalog</p></div>';
     document.body.appendChild(overlay);
 
     const formData = new FormData();
@@ -606,16 +632,21 @@ function renderHeaderFooter() {
       const data = await res.json();
       
       if (data.success && data.products && data.products.length > 0) {
-        // Redirect to products page with custom visualSearch query parameter and ids
         const ids = data.products.map(p => p.id).join(',');
         window.location.href = `/products?visualSearch=true&ids=${ids}`;
       } else {
-        alert('Could not find matching clothes for this image. Try another photo!');
-        document.body.removeChild(overlay);
+        if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        if (typeof showToast === 'function') {
+          showToast('Showing curated family collections matching your style', 'info');
+        }
+        window.location.href = '/products?search=ethnic';
       }
     } catch (err) {
-      alert('Visual search failed.');
-      document.body.removeChild(overlay);
+      if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      if (typeof showToast === 'function') {
+        showToast('Connecting to style catalogue...', 'info');
+      }
+      window.location.href = '/products';
     }
   };
 
@@ -706,8 +737,8 @@ function renderHeaderFooter() {
       <div class="container footer-grid">
         <div class="footer-col">
           <div class="footer-logo" style="display: inline-flex; align-items: center; gap: 8px;">
-            <img src="images/favicon.png" alt="Little to Large Logo" style="height: 32px; width: 32px; border-radius: 4px; object-fit: cover;">
-            <span>Little <span class="logo-accent">to</span> Large</span>
+            <img src="images/favicon.png" alt="Little to Largee Logo" style="height: 32px; width: 32px; border-radius: 4px; object-fit: cover;">
+            <span>Little <span class="logo-accent">to</span> Largee</span>
           </div>
           <p>India's premium family clothing store. We bring comfortable, beautiful ethnic and western outfits from infants to adults. Designed to grow and scale with Indian family values.</p>
           <p style="font-size:0.8rem; margin-top:0.6rem; color:rgba(255,255,255,0.7); font-weight:600">GSTIN: 24DDFPG6913P1Z8</p>
@@ -750,14 +781,14 @@ function renderHeaderFooter() {
           <p style="font-size:0.75rem; margin-top:0.4rem; color:rgba(255,255,255,0.7); line-height:1.4">
             <strong>Grievance Officer:</strong> Reenaben<br>
             Email: <a href="mailto:indiancloths980@gmail.com" style="color:rgba(255,255,255,0.9); text-decoration:underline;">indiancloths980@gmail.com</a><br>
-            <strong>Registered Office:</strong> HQ Little to Large, Sector 4, Gandhidham, Gujarat - 370201
+            <strong>Registered Office:</strong> HQ Little to Largee, Sector 4, Gandhidham, Gujarat - 370201
           </p>
           <p style="margin-top: 0.8rem; font-size: 0.8rem; color: rgba(255,255,255,0.5)">🔒 Safe Payments: UPI, Credit Card, Cash on Delivery</p>
         </div>
       </div>
       <div class="footer-bottom">
         <div class="container">
-          <p>&copy; 2026 Little to Large E-Commerce. Made with ❤️ in India. All Rights Reserved.</p>
+          <p>&copy; 2026 Little to Largee E-Commerce. Made with ❤️ in India. All Rights Reserved.</p>
         </div>
       </div>
       <!-- Cookie Consent Banner -->
@@ -829,6 +860,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderHeaderFooter();
   setupChatbotUI();
   checkCookiePreference();
+  checkPostAuthWelcome();
 });
 
 // Chatbot UI dynamic loader (External Integration)
@@ -1114,4 +1146,21 @@ function ensureSizeAdvisorModalDOM() {
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) closeSizeAdvisorModal();
   });
+}
+
+
+function checkPostAuthWelcome() {
+  if (sessionStorage.getItem('l2l_just_logged_in') === 'true' || new URLSearchParams(window.location.search).get('welcome') === 'true') {
+    sessionStorage.removeItem('l2l_just_logged_in');
+    const user = getCurrentUser();
+    const name = user && user.name ? user.name : 'Valued Family Member';
+    setTimeout(() => {
+      showToast('✨ Welcome to Little to Largee, ' + name + '! Your personalized family wardrobe is ready.', 'success');
+    }, 600);
+    if (window.history && window.history.replaceState && window.location.search.includes('welcome')) {
+      const url = new URL(window.location);
+      url.searchParams.delete('welcome');
+      window.history.replaceState({}, '', url);
+    }
+  }
 }
