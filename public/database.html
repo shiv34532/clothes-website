@@ -582,6 +582,31 @@
     </div>
   </div>
 
+  
+  <!-- SECURE ADMIN AUTHENTICATION BARRIER -->
+  <div id="adminAuthBarrier" style="display:none; position:fixed; inset:0; background:linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); z-index:9999999; flex-direction:column; align-items:center; justify-content:center; padding:20px; color:#fff; text-align:center;">
+    <div style="background:#1e293b; border:1px solid #334155; border-radius:16px; padding:2.5rem 2rem; max-width:440px; width:100%; box-shadow:0 25px 50px rgba(0,0,0,0.5);">
+      <div style="width:68px; height:68px; background:rgba(239, 68, 68, 0.15); border:2px solid #ef4444; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.5rem auto;">
+        <i class="fas fa-user-shield" style="font-size:2rem; color:#ef4444;"></i>
+      </div>
+      <h2 style="font-size:1.4rem; font-weight:800; margin-bottom:0.5rem; color:#f8fafc;">Private Admin Access Only</h2>
+      <p style="color:#94a3b8; font-size:0.88rem; line-height:1.5; margin-bottom:1.5rem;">
+        The Live SQL Database Studio is strictly restricted to authenticated administrators. Please log in with authorized credentials to access this system.
+      </p>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <a href="/login?redirect=/database" class="header-btn" style="background:linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color:#fff; text-decoration:none; padding:12px; border-radius:8px; font-weight:700; font-size:0.95rem; display:flex; align-items:center; justify-content:center; gap:8px;">
+          <i class="fas fa-lock-open"></i> Login as Administrator
+        </a>
+        <a href="/admin" class="header-btn" style="background:#334155; color:#e2e8f0; text-decoration:none; padding:10px; border-radius:8px; font-weight:600; font-size:0.85rem; display:flex; align-items:center; justify-content:center; gap:8px;">
+          <i class="fas fa-arrow-left"></i> Go to Admin Dashboard
+        </a>
+        <a href="/" style="color:#94a3b8; font-size:0.8rem; text-decoration:none; margin-top:8px;">
+          Return to Little to Largee Storefront
+        </a>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast-msg"></div>
 
   <script>
@@ -594,6 +619,53 @@
     let loadedRows = [];
     let modalMode = 'add';
     let editPkValue = null;
+
+    function getToken() {
+      const token = localStorage.getItem('l2l_token') || localStorage.getItem('token');
+      return (!token || token === 'undefined' || token === 'null') ? null : token;
+    }
+
+    function getCurrentUser() {
+      try {
+        const u = localStorage.getItem('l2l_user') || localStorage.getItem('user');
+        if (!u) return null;
+        return JSON.parse(u);
+      } catch(e) {
+        return null;
+      }
+    }
+
+    function checkAdminAuth() {
+      const token = getToken();
+      const user = getCurrentUser();
+      const emailLower = (user && user.email ? user.email : '').toLowerCase().trim();
+      const isAuthorized = user && token && (
+        emailLower === 'indiancloths980@ltl.com' ||
+        emailLower === 'admin@littlelarge.in' ||
+        emailLower.includes('indiancloths980') ||
+        emailLower.includes('admin') ||
+        emailLower.includes('jethinaitik') ||
+        user.role === 'admin' ||
+        user.role === 'staff' ||
+        user.isStaff
+      );
+
+      if (!isAuthorized) {
+        const barrier = document.getElementById('adminAuthBarrier');
+        if (barrier) barrier.style.display = 'flex';
+        return false;
+      }
+      return true;
+    }
+
+    function getAuthHeaders(extra = {}) {
+      const token = getToken();
+      return {
+        ...(token ? { 'Authorization': 'Bearer ' + token } : {}),
+        ...extra
+      };
+    }
+
 
     function showToast(msg, type = 'info') {
       const toast = document.getElementById('toast');
@@ -616,8 +688,17 @@
 
     // Load tables list on startup
     async function initDatabaseStudio() {
+      if (!checkAdminAuth()) {
+        console.warn('Access denied: Admin credentials required for Live SQL Studio.');
+        return;
+      }
       try {
-        const res = await fetch('/api/admin/db/tables');
+        const res = await fetch('/api/admin/db/tables', { headers: getAuthHeaders() });
+        if (res.status === 401 || res.status === 403) {
+          const barrier = document.getElementById('adminAuthBarrier');
+          if (barrier) barrier.style.display = 'flex';
+          return;
+        }
         const data = await res.json();
         if (data.success && data.tables) {
           tablesData = data.tables;
@@ -677,7 +758,8 @@
       tbody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding:3rem; color:#94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size:2rem; color:#8b5cf6;"></i><p style="margin-top:8px;">Fetching data from "' + tableName + '"...</p></td></tr>';
 
       try {
-        const res = await fetch(`/api/admin/db/table/${encodeURIComponent(tableName)}?page=${page}&limit=50&search=${encodeURIComponent(search)}`);
+        const res = await fetch(`/api/admin/db/table/${encodeURIComponent(tableName)}?page=${page}&limit=50&search=${encodeURIComponent(search)}`, { headers: getAuthHeaders() });
+        if (res.status === 401 || res.status === 403) { const b = document.getElementById('adminAuthBarrier'); if (b) b.style.display = 'flex'; return; }
         const data = await res.json();
         if (!data.success) {
           tbody.innerHTML = `<tr><td colspan="15" style="padding:2rem; text-align:center; color:#dc2626;">${data.message || 'Error loading records.'}</td></tr>`;
@@ -916,7 +998,8 @@
 
       try {
         const res = await fetch(`/api/admin/db/table/${encodeURIComponent(currentTable)}/${encodeURIComponent(rowId)}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers: getAuthHeaders()
         });
         const data = await res.json();
         if (data.success) {
@@ -955,7 +1038,7 @@
       try {
         const res = await fetch('/api/admin/db/query', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ sql: query })
         });
         const data = await res.json();

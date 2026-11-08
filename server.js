@@ -235,7 +235,7 @@ app.use((req, res, next) => {
 
 // Protect admin.html and /admin from unauthorized client access before serving static files
 // Direct 1-Click Access for Live SQL Database Studio
-app.get(['/database', '/database.html', '/sql', '/db', '/db-studio'], (req, res) => {
+app.get(['/database', '/database.html', '/sql', '/db', '/db-studio'], adminIpFilter, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'database.html'));
 });
 
